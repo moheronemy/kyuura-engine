@@ -2138,5 +2138,1554 @@
   "kyuura の変更",
   "旧集計・登録済みの証跡の変更",
   "main への push・マージ・PR"
- ]
+ ],
+ "board_verification": {
+  "date": "2026-11-23",
+  "doc_section": "11",
+  "base": {
+   "branch": "claude/rs1-lucky-stadium-replacement-design",
+   "commit": "af23af1119ff2a342e2ccdf3372f26738b478fb9"
+  },
+  "work_branch": "claude/rs1-board-verification",
+  "run_commit": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c",
+  "engine_version": "0.197.0",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-boards-run/",
+  "convention_sets": [
+   "CS-KYUURA-PLAY-TR7@1",
+   "CURRENT"
+  ],
+  "tr7_digest": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",
+  "method": "tests.helpers.build_test_state の盤面から正規の操作（PlayTrainer・UseStadium・UsePokemonPower・ResolveDecision・EndTurn）。コインは with_coin_results。規約集合は操作の前に置く。状態の直接の書きかえなし",
+  "boards": {
+   "M1": {
+    "design_now": "候補なし・STADIUM_ALREADY_USED",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使ったあと（同じ個体の 2 回目）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": false
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "STADIUM_ALREADY_USED",
+       "category": "invalid_input",
+       "raised": "IllegalActionError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M2": {
+    "design_now": "unresolved_ruling・RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を出した直後（使う前）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 10,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 10,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M2b": {
+    "design_now": "RS1（3 枚目でも）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "C に入れかえたあと（3 枚目）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 5,
+       "card_id": "PRN-017",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M3": {
+    "design_now": "使える（記録は空）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "相手の番（相手）",
+      "turn": 8,
+      "actor": 1,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "本人の次の番",
+      "turn": 9,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 8,
+         "uses_after": [
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 8,
+         "uses_after": [
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M4": {
+    "design_now": "相手は使える",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "相手の番に相手が場の B を使う",
+      "turn": 8,
+      "actor": 1,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M5": {
+    "design_now": "RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-015 を使い、NIP2X-009 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "NIP2X-009",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-015 を使い、neo4-106 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "neo4-106",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "neo4-106 を使い、PRN-015 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M6": {
+    "design_now": "LK1 / RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-015 を使い、PRN-027 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-027 を使い、PRN-015 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-027 の同じ個体の 2 回目（LK1 の対照）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M7": {
+    "design_now": "RS1・RS1・FG1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "エネルギースタジアム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "NIP1X-009",
+       "name": "エネルギースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "キョウの忍者ジム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PR1-067",
+       "name": "キョウの忍者ジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "セキチクシティジム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PMCG6-086",
+       "name": "セキチクシティジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M8": {
+    "design_now": "止めない",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "ラッキースタジアムを使い、セキチクシティジムに入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PMCG6-086",
+       "name": "セキチクシティジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           0,
+           3
+          ],
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           0,
+           3
+          ],
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M9": {
+    "design_now": "SX2",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、でこぼこジムで A がトラッシュ、［じくうへんかん］で A がもどったあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "returned_same_card": true
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M10": {
+    "design_now": "記録・候補・submit の結果が保存の前と同じ",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "保存の前（B に入れかえたあと）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "復元のあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "restore_status": "restored",
+      "state_equal": true,
+      "probes_equal": {
+       "uses_before": true,
+       "stadium": true,
+       "candidate_api": true,
+       "direct": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M11": {
+    "design_now": "STB1（RS1 より先）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、B に入れかえ、トレーナーの使用の禁止がはたらいたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "trainer_locks": [
+       {
+        "player": 0,
+        "source_player": 0,
+        "source_card": 5,
+        "effect": "PMCG6-091",
+        "created_turn": 7,
+        "expires_turn": 9,
+        "origin": "trainer"
+       }
+      ]
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M12": {
+    "design_now": "RS1（山札 0）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を出した直後（使う前）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 0,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 0,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "deck_count": 0
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O1": {
+    "design_now": "同じ個体の 2 回目が STB1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "同じ個体の 2 回目 + 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": false
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "STADIUM_ALREADY_USED",
+       "category": "invalid_input",
+       "raised": "IllegalActionError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O2": {
+    "design_now": "STB1 が LK1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-027 の 2 回目（LK1 の条件）+ 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O3": {
+    "design_now": "SX2 が STB1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "SX2 + 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O4": {
+    "design_now": "SX2 が RS1 より先（同じ個体の記録と別の個体の記録の両方）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、B に入れかえ、［じくうへんかん］で A がもどったあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   }
+  },
+  "counts": {
+   "TR7": {
+    "一致": 17
+   },
+   "CURRENT": {
+    "一致": 17
+   }
+  },
+  "main_13": {
+   "TR7": {
+    "一致": 13,
+    "不一致": 0,
+    "到達不能": 0,
+    "未確認": 0
+   },
+   "CURRENT": {
+    "一致": 13,
+    "不一致": 0,
+    "到達不能": 0,
+    "未確認": 0
+   }
+  },
+  "order_measured": {
+   "O1": "STADIUM_ALREADY_USED > STB1",
+   "O2": "STB1 > LK1",
+   "O3": "SX2 > STB1",
+   "O4": "SX2 > RS1",
+   "M11": "STB1 > RS1",
+   "LK1_RS1": "構成上重ならない（場のカードの版で一方だけ）"
+  },
+  "candidate_api_codes": "候補 API は停止のコードを出さない（unresolved_ruling・stops_before_acceptance、check・submit は CANDIDATE_NOT_EXECUTABLE）。直接のコマンドの診断は候補 API の実測コードに数えない",
+  "deck_zero": "使える使用の「おもて」: coin_flip のあと draw の出来事、引いた枚数 0、負けにしない。入れかえ後の B は RS1 でコインの前に止まる",
+  "conclusion": "ラッキースタジアムの別個体だけを対象にした規約の設計へ進める（採用ではない。裁定は確定しない）。SX2・FG1・エネルギースタジアム・忍者ジムへの適用は別の判断",
+  "saved_positions": "保存記録の 14 局面は静的な照合のまま（盤面の実測とは別に数える）"
+ }
 }
