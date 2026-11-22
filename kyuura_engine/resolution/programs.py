@@ -2141,6 +2141,22 @@ class Status(Element):
             return False
         return True
 
+    # v0.197（docs/play-convention-tr7-v0.197.md）: 続行規約 PC-T19B-NULLIFIED-STATUS-COIN@1 を当てる効果の登録の型（ダメージ → この要素のコイン → 特殊状態）
+    NULLIFIED_COIN_EFFECTS: ClassVar[tuple[type, ...]] = (E.ConfuseOnHeads, E.PoisonOnHeads, E.ParalyzeOnHeads)
+
+    def _nullified_coin_path(self, run: AttackRun) -> bool:
+        """v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約を当てる経路か（状態の値と要素の値だけで決める。状態を変えない。カード ID の定数で
+        分けない）。相手の対戦ポケモンへの、「おもて」で特殊状態・「うら」の効果のない要素で、ほかの条件（ワザ全体のコイン・前の結果・入れ替え・ダメージのあとの条件・特殊などく）
+        がなく、処理しているワザが元のワザ（宣言したワザと同じで、使ったポケモンの印刷のカードがそのワザのカード）で、効果の登録の型が ``NULLIFIED_COIN_EFFECTS`` のどれか。"""
+        if (self.target != OPP or self.local_coin is not HEADS or self.otherwise is not None or self.gate is not None or self.if_result is not None
+                or self.after_switch is not None or self.after_damage is not None or self.poison_damage is not None or self.poison_multiplier != 1):
+            return False
+        state, key = run.state, run.key
+        if run.declared != key or state.card_def(run.attacker().card).id != key.card_id:
+            return False
+        entry = state.effects.attack_entry(key.card_id, key.attack_index)
+        return entry is not None and type(entry.effect) in self.NULLIFIED_COIN_EFFECTS
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -2189,9 +2205,23 @@ class Status(Element):
                 raise run.res.question("special_poison_overwrite", f"ポケモン {target.pokemon_id}（{shown}）")
         if self.local_coin is not None:
             if run.fs.reception.get(target.pokemon_id) is False:
-                final = run.fs.evaded.get(target.pokemon_id)
-                raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
-                                       None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+                # v0.197: 状態の規約集合にこの場面（停止コード）の続行規約があり、対象の経路なら、ワザを使った側がコインを 1 回投げ、結果を使わずに戻る（特殊状態にしない。
+                # 「おもて」なら受けない記録は今の受ける判定が書く）。ほかは今までどおり止める（状態を変える前）
+                lookup = None
+                if self._nullified_coin_path(run):
+                    from ..conventions import continuation_for
+
+                    lookup = continuation_for(run.state, "UNRESOLVED_EVADED_EFFECT_COIN")
+                if lookup is None:
+                    final = run.fs.evaded.get(target.pokemon_id)
+                    raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                                           None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+                from ..conventions import record_application
+
+                record_application(run.state, lookup, player=run.player, target_owner=owner, pokemon_id=target.pokemon_id, element=self.condition)
+                if run.flip(1).results[0] is self.local_coin:
+                    reaches(run.res, run.fs, owner, target, self.condition)  # 受けないと決まっている（偽。ログ attack_evaded）
+                return False
             prevented_effect_coin(run, owner, target)  # v0.31: 「ワザをうけない」状態（バリアー）なら、効果だけを決めるコインを投げるか決まらない
             condition = self.condition
             if run.flip(1).results[0] is not self.local_coin:

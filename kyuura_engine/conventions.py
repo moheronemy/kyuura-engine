@@ -481,8 +481,55 @@ SETS = MappingProxyType({
                                                 "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約（docs/play-convention-tr7-v0.197.md）
+#
+# 利用者の採用（2026-11-22。設計 docs/t19b-evaded-effect-coin-design.md の案 B。族の案 PC-NULLIFIED-ELEMENT-COIN のうち、T19b の特殊状態の要素の経路だけ）。プレイ用の
+# 取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（T19b の停止コードは厳密側・既存の集合・対象の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3・
+# TR4・TR6 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1 だけに入れる。処理は特殊状態の要素のワザのコインの前（``resolution.programs.Status.run``
+# の T19b の分岐）で、未裁定の停止の代わりにワザを使った側がコインを 1 回投げ、結果を使わずに次へ進む（``convention_applied`` を書く）
+
+TR7_SET_ID = "CS-KYUURA-PLAY-TR7"
+TR7_ADOPTION = ("利用者の採用（2026-11-22。案 B: 「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと決まったあとの、特殊状態にするかを決めるワザのコインを、"
+                "ワザを使った側が説明どおり 1 回投げ、結果を使わずにワザの続きへ進む。効果の登録の型が ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザの、"
+                "相手の対戦ポケモンへの特殊状態の要素だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR7_REFERENCES = ("docs/play-convention-tr7-v0.197.md", "docs/t19b-evaded-effect-coin-design.md")
+
+T19B_NULLIFIED_STATUS_COIN_ID = "PC-T19B-NULLIFIED-STATUS-COIN"
+
+_TR7_CONVENTIONS = (
+    Convention(T19B_NULLIFIED_STATUS_COIN_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "相手の対戦ポケモンが、そのワザのダメージの要素で「とうめい」の「おもて」になり、そのワザのダメージと効果を受けないと決まっているとき、そのポケモンを特殊状態に"
+               "するかだけを決めるワザのコインを、ワザを使ったプレイヤーが説明どおり 1 回投げる。結果にかかわらず特殊状態にせず、ワザの続きを処理する",
+               content={"adoption": TR7_ADOPTION,
+                        "family": "PC-NULLIFIED-ELEMENT-COIN（族の案）のうち、T19b の特殊状態の要素の経路だけ",
+                        "applies_when": ("特殊状態の要素（解決の基盤の要素 Status。相手の対戦ポケモン・この要素のコインが「おもて」で特殊状態・「うら」の効果なし）のコインの前で、"
+                                         "対象がこのワザの「とうめい」で受けないと決まっていて（HP 以上ではない）、ワザの経路が元のワザのとき"),
+                        "identification": ("効果の登録の型が ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads（ダメージ → この要素のコイン → 特殊状態。カード ID では分けない）。"
+                                           "元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード"),
+                        "not_applied_paths": ["ほかの型の特殊状態の要素（「うら」の効果のある型・ダメージのない型・自分への特殊状態・ほかの要素と組む型）",
+                                              "特殊状態の要素でない T19b の箇所（入れ替え・禁止・エネルギーやトレーナーのトラッシュ・ダメージの量・ワザ全体のコインなど）",
+                                              "コピー・［へんしん］などで持つワザ（元のワザでない経路）",
+                                              "UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN・UNRESOLVED_DISCARD_PROTECTED_COIN・UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"],
+                        "on_apply": {"coin": "ワザを使ったプレイヤーが 1 枚（公開のコインのログ。source attack）", "result": "使わない（特殊状態にしない）",
+                                     "log": "規約を当てた記録のあとにコイン。「おもて」なら受けない記録（attack_evaded）", "next": "ワザの続き（ワザのあとの処理・番の終わりは今の処理）"},
+                        "record": ["player", "target_owner", "pokemon_id", "element"],
+                        "unchanged": ["「とうめい」の「うら」（受ける。HP 以上ならワザのコインを投げない）", "「とうめい」がはたらかないとき・最終ダメージが 0 のとき",
+                                      "候補・入力・確かめの契約", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_EVADED_EFFECT_COIN",), references=TR7_REFERENCES),
+)
+TR7_MEMBERS = tuple((c.id, c.version) for c in _TR7_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR7_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR7_SET_ID, 1): ConventionSet(TR7_SET_ID, 1, USAGE_DEVELOPMENT,
+                                   _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS,
+                                   description=("v0.197 の開発用の部分的な集合: CS-KYUURA-PLAY-TR6@1 の 25 規約と、「とうめい」で受けないと決まったあとの特殊状態のワザのコインの"
+                                                "続行規約 1 件。14 規約の場面だけを続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -518,6 +565,8 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-ENERGY-RETRIEVAL-ZERO", 1): "sha256:42427e752631572b425d391783f362c0b88982328fd9231b57da0c1455fdba01",
     # v0.196: エナジーへんかんの 0 枚の答えの続行規約（利用者の採用。2026-11-21）
     ("PC-ENERGY-CONVERSION-ZERO", 1): "sha256:6a35ebb8f6aa772e051d0ade7a8fd6d771537d2f1205365b4c039a19dea44594",
+    # v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約（利用者の採用。2026-11-22）
+    ("PC-T19B-NULLIFIED-STATUS-COIN", 1): "sha256:e4082ecb8e189e1a4b67fbf66fc9c2d6b580de050b2696c711d6ba7ea81bd3b8",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
@@ -527,6 +576,7 @@ PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-PLAY-TR3", 1): "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",  # v0.186: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR4", 1): "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",  # v0.195: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR6", 1): "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",  # v0.196: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR7", 1): "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",  # v0.197: 開発用の部分的な集合
 })
 
 
