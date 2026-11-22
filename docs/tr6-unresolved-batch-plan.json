@@ -1555,5 +1555,1026 @@
    "F3 関門のまとめの初版が prestop の R6 の形を読み違えた（P-4 偽 × 4。証跡は不変）",
    "F4 analyze_tr6a.py の最初の作成がシェルの引用で何も書かずに終わった"
   ]
+ },
+ "main_execution": {
+  "date": "2026-11-22",
+  "doc_section": "13 章",
+  "docs_base": "ac9548344d2523819c9fe15b89659cbae3bbc33e",
+  "branch": "claude/tr6a-main",
+  "docs_worktree": "C:\\dev\\kyuura-engine-lt88",
+  "execution_commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "execution_worktree": "C:\\dev\\kyuura-engine-lt87（7f7712a に切り離して。キャッシュの準備の記録と同じ場所）",
+  "evidence": "verifier/runs/vai-batch-tr6a-main-run/",
+  "duplicate_found": false,
+  "precheck": {
+   "identity_equal_to_pilot": true,
+   "sets_equal_to_pilot": true,
+   "expected_identity_equal_d25feba": true,
+   "doc_pilot_gates_all": true,
+   "doc_verdict_proceed": true,
+   "pilot_gates_4_games_all_true": true,
+   "main_plans_fixed_and_not_started": true,
+   "vai-batch-tr6a-p1_plan_sha": true,
+   "vai-batch-tr6a-p2_plan_sha": true,
+   "vai-batch-tr6a-p3_plan_sha": true,
+   "vai-batch-tr6a-p4_plan_sha": true
+  },
+  "main_plan_sha256": {
+   "vai-batch-tr6a-m1": "365d1f36498c504de7a2a2775a0a9b9ea88693e8457a3d7b0ef63d9bd1cc3835",
+   "vai-batch-tr6a-m2": "7cb9f7304acfaec62acc9b67d9e5bebbac0dea882a86ba803daa2350f8237fe1",
+   "vai-batch-tr6a-m3": "2b87a3d1780a9438dd6d016c910364bdd0bdf322e20519c5543a062b9626f333",
+   "vai-batch-tr6a-m4": "0aa890178604318e7738e3c02a885569a8919c0cd5fabfa613bd91eea008f98e"
+  },
+  "dry_run": {
+   "plans": 4,
+   "use_cache": true,
+   "capacity_ok": true,
+   "batch_run_called": false
+  },
+  "games": {
+   "planned": 24,
+   "started": 15,
+   "complete": 15,
+   "complete_with_stop": 1,
+   "incomplete": 0,
+   "not_started": 9,
+   "not_started_list": [
+    "9017 C4",
+    "9018 C1",
+    "9018 C2",
+    "9018 C3",
+    "9018 C4",
+    "9019 C1",
+    "9019 C2",
+    "9019 C3",
+    "9019 C4"
+   ],
+   "per_plan_complete": {
+    "vai-batch-tr6a-m1": 4,
+    "vai-batch-tr6a-m2": 4,
+    "vai-batch-tr6a-m3": 4,
+    "vai-batch-tr6a-m4": 3
+   }
+  },
+  "abort": {
+   "call": 15,
+   "batch": "vai-batch-tr6a-m3",
+   "game": "g004-rules-v2-s9017",
+   "condition": "C3",
+   "seed": 9017,
+   "batch_status": "stopped_policy",
+   "stop": [
+    "undetermined:no_progress:1"
+   ],
+   "termination": "no_progress",
+   "termination_detail": "draws_per_position（64）",
+   "driver_exit": 12,
+   "acknowledge_stop_used": false,
+   "records_checked": "post_stop_call15.ps1（verify 0・R2〜R5・観測 complete・replay・prestop complete・キャッシュ不変）"
+  },
+  "gates_per_call": {
+   "1": {
+    "go": true,
+    "failed": []
+   },
+   "2": {
+    "go": true,
+    "failed": []
+   },
+   "3": {
+    "go": true,
+    "failed": []
+   },
+   "4": {
+    "go": true,
+    "failed": []
+   },
+   "5": {
+    "go": true,
+    "failed": []
+   },
+   "6": {
+    "go": true,
+    "failed": []
+   },
+   "7": {
+    "go": true,
+    "failed": []
+   },
+   "8": {
+    "go": true,
+    "failed": []
+   },
+   "9": {
+    "go": true,
+    "failed": []
+   },
+   "10": {
+    "go": true,
+    "failed": []
+   },
+   "11": {
+    "go": true,
+    "failed": []
+   },
+   "12": {
+    "go": true,
+    "failed": []
+   },
+   "13": {
+    "go": true,
+    "failed": []
+   },
+   "14": {
+    "go": true,
+    "failed": []
+   },
+   "15": {
+    "go": false,
+    "failed": [
+     "no_stop_reason",
+     "judge_undetermined_0"
+    ]
+   }
+  },
+  "per_game": {
+   "vai-batch-tr6a-m1/g001-rules-v2-s9014": {
+    "condition": "C1",
+    "seed": 9014,
+    "call": 1,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 6,
+    "accepted": 18,
+    "rejected": 0,
+    "attempts": 19,
+    "attempt_seconds": 0.209,
+    "attempt_bytes": 962535,
+    "tool_accounted_seconds": 2.069,
+    "outer_seconds": 17.488,
+    "run_wall_seconds": 2.8819946,
+    "check_wall_seconds": 13.9344865
+   },
+   "vai-batch-tr6a-m2/g001-rules-v2-s9014": {
+    "condition": "C2",
+    "seed": 9014,
+    "call": 2,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 33,
+    "accepted": 95,
+    "rejected": 0,
+    "attempts": 114,
+    "attempt_seconds": 1.558,
+    "attempt_bytes": 6149835,
+    "tool_accounted_seconds": 3.753,
+    "outer_seconds": 18.731,
+    "run_wall_seconds": 4.6340159,
+    "check_wall_seconds": 13.4490516
+   },
+   "vai-batch-tr6a-m3/g001-rules-v2-s9014": {
+    "condition": "C3",
+    "seed": 9014,
+    "call": 3,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 37,
+    "accepted": 154,
+    "rejected": 0,
+    "attempts": 189,
+    "attempt_seconds": 3.802,
+    "attempt_bytes": 11808380,
+    "tool_accounted_seconds": 6.442,
+    "outer_seconds": 22.284,
+    "run_wall_seconds": 7.5071235,
+    "check_wall_seconds": 14.1238917
+   },
+   "vai-batch-tr6a-m4/g001-rules-v2-s9014": {
+    "condition": "C4",
+    "seed": 9014,
+    "call": 4,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 63,
+    "accepted": 205,
+    "rejected": 0,
+    "attempts": 281,
+    "attempt_seconds": 4.272,
+    "attempt_bytes": 15906368,
+    "tool_accounted_seconds": 7.0,
+    "outer_seconds": 22.638,
+    "run_wall_seconds": 8.1221946,
+    "check_wall_seconds": 13.8632777
+   },
+   "vai-batch-tr6a-m1/g002-rules-v2-s9015": {
+    "condition": "C1",
+    "seed": 9015,
+    "call": 5,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 31,
+    "accepted": 102,
+    "rejected": 0,
+    "attempts": 110,
+    "attempt_seconds": 1.505,
+    "attempt_bytes": 6345564,
+    "tool_accounted_seconds": 3.765,
+    "outer_seconds": 18.832,
+    "run_wall_seconds": 4.6736321,
+    "check_wall_seconds": 13.5091275
+   },
+   "vai-batch-tr6a-m2/g002-rules-v2-s9015": {
+    "condition": "C2",
+    "seed": 9015,
+    "call": 6,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 29,
+    "accepted": 86,
+    "rejected": 0,
+    "attempts": 99,
+    "attempt_seconds": 1.37,
+    "attempt_bytes": 5515981,
+    "tool_accounted_seconds": 3.55,
+    "outer_seconds": 18.534,
+    "run_wall_seconds": 4.416708,
+    "check_wall_seconds": 13.4621699
+   },
+   "vai-batch-tr6a-m3/g002-rules-v2-s9015": {
+    "condition": "C3",
+    "seed": 9015,
+    "call": 7,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 67,
+    "accepted": 215,
+    "rejected": 0,
+    "attempts": 224,
+    "attempt_seconds": 5.629,
+    "attempt_bytes": 16682120,
+    "tool_accounted_seconds": 8.68,
+    "outer_seconds": 24.53,
+    "run_wall_seconds": 9.8432698,
+    "check_wall_seconds": 14.037497
+   },
+   "vai-batch-tr6a-m4/g002-rules-v2-s9015": {
+    "condition": "C4",
+    "seed": 9015,
+    "call": 8,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 68,
+    "accepted": 199,
+    "rejected": 0,
+    "attempts": 288,
+    "attempt_seconds": 4.95,
+    "attempt_bytes": 16922827,
+    "tool_accounted_seconds": 7.674,
+    "outer_seconds": 23.343,
+    "run_wall_seconds": 8.8444052,
+    "check_wall_seconds": 13.8449347
+   },
+   "vai-batch-tr6a-m1/g003-rules-v2-s9016": {
+    "condition": "C1",
+    "seed": 9016,
+    "call": 9,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 25,
+    "accepted": 85,
+    "rejected": 0,
+    "attempts": 93,
+    "attempt_seconds": 1.182,
+    "attempt_bytes": 4990407,
+    "tool_accounted_seconds": 3.299,
+    "outer_seconds": 17.991,
+    "run_wall_seconds": 4.2284986,
+    "check_wall_seconds": 13.1270442
+   },
+   "vai-batch-tr6a-m2/g003-rules-v2-s9016": {
+    "condition": "C2",
+    "seed": 9016,
+    "call": 10,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 6,
+    "accepted": 28,
+    "rejected": 0,
+    "attempts": 28,
+    "attempt_seconds": 0.295,
+    "attempt_bytes": 1258744,
+    "tool_accounted_seconds": 2.227,
+    "outer_seconds": 16.629,
+    "run_wall_seconds": 3.0259173,
+    "check_wall_seconds": 12.9664566
+   },
+   "vai-batch-tr6a-m3/g003-rules-v2-s9016": {
+    "condition": "C3",
+    "seed": 9016,
+    "call": 11,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 74,
+    "accepted": 360,
+    "rejected": 0,
+    "attempts": 436,
+    "attempt_seconds": 9.22,
+    "attempt_bytes": 28524165,
+    "tool_accounted_seconds": 14.356,
+    "outer_seconds": 30.725,
+    "run_wall_seconds": 15.2972818,
+    "check_wall_seconds": 14.7743909
+   },
+   "vai-batch-tr6a-m4/g003-rules-v2-s9016": {
+    "condition": "C4",
+    "seed": 9016,
+    "call": 12,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 51,
+    "accepted": 164,
+    "rejected": 0,
+    "attempts": 212,
+    "attempt_seconds": 3.601,
+    "attempt_bytes": 13446256,
+    "tool_accounted_seconds": 6.207,
+    "outer_seconds": 21.64,
+    "run_wall_seconds": 7.3760855,
+    "check_wall_seconds": 13.5961444
+   },
+   "vai-batch-tr6a-m1/g004-rules-v2-s9017": {
+    "condition": "C1",
+    "seed": 9017,
+    "call": 13,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 47,
+    "accepted": 168,
+    "rejected": 0,
+    "attempts": 212,
+    "attempt_seconds": 3.493,
+    "attempt_bytes": 12328766,
+    "tool_accounted_seconds": 6.068,
+    "outer_seconds": 21.429,
+    "run_wall_seconds": 7.1527831,
+    "check_wall_seconds": 13.6244353
+   },
+   "vai-batch-tr6a-m2/g004-rules-v2-s9017": {
+    "condition": "C2",
+    "seed": 9017,
+    "call": 14,
+    "termination": "game_over",
+    "halt": null,
+    "turns": 65,
+    "accepted": 993,
+    "rejected": 0,
+    "attempts": 1458,
+    "attempt_seconds": 35.878,
+    "attempt_bytes": 102635601,
+    "tool_accounted_seconds": 46.735,
+    "outer_seconds": 68.579,
+    "run_wall_seconds": 47.6640789,
+    "check_wall_seconds": 20.2614092
+   },
+   "vai-batch-tr6a-m3/g004-rules-v2-s9017": {
+    "condition": "C3",
+    "seed": 9017,
+    "call": 15,
+    "termination": "no_progress",
+    "halt": null,
+    "turns": 44,
+    "accepted": 156,
+    "rejected": 1,
+    "attempts": 231,
+    "attempt_seconds": 3.253,
+    "attempt_bytes": 11356234,
+    "tool_accounted_seconds": 5.883,
+    "outer_seconds": 7.659,
+    "run_wall_seconds": 6.945736,
+    "check_wall_seconds": null
+   }
+  },
+  "by_condition": {
+   "C1": {
+    "games": 4,
+    "terminations": {
+     "game_over": 4
+    },
+    "accepted": 373,
+    "rejected": 0,
+    "turns": [
+     6,
+     31,
+     25,
+     47
+    ]
+   },
+   "C2": {
+    "games": 4,
+    "terminations": {
+     "game_over": 4
+    },
+    "accepted": 1202,
+    "rejected": 0,
+    "turns": [
+     33,
+     29,
+     6,
+     65
+    ]
+   },
+   "C3": {
+    "games": 4,
+    "terminations": {
+     "game_over": 3,
+     "no_progress": 1
+    },
+    "accepted": 885,
+    "rejected": 1,
+    "turns": [
+     37,
+     67,
+     74,
+     44
+    ]
+   },
+   "C4": {
+    "games": 3,
+    "terminations": {
+     "game_over": 3
+    },
+    "accepted": 568,
+    "rejected": 0,
+    "turns": [
+     63,
+     68,
+     51
+    ]
+   }
+  },
+  "totals": {
+   "planned": 24,
+   "started": 15,
+   "complete": 15,
+   "incomplete": 0,
+   "not_started": 9,
+   "analyzed": 15,
+   "terminations": {
+    "game_over": 14,
+    "no_progress": 1
+   },
+   "halt_codes": {},
+   "tool_accounted_seconds": 127.708,
+   "outer_seconds": 351.032,
+   "plan_dir_bytes_before_final_aggregate": null,
+   "attempt_bytes": 254833783,
+   "attempt_seconds": 80.217,
+   "accepted": 3028,
+   "rejected": 1,
+   "attempts": 3994,
+   "convention_applied": 11
+  },
+  "plans": {
+   "vai-batch-tr6a-m1": {
+    "accounted_seconds_total": 15.201,
+    "last_session_status": "stopped_requested",
+    "games_planned": 6,
+    "games_complete": 4,
+    "incomplete_attempts": 0,
+    "dir_bytes": 24731908
+   },
+   "vai-batch-tr6a-m2": {
+    "accounted_seconds_total": 56.265,
+    "last_session_status": "stopped_requested",
+    "games_planned": 6,
+    "games_complete": 4,
+    "incomplete_attempts": 0,
+    "dir_bytes": 115634244
+   },
+   "vai-batch-tr6a-m3": {
+    "accounted_seconds_total": 35.361,
+    "last_session_status": "stopped_policy",
+    "games_planned": 6,
+    "games_complete": 4,
+    "incomplete_attempts": 0,
+    "dir_bytes": 68480340
+   },
+   "vai-batch-tr6a-m4": {
+    "accounted_seconds_total": 20.881,
+    "last_session_status": "stopped_requested",
+    "games_planned": 6,
+    "games_complete": 3,
+    "incomplete_attempts": 0,
+    "dir_bytes": 46368939
+   }
+  },
+  "items": {
+   "termination": {
+    "by_class": {
+     "game_over": 14,
+     "no_progress": 1
+    },
+    "measured_halt_codes": {},
+    "batch_stops": {
+     "vai-batch-tr6a-m1": "stopped_requested",
+     "vai-batch-tr6a-m2": "stopped_requested",
+     "vai-batch-tr6a-m3": "stopped_policy",
+     "vai-batch-tr6a-m4": "stopped_requested"
+    }
+   },
+   "rejections": {
+    "rejected_by_code": {
+     "UNRESOLVED_EVADED_EFFECT_COIN|unresolved_ruling": 1
+    },
+    "rejected_games": {
+     "UNRESOLVED_EVADED_EFFECT_COIN|unresolved_ruling": 1
+    },
+    "reanswer": {
+     "not_reanswered": 1
+    },
+    "follow_up_by_code": {
+     "UNRESOLVED_EVADED_EFFECT_COIN": {
+      "rejections": 1,
+      "ended_without_acceptance": 1,
+      "later_submitted_accepted": 0,
+      "later_submitted_rejected": 0,
+      "later_not_submitted": 63
+     }
+    },
+    "refusals": {},
+    "tool_counters": {
+     "policy_suppressed": 176,
+     "withheld": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "retry_same_input": 63,
+     "failed": 0
+    }
+   },
+   "rejection_scenes": {
+    "rejected|UNRESOLVED_EVADED_EFFECT_COIN|attach_energy|None": {
+     "rows": 1,
+     "positions": 1,
+     "games": 1,
+     "conditions": [
+      "C3"
+     ]
+    }
+   },
+   "exclusions": [
+    {
+     "level": "candidate",
+     "key": "candidate|discard_from_play|face_down",
+     "units": {
+      "total": 4,
+      "first_attempt_only": 4,
+      "rows": 4,
+      "positions": 4,
+      "games": 1
+     },
+     "units_from_sources": null,
+     "conditions": [
+      "C3"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+     "basis": "kyuura_engine/engine.py:2686 check_discard_from_play（2689: うらのカードは FD1・HiddenPropertyRead で拒否。play_as_pokemon_effect でうらの項目を読む）、errors.py:51・54（SECRET_PLAN_HIDDEN_CODE・HiddenPropertyRead）",
+     "card": "prestop の選択肢はすべて face_down（カードは特定しない。C1・C3 で うらで場に出すのはマチスの秘策 PMCG5-093 を持つ L67-U の側だけ。デッキの構成）"
+    },
+    {
+     "level": "candidate",
+     "key": "candidate|play_trainer|PMCG1-076",
+     "units": {
+      "total": 26,
+      "first_attempt_only": 17,
+      "rows": 26,
+      "positions": 17,
+      "games": 3
+     },
+     "units_from_sources": null,
+     "conditions": [
+      "C2"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+     "basis": "kyuura_engine/effects.py:6683 WITHOUT_TARGET・6694 check_playable（トラッシュに基本エネルギーがないと UnsupportedError）。ほかの停止の経路は check_tower_trainer（effects.py:21650・PT1 ポケモンタワー）だけで、C2 のデッキにポケモンタワーはない",
+     "card": "エネルギー回収（PMCG1-076。prestop の inputs の選択肢のおもての card_id がすべてこのカード）"
+    },
+    {
+     "level": "candidate",
+     "key": "candidate|use_stadium|",
+     "units": {
+      "total": 6,
+      "first_attempt_only": 3,
+      "rows": 6,
+      "positions": 3,
+      "games": 2
+     },
+     "units_from_sources": null,
+     "conditions": [
+      "C4"
+     ],
+     "class": "unknown",
+     "code": null,
+     "basis": "prestop は選択肢の段がない（no_stages 1・取得 0）。候補の記録に停止のコードがない",
+     "card": "記録になし（C4 のスタジアムはラッキースタジアム PRN-015 の見込み。デッキの構成）"
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|play_trainer|PMCG1-076",
+     "units": null,
+     "units_from_sources": {
+      "rows": 8,
+      "positions": 8,
+      "games": 4,
+      "conditions": [
+       "C2"
+      ]
+     },
+     "conditions": [
+      "C2"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+     "basis": "kyuura_engine/effects.py:6683 WITHOUT_TARGET・6694 check_playable（トラッシュに基本エネルギーがないと UnsupportedError）。ほかの停止の経路は check_tower_trainer（effects.py:21650・PT1 ポケモンタワー）だけで、C2 のデッキにポケモンタワーはない",
+     "card": "エネルギー回収（PMCG1-076。取得した play_trainer の inputs の選択肢のおもての card_id）"
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|select_pokemon|play_trainer|PMCG1-071",
+     "units": null,
+     "units_from_sources": {
+      "rows": 18,
+      "positions": 18,
+      "games": 10,
+      "conditions": [
+       "C1",
+       "C2",
+       "C3"
+      ]
+     },
+     "conditions": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "class": "static",
+     "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+     "basis": "kyuura_engine/effects.py:7156〜7157 RemoveDamageCounters（unresolved_choices = ダメージ 0 の自分の場のポケモン。unresolved_code はこの 1 つ）",
+     "card": "きずぐすり（PMCG1-071。出所の操作の選択肢の card_id。sources_pilot.json）"
+    }
+   ],
+   "exclusion_option_units": {
+    "answer_decision|": {
+     "total": 53,
+     "first_attempt_only": 53,
+     "rows": 18,
+     "positions": 18,
+     "games": 10
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 10,
+     "first_attempt_only": 7,
+     "rows": 8,
+     "positions": 8,
+     "games": 4
+    }
+   },
+   "prestop_cards": {
+    "play_trainer|PMCG1-076": 24,
+    "discard_from_play|face_down": 4
+   },
+   "prestop_unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "measured_codes": 0,
+   "conventions": {
+    "convention_direct": {
+     "PC-GUST-WITHOUT-OPPONENT-BENCH@1|eligible=False": {
+      "total": 3,
+      "first_attempt_only": 3,
+      "rows": 3,
+      "positions": 3,
+      "games": 1
+     },
+     "PC-POTION-WITHOUT-DAMAGE@1|eligible=False": {
+      "total": 15,
+      "first_attempt_only": 11,
+      "rows": 14,
+      "positions": 14,
+      "games": 7
+     }
+    },
+    "convention_id_unknown": {
+     "play_trainer|no_eligible_card": {
+      "total": 96,
+      "first_attempt_only": 78,
+      "rows": 96,
+      "positions": 78,
+      "games": 9
+     }
+    },
+    "not_implemented": {
+     "play_trainer|no_eligible_card": {
+      "total": 96,
+      "first_attempt_only": 78,
+      "rows": 96,
+      "positions": 78,
+      "games": 9
+     }
+    },
+    "unverified": {
+     "use_power|face_down_reveal_not_evaluated": {
+      "total": 1,
+      "first_attempt_only": 1,
+      "rows": 1,
+      "positions": 1,
+      "games": 1
+     }
+    },
+    "unbuildable": 726,
+    "residual_present": {},
+    "convention_applied": {
+     "PC-ENERGY-RETRIEVAL-ZERO@1": 2,
+     "PC-ENERGY-CONVERSION-ZERO@1": 9
+    },
+    "er9": {
+     "zero_answers": 2,
+     "accepted_applied": 2,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    },
+    "h4": {
+     "zero_answers": 9,
+     "accepted_applied": 9,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    },
+    "er9_paths": {
+     "accepted": {
+      "plain_hand_use": 2
+     },
+     "rejected": {}
+    },
+    "h4_paths": {
+     "accepted": {
+      "original_attack": 9
+     },
+     "rejected": {}
+    }
+   }
+  },
+  "table_a": [
+   {
+    "condition": "no_progress（直前の拒否 UNRESOLVED_EVADED_EFFECT_COIN）",
+    "games": 1,
+    "conditions": [
+     "C3"
+    ],
+    "evidence": "measured",
+    "cards": {
+     "attacker": "PMCG1-049 フーディン［あやしいひかり］",
+     "defender": "PMCG3-030 ゴースト（とうめい）"
+    },
+    "decision_needed": [
+     "裁定の調べ（研究上の未解決 T19b）",
+     "プレイ用規約の採否",
+     "方策の選び直し（別の一覧）"
+    ]
+   }
+  ],
+  "table_b": [
+   {
+    "level": "option_in_fetched_inputs",
+    "key": "option|select_pokemon|play_trainer|PMCG1-071",
+    "class": "static",
+    "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+    "games": 10,
+    "conditions": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "positions": 18,
+    "total": null,
+    "first_attempt_only": null,
+    "rows": 18
+   },
+   {
+    "level": "option_in_fetched_inputs",
+    "key": "option|play_trainer|PMCG1-076",
+    "class": "static",
+    "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "games": 4,
+    "conditions": [
+     "C2"
+    ],
+    "positions": 8,
+    "total": null,
+    "first_attempt_only": null,
+    "rows": 8
+   },
+   {
+    "level": "candidate",
+    "key": "candidate|play_trainer|PMCG1-076",
+    "class": "static",
+    "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "games": 3,
+    "conditions": [
+     "C2"
+    ],
+    "positions": 17,
+    "total": 26,
+    "first_attempt_only": 17,
+    "rows": 26
+   },
+   {
+    "level": "candidate",
+    "key": "candidate|use_stadium|",
+    "class": "unknown",
+    "code": null,
+    "games": 2,
+    "conditions": [
+     "C4"
+    ],
+    "positions": 3,
+    "total": 6,
+    "first_attempt_only": 3,
+    "rows": 6
+   }
+  ],
+  "next_candidates": [
+   {
+    "rank": 1,
+    "code": "UNRESOLVED_EVADED_EFFECT_COIN",
+    "ruling": "T19b",
+    "source": "表 A（実測）",
+    "prospect": "accepted_moves_increase",
+    "related": "PC-NULLIFIED-ELEMENT-COIN（DEC-NULLIFIED-COINS・proposal）",
+    "missing": "出現 1 局・受理のあとの進み方は記録にない・とうめいがはたらいていたことは拒否の理由と観測から読んだだけ"
+   },
+   {
+    "rank": 2,
+    "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+    "source": "表 B（10 局・18 局面・静的照合）",
+    "prospect": "display_only",
+    "related": "docs/play-convention-potion-target.md（PC-POTION-UNDAMAGED-TARGET@1 案）",
+    "missing": "今回の局面の当時の盤面の照らし"
+   },
+   {
+    "rank": 3,
+    "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "ruling": "ER10",
+    "source": "表 B（候補全体 3 局・17 局面、選択肢 4 局・8 局面・静的照合）",
+    "prospect": "depends_on_option（C: accepted_moves_increase・B: display_only）",
+    "related": "docs/er10-energy-retrieval-without-target-design.md（推奨 A）",
+    "missing": "今回の局面の当時のトラッシュの基本エネルギーの照らし"
+   }
+  ],
+  "not_candidates": [
+   "use_stadium（コード不明）",
+   "拒否のあと方策が同じ種類を選び続けた（道具・方策）",
+   "judge の known_stop の根拠表に EVADED_EFFECT_COIN がない（判定の規則）",
+   "discard_from_play のうら（1 局）",
+   "no_eligible_card（規約 ID 不明）"
+  ],
+  "budget_actual": {
+   "pilot_and_main_tool_seconds": 150.231,
+   "pilot_and_main_outer_seconds": 435.192,
+   "pilot_and_main_evidence_bytes": 300003700,
+   "remaining_tool_seconds": 3449.769,
+   "remaining_outer_seconds": 6764.808,
+   "remaining_evidence_bytes": 1847479948,
+   "drive_free_bytes": 258687553536,
+   "max_complete_attempt_bytes": 102641374,
+   "required_bytes": 402653184,
+   "forecast_from_pilot": {
+    "body_x6": {
+     "tool_seconds": 135.138,
+     "outer_seconds": 504.96,
+     "evidence_bytes": 268729614
+    },
+    "upper_x1_5": {
+     "tool_seconds": 202.707,
+     "outer_seconds": 757.44,
+     "evidence_bytes": 403094421
+    },
+    "upper_tr3_ratio": {
+     "tool_seconds": 193.247,
+     "outer_seconds": null,
+     "evidence_bytes": 424592790
+    },
+    "remaining_after_pilot": {
+     "tool_seconds": 3577.477,
+     "outer_seconds": 7115.84,
+     "evidence_bytes": 2102515256,
+     "drive_free_bytes": 259443326976
+    },
+    "evidence_floor_bytes": 402653184,
+    "evidence_floor_rule": "max(384 MiB, 先行の最大 1 局 × 1.5)。先行の最大 1 局 × 1.5 が 384 MiB 未満なので 384 MiB のまま",
+    "within_remaining": {
+     "body": true,
+     "upper_x1_5": true
+    }
+   }
+  },
+  "pilot_reference": {
+   "totals": {
+    "started": 4,
+    "complete": 4,
+    "incomplete": 0,
+    "not_started_pilot": 0,
+    "terminations": {
+     "game_over": 4
+    },
+    "halt_codes": {},
+    "tool_accounted_seconds": 22.523,
+    "outer_seconds": 84.16,
+    "plan_dir_bytes_pilot": 44788269,
+    "attempt_bytes": 44630626,
+    "attempt_seconds": 12.357,
+    "accepted": 597,
+    "rejected": 0,
+    "attempts": 722
+   },
+   "item3_entries": [
+    {
+     "level": "candidate",
+     "key": "candidate|discard_from_play|face_down",
+     "class": "static",
+     "code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+     "conditions": [
+      "C1",
+      "C3"
+     ]
+    },
+    {
+     "level": "candidate",
+     "key": "candidate|use_stadium|",
+     "class": "unknown",
+     "code": null,
+     "conditions": [
+      "C4"
+     ]
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|play_trainer|PMCG1-076",
+     "class": "static",
+     "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+     "conditions": [
+      "C2"
+     ]
+    },
+    {
+     "level": "option_in_fetched_inputs",
+     "key": "option|select_pokemon|play_trainer|PMCG1-071",
+     "class": "static",
+     "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+     "conditions": [
+      "C1",
+      "C2",
+      "C3"
+     ]
+    }
+   ],
+   "item4": {
+    "convention_applied": {},
+    "er9": {
+     "zero_answers": 0,
+     "accepted_applied": 0,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    },
+    "h4": {
+     "zero_answers": 0,
+     "accepted_applied": 0,
+     "accepted_not_applied": 0,
+     "rejected": 0
+    }
+   }
+  },
+  "checks": {
+   "P5_all_ok": true,
+   "sets_all_expected": true,
+   "P6_all_readable": true,
+   "P7_all_consistent": true
+  },
+  "failures": [
+   "F1 外側の写しを作る最初の heredoc がエスケープで止まった（何も書かず）",
+   "F2 derive_drivers_tr6m.py の初版が run_all の置きかえ 2 回で止まった（one_game_tr6m.ps1 を消して作り直し）",
+   "F3 main_summary_tr6m.py の初版が拒否の場面を除外に入れ、候補全体の play_trainer に静的照合を当てていなかった"
+  ]
  }
 }
