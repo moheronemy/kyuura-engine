@@ -4015,5 +4015,345 @@
    "judge・方策・GUI・版の変更",
    "main への push・マージ・PR"
   ]
+ },
+ "tr8_implementation": {
+  "date": "2026-11-23",
+  "doc_section": "13",
+  "document": "docs/play-convention-tr8-v0.198.md",
+  "status": "implemented_in_development_set",
+  "base": {
+   "branch": "claude/rs1-lucky-convention-design",
+   "commit": "a1bd346d50c55776c841a2ea21acf28417c91cfc"
+  },
+  "work_branch": "claude/rs1-lucky-convention-tr8",
+  "commits": {
+   "implementation": "0350725f8f543f37fa89d609e7bd532ae6852879",
+   "generated_followup": "44459cfc51bf1c547940350dd3a62e79a6a7e1e8",
+   "version_pinned_distribution": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0"
+  },
+  "engine_version": "0.198.0",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-tr8-run/",
+  "convention": {
+   "id": "PC-LUCKY-STADIUM-REPLACEMENT",
+   "version": 1,
+   "digest": "sha256:5b5d1b4f7dfa52299cb1502957d9d47262c7e47e684e09147a0d9c886cc4a017",
+   "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR8",
+   "version": 1,
+   "members": 27,
+   "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "default_set": "CS-KYUURA-CURRENT@1"
+  },
+  "existing_sets_unchanged": true,
+  "target_versions_by_registered_type": [
+   "NIP2X-009",
+   "PRN-015",
+   "PRN-016",
+   "PRN-017",
+   "PRN-018",
+   "PRN-019",
+   "PRN-020",
+   "PRN-021",
+   "PRN-022",
+   "neo4-106"
+  ],
+  "applied_record": {
+   "order": [
+    "stadium_used",
+    "convention_applied",
+    "coin_flip",
+    "draw（おもて）"
+   ],
+   "fields": [
+    "player",
+    "card",
+    "used_cards"
+   ],
+   "used_cards": "版（card_id）の並び。uid は書かない（設計 12.5 との差。先に使ったカードが手札・山札にある場合に uid を新しいログに書かないため）"
+  },
+  "identity_difference": {
+   "diagnosis": "RS1 の診断のコード表の項目は事例が 2 つになり case_id が null・case_status が not_identified（diagnostic_id・区分・文は同じ）",
+   "behavior_digest": [
+    "c01995787f67084193dc0fa3c9ba95a11c9496ad97f4a756385381572c12bf4f",
+    "c9912dd81eca81f572030c32b8de0993820b53eb1e07f11b43186cd2361b8b06"
+   ],
+   "instrumentation_digest": [
+    "13c773a8892efc0736d8896544d2f29bd8d6ce94a534502a852daabf07eba27a",
+    "61f09812b1a330ad14c0080c41612c5c405a7fec3ae0a42609981bc39270ff67"
+   ]
+  },
+  "baseline_0197": "CURRENT・TR7 の対象の盤面は直接のコマンドで RS1・候補 API で unresolved_ruling と CANDIDATE_NOT_EXECUTABLE。TR8 は登録がない（RS1 の確かめに数えない）",
+  "v_results": {
+   "counts": {
+    "CURRENT": {
+     "一致": 12
+    },
+    "TR7": {
+     "一致": 12
+    },
+    "TR8": {
+     "一致": 12
+    }
+   },
+   "hidden_zone": {
+    "CURRENT": "一致",
+    "TR7": "一致",
+    "TR8": "一致"
+   },
+   "v13": "一致",
+   "tr8_codes": {
+    "V1": [
+     "accepted"
+    ],
+    "V2": [
+     "accepted",
+     "B を使った（受理）",
+     "accepted"
+    ],
+    "V3": [
+     "STADIUM_ALREADY_USED"
+    ],
+    "V4": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+    ],
+    "V5": [
+     "accepted",
+     "accepted",
+     "accepted",
+     "accepted"
+    ],
+    "V6": [
+     "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "accepted"
+    ],
+    "V7": [
+     "accepted",
+     "accepted"
+    ],
+    "V8": [
+     "accepted",
+     "accepted",
+     "V1 の入れかえの直後",
+     "accepted",
+     "accepted",
+     "B を使い C に入れかえた直後"
+    ],
+    "V9": [
+     "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+     "STADIUM_ALREADY_USED",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+    ],
+    "V10": [
+     "accepted"
+    ],
+    "V11": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+    ],
+    "V12": [
+     "accepted"
+    ]
+   }
+  },
+  "judge": {
+   "CURRENT": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    }
+   ],
+   "TR7": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    }
+   ],
+   "TR8": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "use_stadium",
+      "outcome": "accepted"
+     },
+     "verdict": "expected",
+     "single_runner_verdict": "expected",
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "use_stadium",
+      "outcome": "accepted"
+     },
+     "verdict": "expected",
+     "single_runner_verdict": "expected",
+     "undetermined": 0
+    }
+   ]
+  },
+  "checks_version": {
+   "tests.test_arcanine_name_migration_v0_123": 0,
+   "tests.test_baby_rules_evolution_v0_114": 0,
+   "tests.test_blaines_quiz_heights_v0_129": 0,
+   "tests.test_catalog_scope_migration_v0_128": 0,
+   "tests.test_damage_reactions_poison_sleep_v0_119": 0,
+   "tests.test_deferred_shortage_user_promos_v0_127": 0,
+   "tests.test_energy_movement_attachment_devolution_v0_116": 0,
+   "tests.test_flash_faceup_deck_v0_126": 0,
+   "tests.test_fossil_basic_virtual_attacks_v0_120": 0,
+   "tests.test_retreat_return_active_powers_v0_117": 0,
+   "tests.test_spread_damage_allocation_v0_115": 0,
+   "tests.test_sudden_death_v0_134": 0,
+   "tests.test_unbounded_coins_heal_allocation_v0_118": 0,
+   "tests.test_unown_fossil_retreat_reactions_v0_122": 0,
+   "tests.test_implementation_assumptions": 0,
+   "tests.test_play_convention_tr8_v0_198": 0,
+   "tests.test_legal_actions_u7_5d": 0,
+   "tests.test_neo_trainer_components_v0_80": 0,
+   "tests.test_instant_trainers_v0_55": 0,
+   "tests.test_play_convention_tr7_v0_197": 0,
+   "tests.test_transparency_v0_9": 0,
+   "tests.test_event_kernel_v0_14": 0,
+   "tests.test_existing_effect_pokemon_v0_28": 0,
+   "tests.test_existing_effect_pokemon_v0_29": 0,
+   "tests.test_existing_elements_v0_17a": 0,
+   "tests.test_barrier_resume_coin_bonus_v0_34": 0,
+   "tests.test_bench_switch_combined_v0_38": 0,
+   "tests.test_cd4_opponent_energy_coins_v0_33": 0,
+   "tests.test_coin_failure_status_flight_v0_107": 0,
+   "tests.test_conditional_damage_energy_v0_45": 0,
+   "tests.test_heal_counter_status_v0_41": 0,
+   "tests.test_selected_target_damage_v0_89": 0,
+   "tests.test_power_decisions_v0_42": 0,
+   "tests.test_legacy_reference_v0_16": 0,
+   "tests.test_diagnostics_adapter_v0_152": 0,
+   "tests.test_po_boundaries_v0_146": 0,
+   "tests.test_sc2_integrity_v0_144": 0,
+   "tests.test_haunter_games_v0_9": 0,
+   "tests.test_moltres_games_v0_12": 0,
+   "tests.test_declared_entry_powers_v0_43_games": 0,
+   "tests.test_power_decisions_v0_42_games": 0,
+   "tests.test_play_convention_tr6_v0_196": 0,
+   "tests.test_play_convention_tr4_v0_195": 0,
+   "tests.test_play_convention_tr3_v0_186": 0,
+   "tests.test_conventions_v0_142": 0,
+   "tests.test_play_policy_s2a_v0_143": 0,
+   "tests.test_poison_mist_play_po_v0_145": 0,
+   "tests.test_lockstep_conventions_v0_146": 0,
+   "tests.test_replay_record_v0_153": 0,
+   "tests.test_state_snapshot_v0_157": 0,
+   "tests.test_stop_policy_classification": 0,
+   "tests.test_stop_policy_generator_tr3_v0_186": 0,
+   "tests.test_stop_policy_token_roles_v0_186": 0,
+   "tests.test_play_policy_family_plan": 0,
+   "tests.test_implementation_identity_design": 0,
+   "tests.test_energy_retrieval_v0_23": 0,
+   "tests.test_search_recovery_trainers_v0_73": 0,
+   "tests.test_reprint_text_variants_v0_71": 0,
+   "tests.test_research_links_v0_18e": 0,
+   "tests.test_unresolved_boundaries_v0_4e": 0,
+   "tests.test_haunter_line_v0_9": 0,
+   "tests.test_recover_zero_energy_premise_v0_187": 0,
+   "tests.test_slowking_mind_games_v0_132": 0,
+   "tests.test_stadiums_v0_57": 0,
+   "tests.test_stadium_reuse_special_energy_v0_58": 0,
+   "tests.test_remaining_stadiums_v0_74": 0,
+   "tests.test_legal_actions_decision_audit": 0,
+   "tests.test_legal_actions_u7_4": 0,
+   "tests.test_preset_decks_v0_20": 0,
+   "tests.test_verification_ai_er9_evidence": 0,
+   "tests.test_verification_ai_batch_judge": 0,
+   "tests.test_verification_ai_recover_zero_r10": 0,
+   "tests.test_verification_ai_lost_target_p1": 0,
+   "tests.test_verification_ai_lost_target_p2": 0,
+   "tests.test_verification_ai_lost_target_p3": 0,
+   "tests.test_verification_ai_observation": 0,
+   "check_implementation_assumptions_check": 0,
+   "check_implementation_assumptions_sites": 0,
+   "check_normalization_revalidation_check": 0,
+   "build_convention_records_check": 0,
+   "build_diagnostic_catalog_check": 0,
+   "build_diagnostics_replay_api_design_check": 0,
+   "build_implementation_identity_design_check": 0,
+   "build_legal_actions_api_design_check": 0,
+   "build_legal_actions_u7_5_design_check": 0,
+   "build_play_policy_family_plan_check": 0,
+   "build_play_policy_s2a_spec_check": 0,
+   "build_poison_mist_play_policy_spec_check": 0,
+   "build_state_snapshot_design_check": 0,
+   "build_stop_policy_classification_check": 0,
+   "legal_actions_decision_sites_check": 0,
+   "git_status_unchanged": true
+  },
+  "distribution": {
+   "commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+   "wheel": "kyuura_engine-0.198.0-py3-none-any.whl",
+   "wheel_sha256": "c225b612e046859136b26356e3ff95c3b5643dd7ce2d929f5f34f89e5b4d7890",
+   "package_files": 62,
+   "check_distribution": 0,
+   "pip_install": 0,
+   "smoke_result_sha256": "9c02221adb38d0516374230d4f535a5127409130d9e7bd1e434c35a62d363d18",
+   "smoke_problems": 0,
+   "identity_equals_source": true,
+   "direct_url": true
+  },
+  "saved_positions": "14 局面は静的な照合のまま（TR8 で再現していない）。通常の対戦での到達・方策の選択・完走は未確認",
+  "not_done": [
+   "通常の対戦・新しいバッチ",
+   "旧監査の再開",
+   "GUI・方策・judge の変更",
+   "main への push・マージ・PR"
+  ]
  }
 }
