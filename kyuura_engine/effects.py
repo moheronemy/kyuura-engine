@@ -21403,7 +21403,63 @@ def _check_stadium_use_count(state: GameState, player: int, stadium: StadiumInPl
     if not once_stated and (same or other):
         raise UnsupportedError(LUCKY_STADIUM_REPEAT_CODE, LUCKY_STADIUM_REPEAT_REASON)
     if once_stated and other:
+        # v0.198（docs/play-convention-tr8-v0.198.md）: RS1 の事例を決めて続行規約を引く。規約があれば受け付ける（記録は受理の処理 engine._use_stadium が書く）。なければ今と同じ停止
+        lookup, case = _stadium_reuse_lookup(state, player, stadium)
+        if lookup is not None:
+            return
+        from .conventions import stop_without_continuation
+
+        stop_without_continuation(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case)
         raise UnsupportedError(STADIUM_REUSE_AFTER_REPLACEMENT_CODE, STADIUM_REUSE_AFTER_REPLACEMENT_REASON)
+
+
+# v0.198: RS1 の事例（停止の方針の台帳の CASES）。「自分の番ごとに1回」のラッキースタジアム（効果の登録の型 CoinDrawStadium・once_stated）の個体で、この番にそのプレイヤーが
+# 使った同じ名前の個体もすべてその型のとき ``lucky-once-stated-replacement``。ほかの RS1（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとう、PRN-027 を使った記録が
+# ある入れかえ）は ``other``。カード ID では分けない
+STADIUM_REUSE_LUCKY_CASE = "lucky-once-stated-replacement"
+STADIUM_REUSE_OTHER_CASE = "other"
+
+
+def _once_stated_lucky(state: GameState, card: int) -> bool:
+    """v0.198: カード（uid）の印刷のカードの効果の登録の型が CoinDrawStadium で、once_stated が真か（版は ``CardInstance.card_id``。対戦の中で変わらない。場所は読まない）。"""
+    entry = state.effects.trainer_entry(state.cards[card].card_id)
+    return entry is not None and isinstance(entry.effect, CoinDrawStadium) and entry.effect.once_stated
+
+
+def stadium_reuse_used_cards(state: GameState, player: int, stadium: StadiumInPlay) -> tuple[int, ...]:
+    """v0.198: この番に ``player`` が使った、場のスタジアムと同じ名前の別のカード（uid。記録の順）。状態を変えない。"""
+    name = state.card_def(stadium.card).name_ja
+    return tuple(card for user, card in state.stadium_uses_this_turn
+                 if user == player and card != stadium.card and state.card_def(card).name_ja == name)
+
+
+def stadium_reuse_case(state: GameState, player: int, stadium: StadiumInPlay) -> str:
+    """v0.198: RS1 の事例（``STADIUM_REUSE_LUCKY_CASE``・``STADIUM_REUSE_OTHER_CASE``）。状態を変えない。"""
+    used = stadium_reuse_used_cards(state, player, stadium)
+    if used and _once_stated_lucky(state, stadium.card) and all(_once_stated_lucky(state, card) for card in used):
+        return STADIUM_REUSE_LUCKY_CASE
+    return STADIUM_REUSE_OTHER_CASE
+
+
+def _stadium_reuse_lookup(state: GameState, player: int, stadium: StadiumInPlay):
+    """v0.198: RS1 の条件がそろった場面の続行規約の照会（呼ぶ側が条件を確かめる）。(照会の結果か None, 事例)。状態・乱数・ログを変えない。"""
+    from .conventions import continuation_for
+
+    case = stadium_reuse_case(state, player, stadium)
+    return continuation_for(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case), case
+
+
+def stadium_reuse_continuation(state: GameState, player: int, stadium: StadiumInPlay):
+    """v0.198: 受理の処理（``engine._use_stadium``）が、使う前の確かめを通ったあと・使った記録を足す前に引く。RS1 の条件（場のカードが「自分の番ごとに1回」・このカードの
+    記録がない・同じ名前の別のカードの記録がある）がそろい、状態の規約集合にその事例の続行規約があれば照会の結果。なければ None（番の最初の使用・規約を選ばない集合など）。
+    確かめ（``_check_stadium_use_count``）と同じ条件・同じ照会を、同じ状態で引く（確かめを通ったので、SX2・2 回目・STB1・LK1 はここに来ない）。状態・乱数・ログを変えない。"""
+    entry = state.effects.trainer_entry(state.cards[stadium.card].card_id)
+    if entry is None or not getattr(entry.effect, "is_stadium", False) or not entry.effect.once_per_turn:
+        return None
+    same, other = stadium_use_history(state, player, stadium)
+    if same or not other:
+        return None
+    return _stadium_reuse_lookup(state, player, stadium)[0]
 
 
 def _no_stadium_choice(energy: int | None) -> None:

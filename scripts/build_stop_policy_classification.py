@@ -214,6 +214,27 @@ CONTINUATION_AGREEMENTS += [
      "reading": ("UNRESOLVED_EVADED_EFFECT_COIN（resolution.programs.Status.run のこの要素のコインの前の T19b の分岐。経路は Status._nullified_coin_path）。厳密側の停止（T19b）は active の"
                  "まま。ほかの T19b の箇所・ほかの型の特殊状態の要素・コピーや［へんしん］で持つワザ・PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは対象外")},
 ]
+# v0.198（docs/play-convention-tr8-v0.198.md）: ラッキースタジアムの別の個体の同じ番の使用の続行規約の採用（2026-11-23 の利用者の指示。設計
+# docs/rs1-lucky-stadium-replacement-design.md 12 章）。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1 の 1 規約の中身だけ（厳密側・既存の集合・RS1 の事例 #other・
+# PC-ONCE-PER-TURN-IDENTITY の案は変えない）。この記録は実装と同じ単位で入力へ
+TR8_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-23",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/rs1-lucky-convention-tr8 の依頼「RS1 の限定規約を TR8 に実装し、V1〜V13 で検証する」: 対象版のラッキースタジアムを"
+                                  "使ったあと、同じ番に対象版の別個体へ入れ替えた場合、その個体を 1 回使える。規約 PC-LUCKY-STADIUM-REPLACEMENT@1・集合 CS-KYUURA-PLAY-TR8@1（TR7@1 の"
+                                  "26 規約 + 1）・TR8 を明示選択した対戦だけで有効。設計は docs/rs1-lucky-stadium-replacement-design.md 12 章）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR8-SET", "source": TR8_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1（CS-KYUURA-PLAY-TR7@1 の 26 規約と TR8 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR8@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1・TR6@1・TR7@1 は同じ ID・"
+                 "版・中身のまま。既定の集合は変えない")},
+    {"id": "AGR-PLAY-TR8-LUCKY-STADIUM-REPLACEMENT", "source": TR8_AGREEMENT_SOURCE,
+     "statement": ("PC-LUCKY-STADIUM-REPLACEMENT@1: 「自分の番ごとに1回」と書かれたラッキースタジアムをこの番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を"
+                   "1 回使える。回数はプレイヤー・自分の番・カードの個体で数える。場のカードと、この番の同じ名前の記録のすべてのカードが、効果の登録の型 CoinDrawStadium で"
+                   "once_stated のときだけ。"),
+     "reading": ("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement（effects._check_stadium_use_count の RS1 の分岐。事例は effects.stadium_reuse_case）。"
+                 "厳密側の停止（RS1）は active のまま。事例 #other（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとう・PRN-027 を使った記録がある入れかえ）・"
+                 "同じ個体の 2 回目・SX2・STB1・LK1・FG1 は対象外")},
+]
 AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
@@ -262,9 +283,11 @@ DECISION_STATUS = {
                             "note": "v0.145: PO1（どくの量を変える効果の順番）だけを続行側の規約 PC-POISON-AMOUNT-ORDER@1 として採用。ほかのダメージの読み方・KA1・厳密側は未決のまま"},
     "DEC-TEXT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-TARGETS"],
                           "note": "v0.145: PO2（［ポイズンミスト］の当てはまる相手）だけを続行側の規約 PC-POISON-MIST-TARGETS@1 として採用。ほかの文面の読み方・厳密側は未決のまま"},
-    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT"],
+    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT", "AGR-PLAY-TR8-LUCKY-STADIUM-REPLACEMENT"],
                              "note": ("v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・"
-                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま")},
+                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま。v0.198: RS1 の #lucky-once-stated-replacement（「自分の番ごとに1回」の"
+                                      "ラッキースタジアムの別の個体）だけを、続行側の集合 CS-KYUURA-PLAY-TR8@1 の規約（個体で数えて 1 回使える）として採用。RS1 の #other・SX2・FG1・"
+                                      "PC-ONCE-PER-TURN-IDENTITY の案・厳密側は未決のまま")},
     "DEC-USE-WITHOUT-EFFECT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR3-GUST", "AGR-PLAY-TR3-SWITCH", "AGR-PLAY-TR3-POTION"],
                                "note": ("v0.186: GW5・UNRESOLVED_SWITCH_WITHOUT_BENCH・UNRESOLVED_POTION_WITHOUT_DAMAGE の 3 場面だけを、続行側の集合 CS-KYUURA-PLAY-TR3@1 の規約（使えない。"
                                         "P-UWE-1 の形）として採用。ほかのコード（PF-USE-WITHOUT-EFFECT の残り）・PC-USE-WITHOUT-TARGET の案・厳密側は未決のまま")},
@@ -791,6 +814,21 @@ CASES = {
     "UNRESOLVED_SCRAM_TIMING": [
         {"case": "pokemon-check", "sites": ["kyuura_engine/procedures.py:312"], "condition": "ポケモンチェックの途中で残りHPが「10」を通る", "secret_dependency": "public_only", "note": "HALTED"},
         {"case": "command", "sites": [], "condition": "コマンドの処理の中（道具の対戦で拒否を観測）", "secret_dependency": "public_only", "note": "拒否"},
+    ],
+    # v0.198（docs/play-convention-tr8-v0.198.md）: RS1 を、「自分の番ごとに1回」のラッキースタジアムの別の個体（続行規約 PC-LUCKY-STADIUM-REPLACEMENT の場面）とそのほかに分ける。
+    # 停止コードと理由の文は同じ。事例は effects.stadium_reuse_case（効果の登録の型 CoinDrawStadium・once_stated。カード ID では分けない）
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT": [
+        {"case": "lucky-once-stated-replacement",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "lookup, case = _stadium_reuse_lookup(state, player, stadium)")],
+         "condition": ("場のカードと、この番にそのプレイヤーが使った同じ名前のカードのすべてが、「自分の番ごとに1回」のラッキースタジアム（CoinDrawStadium・once_stated）。"
+                       "このカードの記録がなく、トレーナーの使用の禁止がない"),
+         "secret_dependency": "public_only",
+         "note": ("記録のカードの版は CardInstance.card_id（使ったときに場に表で出ていた）で、場所は読まない。v0.198 で、記録のカードを手札・山札へ移した双子で、判定と公開の記録が"
+                  "所在・並びによらないことを確かめた（tests/test_play_convention_tr8_v0_198.py）")},
+        {"case": "other",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "stop_without_continuation(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case)")],
+         "condition": "そのほかの RS1（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの入れかえ、PRN-027 を使った記録がある入れかえ）",
+         "secret_dependency": "public_only", "note": ""},
     ],
 }
 
@@ -1425,6 +1463,17 @@ UPDATES = [
      "new_entries": ["continuation_agreements（AGR-PLAY-TR7-* の 2 項目。項目ごとの出典 source）"],
      "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
                    "（PC-NULLIFIED-ELEMENT-COIN は proposal のまま）は変えていない")},
+    {"version": "0.198.0", "work": "ラッキースタジアムの別の個体の同じ番の使用の続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1）と、RS1 の事例の分割",
+     "document": "docs/play-convention-tr8-v0.198.md",
+     "base": {"commit": "a1bd346d50c55776c841a2ea21acf28417c91cfc", "branch_of_base": "claude/rs1-lucky-convention-design（0.197.0 と RS1 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR8-* の 2 項目（2026-11-23。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-LASTING-READINGS に RS1 の 1 事例を加えた。厳密側・既存の集合・RS1 の #other・ほかのコードは変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-LASTING-READINGS）",
+                         "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT を 2 つの事例（#lucky-once-stated-replacement・#other）に分けた（停止コード・理由の文は同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR8-* の 2 項目。項目ごとの出典 source）", "CASES の UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT（2 事例）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6・TR7 の集合と、事例 #other では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-ONCE-PER-TURN-IDENTITY は proposal のまま）は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}

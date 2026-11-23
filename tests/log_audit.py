@@ -10576,6 +10576,10 @@ TR7_RULES = {
     "PC-T19B-NULLIFIED-STATUS-COIN": (1, {"UNRESOLVED_EVADED_EFFECT_COIN"}, {"player", "target_owner", "pokemon_id", "element"}),
 }
 TR7_STATUS_ELEMENTS = frozenset({"confusion", "poison", "paralysis"})
+# v0.198（docs/play-convention-tr8-v0.198.md）: ラッキースタジアムの別の個体の同じ番の使用の続行規約の記録（規約 → (版, 場面, 項目)）
+TR8_RULES = {
+    "PC-LUCKY-STADIUM-REPLACEMENT": (1, {"UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"}, {"player", "card", "used_cards"}),
+}
 S2A_PLAY_AS_CARDS = frozenset({"PMCG1-091", "PMCG3-046"})  # ピッピ人形・なにかの化石（ポケモンとして場に出せるトレーナー）
 S2A_SHORT_ELEMENTS = {"UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": "discard_water_energy_cards", "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": "return_energy_cards_to_hand"}
 
@@ -10641,16 +10645,18 @@ def s2a_problems(state) -> list[str]:
             if e["kind"] != "convention_applied":
                 continue
             rule = (S2A_RULES.get(e.get("convention")) or PO_RULES.get(e.get("convention")) or TR4_RULES.get(e.get("convention"))
-                    or TR6_RULES.get(e.get("convention")) or TR7_RULES.get(e.get("convention")))  # v0.145: PO・v0.195: TR4・v0.196: TR6・v0.197: TR7 の規約
+                    or TR6_RULES.get(e.get("convention")) or TR7_RULES.get(e.get("convention"))
+                    or TR8_RULES.get(e.get("convention")))  # v0.145: PO・v0.195: TR4・v0.196: TR6・v0.197: TR7・v0.198: TR8 の規約
             if rule is None or e.get("version") != rule[0] or (e.get("convention"), e.get("version")) not in members:
-                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO・TR4・TR6・TR7 の規約ではない")
+                problems.append(f"{where} の {e['turn']} 番の規約の記録 {e.get('convention')}@{e.get('version')} が、状態の規約集合の S2a・PO・TR4・TR6・TR7・TR8 の規約ではない")
                 continue
             if e.get("scene") not in rule[1] or e.get("code") != str(e.get("scene")).split("#")[0]:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録の場面 {e.get('scene')}・コード {e.get('code')} が、規約 {e['convention']} の場面ではない")
             extra = set(e) - {"kind", "turn", "convention", "version", "scene", "code"} - rule[2]
             if extra:
                 problems.append(f"{where} の {e['turn']} 番の規約の記録に、決めていない項目 {sorted(extra)} がある（秘密の情報を書かない）")
-            if "#" in str(e.get("scene")) and e.get("convention") not in PO_RULES and not str(e["scene"]).endswith(("#" + case, "#setup-placement")):
+            if "#" in str(e.get("scene")) and e.get("convention") not in PO_RULES and e.get("convention") not in TR8_RULES \
+                    and not str(e["scene"]).endswith(("#" + case, "#setup-placement")):  # v0.198: TR8 の事例は区間の事例ではない（RS1 の事例）
                 problems.append(f"{where} の規約の記録の場面 {e['scene']} が、この区間の事例 {case} ではない")
         # 2. 準備
         placed = next((i for i, e in enumerate(log) if e["kind"] == "place_starting_pokemon"), len(log))
@@ -10812,6 +10818,36 @@ def s2a_problems(state) -> list[str]:
             if not ok:
                 problems.append(f"{where} の {e['turn']} 番の「とうめい」のあとの特殊状態のワザのコインの規約の記録が、同じプレイヤーのワザの「とうめい」の「おもて」とワザのコインの"
                                 f"あいだにない（プレイヤー {e.get('player')}・ポケモン {e.get('pokemon_id')}・要素 {e.get('element')}）")
+        # 9. v0.198: ラッキースタジアムの別の個体の同じ番の使用の規約の記録は、同じプレイヤーの同じカードの stadium_used のすぐあと、すぐあとが使ったプレイヤーのスタジアムのコイン 1 枚。
+        # カードは「自分の番ごとに1回」のラッキースタジアム（CoinDrawStadium・once_stated）で、used_cards は、この番の前の同じプレイヤーの同じ名前の別のカードの stadium_used の版
+        # （card_id。記録の順。1 件以上・すべて同じ型）。uid は書かない
+        from kyuura_engine.effects import CoinDrawStadium
+
+        def _lucky_once(uid):
+            entry = state.effects.trainer_entry(state.cards[uid].card_id) if uid in state.cards else None
+            return entry is not None and isinstance(entry.effect, CoinDrawStadium) and entry.effect.once_stated
+
+        for i, e in enumerate(log):
+            if e["kind"] != "convention_applied" or e.get("convention") not in TR8_RULES:
+                continue
+            used = log[i - 1] if i >= 1 else None
+            coin = log[i + 1] if i + 1 < len(log) else None
+            start = max((k for k in range(i) if log[k]["kind"] == "turn_start"), default=0)
+            card = e.get("card")
+            ok = (used is not None and used["kind"] == "stadium_used" and used.get("player") == e.get("player") and used.get("card") == card
+                  and coin is not None and coin["kind"] == "coin_flip" and coin.get("source") == "stadium" and coin.get("player") == e.get("player")
+                  and coin.get("count") == 1 and type(card) is int and _lucky_once(card))
+            if ok:
+                name = state.card_def(card).name_ja
+                earlier = [x.get("card") for x in log[start:i - 1] if x["kind"] == "stadium_used" and x.get("player") == e.get("player")
+                           and x.get("card") in state.cards and x.get("card") != card and state.card_def(x.get("card")).name_ja == name]
+                ids = [state.cards[x].card_id for x in earlier]
+                ok = (bool(earlier) and all(_lucky_once(x) for x in earlier) and list(e.get("used_cards") or ()) == ids
+                      and all(isinstance(v, str) for v in e.get("used_cards") or ()) and not any(x.get("card") == card for x in log[start:i - 1] if x["kind"] == "stadium_used"
+                                                                                                and x.get("player") == e.get("player")))
+            if not ok:
+                problems.append(f"{where} の {e['turn']} 番のラッキースタジアムの別の個体の使用の規約の記録が、同じプレイヤーのその個体の使用とスタジアムのコインのあいだにないか、"
+                                f"この番の同じ名前の使用の版と合わない（プレイヤー {e.get('player')}・カード {card}・使った版 {e.get('used_cards')}）")
         # 4. 枚数の不足の規約の記録の場所（ワザ・トレーナーの使用のあと、番の終わりの前）
         last_use = None
         for e in log:

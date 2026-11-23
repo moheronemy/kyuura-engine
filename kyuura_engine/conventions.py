@@ -528,8 +528,53 @@ SETS = MappingProxyType({
                                                 "続行規約 1 件。14 規約の場面だけを続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.198: ラッキースタジアムの別の個体の同じ番の使用の続行規約（docs/play-convention-tr8-v0.198.md）
+#
+# 利用者の指示（2026-11-23。設計 docs/rs1-lucky-stadium-replacement-design.md 12 章の規約を TR8 に実装する）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の
+# 解決ではない（RS1 の停止コードは厳密側・既存の集合・事例 #other で active のまま）。今の挙動の集合・S2a・PO・TR3・TR4・TR6・TR7 の集合には入れず、新しい開発用の部分的な
+# 集合 CS-KYUURA-PLAY-TR8@1 だけに入れる。処理は回数の確かめ（``effects._check_stadium_use_count``）の RS1 の分岐で、事例 #lucky-once-stated-replacement の未裁定の停止の
+# 代わりに受け付け、受理の処理（``engine._use_stadium``）が ``convention_applied`` を書く
+
+TR8_SET_ID = "CS-KYUURA-PLAY-TR8"
+TR8_ADOPTION = ("利用者の指示（2026-11-23。設計 docs/rs1-lucky-stadium-replacement-design.md 12 章: 「自分の番ごとに1回」のラッキースタジアムをこの番に使ったあと、同じ番に"
+                "同じ名前の別の個体へ入れかわったとき、その個体を 1 回使える。回数はプレイヤー・自分の番・カードの個体。効果の登録の型 CoinDrawStadium で once_stated の版"
+                "だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR8_REFERENCES = ("docs/play-convention-tr8-v0.198.md", "docs/rs1-lucky-stadium-replacement-design.md")
+
+LUCKY_STADIUM_REPLACEMENT_ID = "PC-LUCKY-STADIUM-REPLACEMENT"
+
+_TR8_CONVENTIONS = (
+    Convention(LUCKY_STADIUM_REPLACEMENT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "「自分の番ごとに1回」と書かれたラッキースタジアムを、この番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を 1 回使える。"
+               "回数はプレイヤー・自分の番・カードの個体で数える",
+               content={"adoption": TR8_ADOPTION,
+                        "applies_when": ("回数の確かめの RS1 の分岐（このカードの記録がない・トレーナーの使用の禁止がない・この番にそのプレイヤーが同じ名前の別のカードを使った）で、"
+                                         "場のカードと、その同じ名前の記録のすべてのカードの効果の登録の型が CoinDrawStadium で once_stated が真のとき"),
+                        "identification": ("効果の登録の型 CoinDrawStadium・once_stated（カード ID では分けない）。記録のカードの版は CardInstance.card_id（対戦の中で変わらない。"
+                                           "場所は読まない）"),
+                        "not_applied_paths": ["同じ個体の 2 回目（STADIUM_ALREADY_USED）", "使った個体が同じ番に場にもどる（UNRESOLVED_STADIUM_REUSE_AFTER_RETURN）",
+                                              "トレーナーの使用の禁止（UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN）", "PRN-027（LK1。once_stated が偽）",
+                                              "PRN-027 を使った記録がある入れかえ（RS1 の事例 #other）", "セキチクシティジム（FG1）",
+                                              "エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの RS1（事例 #other）"],
+                        "on_apply": {"log": "stadium_used のあと・コインの前に規約を当てた記録", "coin": "使ったプレイヤーが 1 枚（今のラッキースタジアムの処理）",
+                                     "heads": "1 枚引く（山札 0 なら引かない・負けにしない）", "record": "(使ったプレイヤー, 新しい個体) を記録に足す"},
+                        "record": ["player", "card", "used_cards"],
+                        "unchanged": ["番の最初の使用", "名前の違うスタジアムの記録を数えないこと", "候補・入力・確かめの契約", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",), references=TR8_REFERENCES),
+)
+TR8_MEMBERS = tuple((c.id, c.version) for c in _TR8_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR8_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR8_SET_ID, 1): ConventionSet(TR8_SET_ID, 1, USAGE_DEVELOPMENT,
+                                   _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS + TR8_MEMBERS,
+                                   description=("v0.198 の開発用の部分的な集合: CS-KYUURA-PLAY-TR7@1 の 26 規約と、ラッキースタジアムの別の個体の同じ番の使用の続行規約 1 件。"
+                                                "15 規約の場面だけを続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS + TR8_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -567,6 +612,8 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-ENERGY-CONVERSION-ZERO", 1): "sha256:6a35ebb8f6aa772e051d0ade7a8fd6d771537d2f1205365b4c039a19dea44594",
     # v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約（利用者の採用。2026-11-22）
     ("PC-T19B-NULLIFIED-STATUS-COIN", 1): "sha256:e4082ecb8e189e1a4b67fbf66fc9c2d6b580de050b2696c711d6ba7ea81bd3b8",
+    # v0.198: ラッキースタジアムの別の個体の同じ番の使用の続行規約（利用者の指示。2026-11-23）
+    ("PC-LUCKY-STADIUM-REPLACEMENT", 1): "sha256:5b5d1b4f7dfa52299cb1502957d9d47262c7e47e684e09147a0d9c886cc4a017",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
@@ -577,6 +624,7 @@ PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-PLAY-TR4", 1): "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",  # v0.195: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR6", 1): "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",  # v0.196: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-TR7", 1): "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",  # v0.197: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR8", 1): "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",  # v0.198: 開発用の部分的な集合
 })
 
 
@@ -976,7 +1024,8 @@ def continuation_for(state, code: str, case: str | None = None) -> ContinuationL
 # 規約を当てた記録（ログ ``convention_applied``）に書ける項目（全員に見える値だけ。手札・山札などの秘密の情報は書かない）
 APPLIED_FIELDS = frozenset({"players", "player", "rounds_both", "rounds_single", "order", "pokemon_ids", "element", "heads", "available", "processed", "source",
                             "target_owner", "target",
-                            "pokemon_id", "amount", "poison_mists", "ended_mists"})  # v0.145: どくの量の規約（ポケモンの場の番号・受けるダメージ・［ポイズンミスト］の記録の発生源。公開）
+                            "pokemon_id", "amount", "poison_mists", "ended_mists",  # v0.145: どくの量の規約（ポケモンの場の番号・受けるダメージ・［ポイズンミスト］の記録の発生源。公開）
+                            "card", "used_cards"})  # v0.198: ラッキースタジアムの規約（場に表で出ている新しいカードの uid・この番に使った同じ名前のカードの版 card_id。uid は書かない）
 
 
 def record_application(state, lookup: ContinuationLookup, **detail) -> None:
