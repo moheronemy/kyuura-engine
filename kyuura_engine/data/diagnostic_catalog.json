@@ -6453,10 +6453,11 @@
    ],
    "basis": "台帳 research_stop_code・分類 C",
    "scenes": [
-    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other"
    ],
-   "case": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
-   "case_status": "identified",
+   "case": null,
+   "case_status": "not_identified",
    "text": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンはこの操作を受け付けません。",
    "text_source": "category"
   },

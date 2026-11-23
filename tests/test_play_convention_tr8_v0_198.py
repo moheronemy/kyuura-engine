@@ -462,7 +462,9 @@ class JudgeTest(unittest.TestCase):
         for coin in (HD, TL):
             with self.subTest(coin=coin):
                 result = self.run_use(TR8, coin)
-                entry = next(e for e in result["trace"] if e.get("type") == "attempt" and e.get("submit") is not None and e["candidate"]["kind"] == "use_stadium")
+                # 判定の対象は、主体 0 の最初の試み（A を使い B に入れかえた盤面の B の use_stadium）。相手の番の use_stadium は数えない
+                entry = next(e for e in result["trace"] if e.get("type") == "attempt")
+                self.assertEqual((entry["n"], entry.get("actor"), entry["candidate"]["kind"]), (1, 0, "use_stadium"))
                 judged = B.judge_trace(result)
                 row = next(r for r in judged["rows"] if r["attempt"] == entry["n"])
                 self.assertEqual(entry["submit"]["outcome"], D.ACCEPTED)
@@ -470,6 +472,17 @@ class JudgeTest(unittest.TestCase):
                 single = self.run_use(TR8, coin, negative=NoNegative())
                 (s_entry,) = [e for e in single["trace"] if e.get("type") == "attempt" and e.get("submit") is not None and e["n"] == entry["n"]]
                 self.assertEqual(s_entry["judge"]["verdict"], J.EXPECTED)
+
+    def test_strict_policy_is_not_offered_the_rs1_candidate(self):
+        """厳密側（CURRENT・TR7）では、実行できない RS1 の候補は方策に渡らず、主体 0 は番を終える（B の使用は送られない。judge は変えない）。"""
+        from tools.verification_ai import batch as B
+
+        for key in STRICT_SETS:
+            with self.subTest(key=key):
+                result = self.run_use(key, HD)
+                entry = next(e for e in result["trace"] if e.get("type") == "attempt")
+                self.assertEqual((entry["n"], entry.get("actor"), entry["candidate"]["kind"], entry["submit"]["outcome"]), (1, 0, "end_turn", D.ACCEPTED))
+                self.assertEqual(B.judge_trace(result)["undetermined"], [])
 
 
 if __name__ == "__main__":

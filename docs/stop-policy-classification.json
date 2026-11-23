@@ -11027,14 +11027,15 @@
    ],
    "tests": {
     "assert_like_lines": 1,
-    "mention_lines": 3,
+    "mention_lines": 4,
     "files": [
      "tests/helpers.py",
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_stadiums_v0_57.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 4,
+    "files_total": 5,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -11054,6 +11055,7 @@
     "status": "constructed_board",
     "evidence": [
      "tests/helpers.py",
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_stadiums_v0_57.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
@@ -13892,13 +13894,14 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 3,
+    "mention_lines": 4,
     "files": [
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 3,
+    "files_total": 4,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -23894,14 +23897,15 @@
    ],
    "tests": {
     "assert_like_lines": 1,
-    "mention_lines": 3,
+    "mention_lines": 4,
     "files": [
      "tests/helpers.py",
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_stadiums_v0_57.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 4,
+    "files_total": 5,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -23920,6 +23924,7 @@
     "status": "constructed_board",
     "evidence": [
      "tests/helpers.py",
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_stadiums_v0_57.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
@@ -23966,14 +23971,16 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 4,
+    "mention_lines": 6,
     "files": [
+     "tests/log_audit.py",
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_remaining_stadiums_v0_74.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unbounded_coins_heal_allocation_v0_118.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 4,
+    "files_total": 6,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
@@ -24039,13 +24046,14 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 5,
+    "mention_lines": 6,
     "files": [
+     "tests/test_play_convention_tr8_v0_198.py",
      "tests/test_research_links_v0_18e.py",
      "tests/test_unbounded_coins_heal_allocation_v0_118.py",
      "tests/test_unresolved_boundaries_v0_4e.py"
     ],
-    "files_total": 3,
+    "files_total": 4,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },
