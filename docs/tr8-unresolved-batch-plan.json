@@ -1396,5 +1396,561 @@
    "F1: identity_check_tr8a.py compared an empty problem list with 0; fixed and rerun (first output kept in raw/)",
    "F2: analyze_tr8a.py derivation fixed 3 times before any use (replacement count; unclosed docstring; header placed before the original docstring); broken copies kept in raw/"
   ]
+ },
+ "main_execution": {
+  "date": "2026-11-23",
+  "doc_section": "13",
+  "execution_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "worktree": "C:\\dev\\kyuura-engine-lt99r",
+  "branch": "claude/tr8a-main",
+  "base": "afd0d8ed503811ce10fd51ac239559a6ec914326",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-batch-tr8a-main-run/",
+  "duplicate_found": false,
+  "precheck_ok": true,
+  "plans_regenerated": false,
+  "counts": {
+   "planned": 24,
+   "started": 24,
+   "complete": 24,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 23,
+   "terminations": {
+    "game_over": 23,
+    "limit_accepted": 1
+   },
+   "completion_rate": "23/24"
+  },
+  "by_condition": {
+   "C1": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 5,
+    "completion_rate": "5/6",
+    "terminations": {
+     "game_over": 5,
+     "limit_accepted": 1
+    }
+   },
+   "C2": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    }
+   },
+   "C3": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    }
+   },
+   "C4": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    }
+   }
+  },
+  "pilot_reference": {
+   "planned": 4,
+   "started": 4,
+   "complete": 4,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 4,
+   "completion_rate": "4/4",
+   "terminations": {
+    "game_over": 4
+   },
+   "by_condition": {
+    "C1": {
+     "termination": "game_over",
+     "turns": 9,
+     "accepted": 33,
+     "rejected": 0
+    },
+    "C2": {
+     "termination": "game_over",
+     "turns": 36,
+     "accepted": 198,
+     "rejected": 0
+    },
+    "C3": {
+     "termination": "game_over",
+     "turns": 19,
+     "accepted": 66,
+     "rejected": 0
+    },
+    "C4": {
+     "termination": "game_over",
+     "turns": 34,
+     "accepted": 114,
+     "rejected": 0
+    }
+   }
+  },
+  "abort": {
+   "aborted": false,
+   "reason": null,
+   "policy_stop": false,
+   "all_codes_0": true
+  },
+  "gates_all_games_all_P": true,
+  "final_all_ok": true,
+  "cache_all_same": true,
+  "cache_checks": 51,
+  "limit_game": {
+   "condition": "C1",
+   "seed": 9023,
+   "class": "limit_accepted",
+   "accepted": 1000,
+   "turns": 73,
+   "damage_swap_uses": 775,
+   "policy_suppressed": 161,
+   "category": "policy_or_tool",
+   "stop_code": null
+  },
+  "rejections_exclusions": {
+   "R1_rejected": {},
+   "R2_reanswered": 0,
+   "R3_after_rejection_not_submitted": 0,
+   "R3_tool_counters": {
+    "policy_suppressed": 204,
+    "withheld": 0,
+    "refused": 0,
+    "check_invalid": 0,
+    "retry_same_input": 0,
+    "failed": 0
+   },
+   "R4_candidate_level": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 23,
+     "first_attempt_only": 20,
+     "rows": 23,
+     "positions": 20,
+     "games": 4
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 9,
+     "first_attempt_only": 9,
+     "rows": 9,
+     "positions": 9,
+     "games": 2
+    }
+   },
+   "R5_option_level": {
+    "answer_decision|": {
+     "total": 44,
+     "first_attempt_only": 44,
+     "rows": 18,
+     "positions": 18,
+     "games": 13
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 2,
+     "first_attempt_only": 2,
+     "rows": 2,
+     "positions": 2,
+     "games": 2
+    }
+   },
+   "unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "codes": {
+    "measured": 0,
+    "static": {
+     "R4_candidate|discard_from_play|UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": {
+      "rows": 20,
+      "games": 4,
+      "conditions": [
+       "C1"
+      ],
+      "board_consistent_rows": 20
+     },
+     "R4_candidate|play_trainer|UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "rows": 9,
+      "games": 2,
+      "conditions": [
+       "C2"
+      ],
+      "board_consistent_rows": 9
+     },
+     "R5_option|answer_decision|UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": {
+      "rows": 2,
+      "games": 2,
+      "conditions": [
+       "C3"
+      ],
+      "board_consistent_rows": 2
+     },
+     "R5_option|answer_decision|UNRESOLVED_POTION_UNDAMAGED_TARGET": {
+      "rows": 16,
+      "games": 12,
+      "conditions": [
+       "C1",
+       "C2",
+       "C3"
+      ],
+      "board_consistent_rows": 16
+     },
+     "R5_option|play_trainer|UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "rows": 2,
+      "games": 2,
+      "conditions": [
+       "C2"
+      ],
+      "board_consistent_rows": 2
+     }
+    },
+    "unknown": 0,
+    "all_board_consistent": true
+   }
+  },
+  "input_api": {
+   "not_implemented": {
+    "play_trainer|no_eligible_card": {
+     "total": 109,
+     "first_attempt_only": 84,
+     "rows": 109,
+     "positions": 84,
+     "games": 11
+    },
+    "use_attack|face_down_reveal_not_evaluated": {
+     "total": 1,
+     "first_attempt_only": 1,
+     "rows": 1,
+     "positions": 1,
+     "games": 1
+    },
+    "use_attack|no_printed_attack": {
+     "total": 1,
+     "first_attempt_only": 1,
+     "rows": 1,
+     "positions": 1,
+     "games": 1
+    }
+   },
+   "unverified": {
+    "evolve|face_down_reveal_not_evaluated": {
+     "total": 5,
+     "first_attempt_only": 3,
+     "rows": 5,
+     "positions": 3,
+     "games": 1
+    },
+    "retreat|face_down_reveal_not_evaluated": {
+     "total": 1,
+     "first_attempt_only": 1,
+     "rows": 1,
+     "positions": 1,
+     "games": 1
+    },
+    "use_power|face_down_reveal_not_evaluated": {
+     "total": 2,
+     "first_attempt_only": 2,
+     "rows": 2,
+     "positions": 2,
+     "games": 1
+    }
+   },
+   "convention_direct": {
+    "PC-GUST-WITHOUT-OPPONENT-BENCH@1|eligible=False": {
+     "total": 12,
+     "first_attempt_only": 7,
+     "rows": 12,
+     "positions": 12,
+     "games": 6
+    },
+    "PC-POTION-WITHOUT-DAMAGE@1|eligible=False": {
+     "total": 32,
+     "first_attempt_only": 20,
+     "rows": 25,
+     "positions": 25,
+     "games": 11
+    },
+    "PC-SWITCH-WITHOUT-BENCH@1|eligible=False": {
+     "total": 5,
+     "first_attempt_only": 5,
+     "rows": 4,
+     "positions": 4,
+     "games": 2
+    }
+   },
+   "convention_id_unknown": {
+    "play_trainer|no_eligible_card": {
+     "total": 109,
+     "first_attempt_only": 84,
+     "rows": 109,
+     "positions": 84,
+     "games": 11
+    }
+   },
+   "unbuildable": 984,
+   "residual_present": {
+    "R-2": 1
+   }
+  },
+  "conventions": {
+   "convention_applied": {
+    "PC-LUCKY-STADIUM-REPLACEMENT@1": 6,
+    "PC-ENERGY-RETRIEVAL-ZERO@1": 5,
+    "PC-SETUP-MULLIGAN-COUNT@1": 2,
+    "PC-ENERGY-CONVERSION-ZERO@1": 1
+   },
+   "er9": {
+    "zero_answers": 5,
+    "accepted_applied": 5,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "er9_paths": {
+    "accepted": {
+     "plain_hand_use": 5
+    },
+    "rejected": {}
+   },
+   "h4": {
+    "zero_answers": 1,
+    "accepted_applied": 1,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "h4_paths": {
+    "accepted": {
+     "original_attack": 1
+    },
+    "rejected": {}
+   },
+   "t19b": {
+    "declarations": 28,
+    "accepted_applied": 0,
+    "accepted_not_applied": 28,
+    "rejected": 0,
+    "not_submitted_targets": 0
+   },
+   "t19b_paths": {
+    "accepted": {
+     "unknown|transparency_effective=False": 28
+    },
+    "rejected": {}
+   },
+   "rs1": {
+    "scene_rows": 10,
+    "scene_positions": 6,
+    "presented_positions": 6,
+    "excluded_positions": 0,
+    "not_offered_rows": 0,
+    "chosen": 6,
+    "chosen_unbuildable": 0,
+    "chosen_positions": 6,
+    "checked_valid": 6,
+    "submitted": 6,
+    "accepted": 6,
+    "accepted_with_convention": 6,
+    "accepted_judge_expected": 6,
+    "draw_after_heads": 3,
+    "replacement_seen_positions": 6
+   },
+   "rs1_coins": {
+    "heads": 3,
+    "tails": 3
+   },
+   "by_condition": {
+    "C1": {
+     "PC-SETUP-MULLIGAN-COUNT@1": 1
+    },
+    "C2": {
+     "PC-ENERGY-RETRIEVAL-ZERO@1": 5
+    },
+    "C3": {
+     "PC-SETUP-MULLIGAN-COUNT@1": 1,
+     "PC-ENERGY-CONVERSION-ZERO@1": 1
+    },
+    "C4": {
+     "PC-LUCKY-STADIUM-REPLACEMENT@1": 6
+    }
+   }
+  },
+  "table_a": [
+   {
+    "condition": "limit_accepted (repeated Damage Swap)",
+    "games": 1,
+    "conditions": [
+     "C1"
+    ],
+    "evidence": "measured termination; cause from public log counts",
+    "decision": "policy_or_tool",
+    "unresolved_ruling": false
+   }
+  ],
+  "table_b": [
+   {
+    "code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+    "level": "R5",
+    "games": 12,
+    "conditions": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "positions": 16,
+    "evidence": "static",
+    "outlook": "more_acceptable_moves"
+   },
+   {
+    "code": "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+    "level": "R4",
+    "games": 4,
+    "conditions": [
+     "C1"
+    ],
+    "positions": 20,
+    "evidence": "static",
+    "outlook": "more_acceptable_moves"
+   },
+   {
+    "code": "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET",
+    "level": "R4+R5",
+    "games": 2,
+    "conditions": [
+     "C2"
+    ],
+    "positions": 11,
+    "evidence": "static",
+    "outlook": "more_acceptable_moves"
+   },
+   {
+    "code": "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+    "level": "R5",
+    "games": 2,
+    "conditions": [
+     "C3"
+    ],
+    "positions": 2,
+    "evidence": "static",
+    "outlook": "more_acceptable_moves"
+   }
+  ],
+  "next_candidates": {
+   "more_acceptable_moves": [
+    "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+    "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY",
+    "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET"
+   ],
+   "display_or_diagnosis_only": [
+    "play_trainer no_eligible_card (convention id unknown)",
+    "limit_accepted by repeated Damage Swap (policy, not a ruling)"
+   ],
+   "missing_evidence": [
+    "stop codes for candidates/options are static only",
+    "face-down card identity for FD1",
+    "ruling-record status and post-acceptance progress (needs a same-seed set comparison)"
+   ]
+  },
+  "totals": {
+   "tool_accounted_seconds_main": 166.315,
+   "outer_seconds_main": 595.997,
+   "attempt_seconds": 97.044,
+   "attempt_bytes": 308623245,
+   "accepted": 3956,
+   "rejected": 0,
+   "attempts": 5144,
+   "main_plan_dir_bytes": 309072636
+  },
+  "budget_after_main": {
+   "program_tool_used_seconds": 183.374,
+   "program_remaining_tool_seconds": 3416.626,
+   "program_outer_used_seconds": 676.645,
+   "program_remaining_outer_seconds": 6523.355,
+   "program_evidence_bytes": 338379788,
+   "program_remaining_evidence_bytes": 1809103860,
+   "drive_free_bytes": 257236525056
+  },
+  "plans_budget": {
+   "vai-batch-tr8a-m1": {
+    "accounted_seconds": 69.032,
+    "budget_seconds": 900.0,
+    "dir_bytes": 134358613,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8a-m2": {
+    "accounted_seconds": 30.04,
+    "budget_seconds": 900.0,
+    "dir_bytes": 53548140,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8a-m3": {
+    "accounted_seconds": 20.753,
+    "budget_seconds": 900.0,
+    "dir_bytes": 26678125,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8a-m4": {
+    "accounted_seconds": 46.49,
+    "budget_seconds": 900.0,
+    "dir_bytes": 94487758,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   }
+  },
+  "main_plans": {
+   "vai-batch-tr8a-m1": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "incomplete_notes": 0
+   },
+   "vai-batch-tr8a-m2": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "incomplete_notes": 0
+   },
+   "vai-batch-tr8a-m3": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "incomplete_notes": 0
+   },
+   "vai-batch-tr8a-m4": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "incomplete_notes": 0
+   }
+  },
+  "failures": []
  }
 }

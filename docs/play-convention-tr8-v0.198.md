@@ -146,7 +146,7 @@ judge は変えていません。
 
 ## 10. 残る作業
 
-- TR8 を明示した通常の対戦での到達・選択・完走の確認（別の単位）。1 組の比較は [rs1-tr7-tr8-comparison](rs1-tr7-tr8-comparison.md)。新しい seed・4 条件の監査の計画は [tr8-unresolved-batch-plan](tr8-unresolved-batch-plan.md)。8 計画の固定と先行の 4 局（seed 9020。4 局とも `game_over`・RS1 の局面 1 で提示・選択・受理が各 1）は同じ文書の 12 章で、本実行の 24 局は未着手。
+- TR8 を明示した通常の対戦での到達・選択・完走の確認（別の単位）。1 組の比較は [rs1-tr7-tr8-comparison](rs1-tr7-tr8-comparison.md)。新しい seed・4 条件の監査の計画は [tr8-unresolved-batch-plan](tr8-unresolved-batch-plan.md)。8 計画の固定と先行の 4 局（seed 9020。4 局とも `game_over`・RS1 の局面 1 で提示・選択・受理が各 1）は同じ文書の 12 章。本実行の 24 局（9021〜9026）は 13 章で、`game_over` 23／着手 24・RS1 の受理 6（局面 6 で提示・選択・受理が各 6）。
 - GUI の追従（集合の明示選択・規約の記録の表示）。
 - RS1 の `#other`（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとう、PRN-027 を使った記録がある入れかえ）、SX2、FG1 は、別の判断として残します。
 - 当時の資料の調査（設計 7 章の 1）。
