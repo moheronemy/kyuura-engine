@@ -1,0 +1,514 @@
+{
+ "status": "complete",
+ "date": "2026-11-23",
+ "doc": "docs/rs1-tr7-tr8-comparison.md",
+ "base": {
+  "branch": "claude/rs1-lucky-convention-tr8",
+  "commit": "fab922d71caaf018c6ddec09383741e98f397f7b"
+ },
+ "fixed_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+ "run_code_diff_to_base": 0,
+ "work_branch": "claude/rs1-tr7-tr8-comparison",
+ "evidence": [
+  "kyuura-engine-verification-vai/verifier/runs/vai-rs1-compare-run/",
+  "kyuura-engine-verification-vai/verifier/runs/vai-batch-rs1c-tr7/",
+  "kyuura-engine-verification-vai/verifier/runs/vai-batch-rs1c-tr8/"
+ ],
+ "identity": {
+  "engine_version": "0.198.0",
+  "behavior_digest": "c9912dd81eca81f572030c32b8de0993820b53eb1e07f11b43186cd2361b8b06",
+  "instrumentation_digest": "61f09812b1a330ad14c0080c41612c5c405a7fec3ae0a42609981bc39270ff67",
+  "tool_digest": "be95aa1e5c6fc5ee45755f9741d7fbbda7ddea5567b7968b7f44ecadd4935a41",
+  "tool_version": 13,
+  "judge_rules_version": 10
+ },
+ "sets": {
+  "CS-KYUURA-PLAY-TR7@1": {
+   "count": 26,
+   "digest": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",
+   "pinned_equals_computed": true
+  },
+  "CS-KYUURA-PLAY-TR8@1": {
+   "count": 27,
+   "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "pinned_equals_computed": true
+  },
+  "CS-KYUURA-CURRENT@1": {
+   "count": 12,
+   "digest": "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
+   "pinned_equals_computed": true
+  }
+ },
+ "tr8_minus_tr7": [
+  "PC-LUCKY-STADIUM-REPLACEMENT@1"
+ ],
+ "tr7_minus_tr8": [],
+ "tr8_is_tr7_plus_one": true,
+ "source_game": {
+  "plan": "vai-batch-tr7s-c4",
+  "plan_sha256": "04db9815e688078b23e8f998ab9008df08e0e660295539c95508d9435e447810",
+  "game": "g001-rules-v2-s9017",
+  "engine": "0.197.0"
+ },
+ "common": {
+  "seeds": {
+   "game_seed": 9017,
+   "host_seed": 9017,
+   "policy_seed": 9017
+  },
+  "mode": "rules-v2",
+  "profile": "deep",
+  "decks": {
+   "0": "LUCKY_DECK（U7 の接続のテストのラッキースタジアムのデッキ）",
+   "1": "CONNECT_DECK（U7 の接続のテストの炎のデッキ）"
+  },
+  "deck_sha256": {
+   "0": "857abd7d7d40b041be0e1c92a5c0bdda357ef9c1e0441793f8550f905b204eb8",
+   "1": "6ae10e56108322e0d0b38f76a329246786a08ce81fda7426614e310fc7e3d6f8"
+  },
+  "game_limits": {
+   "accepted": 1000,
+   "draws_per_position": 64,
+   "operations": 2000,
+   "rejections_per_position": 16,
+   "seconds": 120.0,
+   "turns": 200
+  },
+  "observation": true,
+  "prestop": true
+ },
+ "check_plans_problems": [],
+ "tr7_vs_tr8_plan_keys": [
+  "/batch_id",
+  "/games[0]/comparison_group",
+  "/games[0]/config/conventions",
+  "/games[0]/conventions/digest",
+  "/games[0]/conventions/key",
+  "/written"
+ ],
+ "budget": {
+  "plan_tool_seconds": 300,
+  "plan_evidence_mib": 512,
+  "program_tool_seconds": 600,
+  "program_wall_seconds": 1800,
+  "program_evidence_mib": 1024,
+  "used_tool_seconds": 14.846,
+  "used_wall_seconds": 44.375,
+  "used_evidence_bytes": 32172332
+ },
+ "order": [
+  "tr7",
+  "tr8"
+ ],
+ "games": {
+  "tr7": {
+   "batch": "vai-batch-rs1c-tr7",
+   "game": "g001-rules-v2-s9017",
+   "started": true,
+   "complete": true,
+   "termination": "game_over",
+   "counters": {
+    "accepted": 185,
+    "attempts": 274,
+    "operations": 185,
+    "rejected": 0,
+    "refused": 0,
+    "unbuildable": 89,
+    "turns": 64
+   },
+   "judge": {
+    "termination": {
+     "class": "game_over",
+     "halt": null,
+     "reasons": [],
+     "verdict": "expected"
+    },
+    "counts": {
+     "expected": 185
+    },
+    "undetermined": 0,
+    "known_stop": 0
+   },
+   "end_events": [
+    {
+     "kind": "deck_out",
+     "player": 0,
+     "turn": 65
+    },
+    {
+     "kind": "game_end",
+     "turn": 65,
+     "winner": 1,
+     "outcome": "win"
+    }
+   ],
+   "prestop": {
+    "status": "complete",
+    "offered": 4,
+    "offered_by_kind": {
+     "use_stadium": 4
+    },
+    "keys": 2,
+    "no_stages": 2,
+    "rows": 0
+   },
+   "gate": {
+    "go": true,
+    "failed": []
+   },
+   "tool_seconds": 7.386,
+   "plan_dir_bytes": 15861761,
+   "plan_sha256": "58903993317159780de74da85eb5aaedf18ec1965f1a2155b677b5971b5bb57a",
+   "conventions": {
+    "digest": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",
+    "key": "CS-KYUURA-PLAY-TR7@1"
+   }
+  },
+  "tr8": {
+   "batch": "vai-batch-rs1c-tr8",
+   "game": "g001-rules-v2-s9017",
+   "started": true,
+   "complete": true,
+   "termination": "game_over",
+   "counters": {
+    "accepted": 190,
+    "attempts": 272,
+    "operations": 190,
+    "rejected": 0,
+    "refused": 0,
+    "unbuildable": 82,
+    "turns": 63
+   },
+   "judge": {
+    "termination": {
+     "class": "game_over",
+     "halt": null,
+     "reasons": [],
+     "verdict": "expected"
+    },
+    "counts": {
+     "expected": 190
+    },
+    "undetermined": 0,
+    "known_stop": 0
+   },
+   "end_events": [
+    {
+     "kind": "deck_out",
+     "player": 1,
+     "turn": 64
+    },
+    {
+     "kind": "game_end",
+     "turn": 64,
+     "winner": 0,
+     "outcome": "win"
+    }
+   ],
+   "prestop": {
+    "status": "complete",
+    "offered": 0,
+    "offered_by_kind": {},
+    "keys": 0,
+    "no_stages": 0,
+    "rows": 0
+   },
+   "gate": {
+    "go": true,
+    "failed": []
+   },
+   "tool_seconds": 7.46,
+   "plan_dir_bytes": 16310571,
+   "plan_sha256": "6ba28fa33fd141b6338d5de73a562dd8520803d630672aa8ad80ead7bd3ff643",
+   "conventions": {
+    "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+    "key": "CS-KYUURA-PLAY-TR8@1"
+   }
+  }
+ },
+ "planned": 2,
+ "started": 2,
+ "completed": 2,
+ "incomplete": 0,
+ "not_started": 0,
+ "aborted": false,
+ "first_candidate_diff": {
+  "n": 147,
+  "position": 102,
+  "actor": 0,
+  "turn": 35,
+  "tr7": {
+   "id": "c3",
+   "kind": "use_stadium",
+   "processability": "unresolved_ruling",
+   "reasons": [
+    "stops_before_acceptance"
+   ],
+   "input_stages": 0,
+   "card": 57,
+   "card_id": "PRN-015"
+  },
+  "tr8": {
+   "id": "c3",
+   "kind": "use_stadium",
+   "processability": "may_stop_later",
+   "reasons": [
+    "continuation_not_evaluated"
+   ],
+   "input_stages": 0,
+   "card": 57,
+   "card_id": "PRN-015"
+  },
+  "other_candidates_equal": true,
+  "choices": {
+   "tr7": {
+    "candidate": "c2",
+    "reason": "rule2:priority5:retreat"
+   },
+   "tr8": {
+    "candidate": "c2",
+    "reason": "rule2:priority5:retreat:tie2"
+   }
+  },
+  "sent": false
+ },
+ "scene": {
+  "public_events_before_equal": true,
+  "public_events_before": 284,
+  "turn_stadium_events": [
+   {
+    "kind": "turn_start",
+    "player": 0
+   },
+   {
+    "kind": "stadium_used",
+    "card": 56,
+    "player": 0
+   },
+   {
+    "kind": "coin_flip",
+    "card": 56,
+    "player": 0,
+    "result": "heads"
+   },
+   {
+    "kind": "play_trainer",
+    "card": 57,
+    "player": 0
+   },
+   {
+    "kind": "stadium_placed",
+    "card": 57,
+    "player": 0,
+    "replaces": 56
+   },
+   {
+    "kind": "stadium_discarded",
+    "card": 56,
+    "player": 0,
+    "reason": "replaced"
+   }
+  ],
+  "stadium_in_play": {
+   "card": 57,
+   "card_id": "PRN-015",
+   "owner": 0,
+   "placed_turn": 35
+  },
+  "stadium_uses_this_turn": [
+   [
+    0,
+    56
+   ]
+  ],
+  "tr7_equal": {
+   "turn_stadium_events_before": true,
+   "observed_stadium_after_prev_accept": true,
+   "observed_stadium_uses_this_turn": true
+  }
+ },
+ "first_operation_diff": {
+  "n": 148,
+  "position": 102,
+  "actor": 0,
+  "tr7": {
+   "choice": {
+    "candidate": "c1",
+    "choices": [],
+    "picks": [],
+    "reason": "rule2:priority6:end_turn"
+   },
+   "kind": "end_turn"
+  },
+  "tr8": {
+   "choice": {
+    "candidate": "c3",
+    "choices": [],
+    "picks": [],
+    "reason": "rule2:priority5:use_stadium"
+   },
+   "kind": "use_stadium"
+  },
+  "send_results_differ_while_aligned": false,
+  "tr7_send": [
+   "{\"refusal\": null, \"valid\": true}",
+   "accepted",
+   null
+  ],
+  "alignment_ends_at_n": 149
+ },
+ "tr8_send": {
+  "operation_id": "g001-rules-v2-s9017-000103",
+  "command": {
+   "energy": null,
+   "player": 0,
+   "type": "use_stadium"
+  },
+  "check": "valid",
+  "outcome": "accepted",
+  "judge": "expected",
+  "event_kinds": [
+   "stadium_used",
+   "convention_applied",
+   "coin_flip"
+  ],
+  "convention_applied": [
+   {
+    "entry": 104,
+    "log_index": 285,
+    "card": 57,
+    "code": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+    "convention": "PC-LUCKY-STADIUM-REPLACEMENT",
+    "kind": "convention_applied",
+    "player": 0,
+    "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+    "turn": 35,
+    "used_cards": [
+     "PRN-015"
+    ],
+    "version": 1
+   }
+  ],
+  "coin": [
+   "tails"
+  ],
+  "draw": false,
+  "stadium_uses_after": [
+   [
+    0,
+    56
+   ],
+   [
+    0,
+    57
+   ]
+  ],
+  "decks_after": [
+   {
+    "player": 0,
+    "deck": {
+     "count": 26
+    }
+   },
+   {
+    "player": 1,
+    "deck": {
+     "count": 24
+    }
+   }
+  ],
+  "status_after": "in_progress"
+ },
+ "stages": {
+  "candidate_increase": "confirmed",
+  "selection": "confirmed",
+  "acceptance": "confirmed"
+ },
+ "after_divergence_reference": {
+  "tr7_unresolved_positions": [
+   {
+    "n": 147,
+    "position": 102,
+    "stadium": {
+     "card": 57,
+     "card_id": "PRN-015",
+     "owner": 0
+    },
+    "chosen": "c2"
+   },
+   {
+    "n": 148,
+    "position": 102,
+    "stadium": {
+     "card": 57,
+     "card_id": "PRN-015",
+     "owner": 0
+    },
+    "chosen": "c1"
+   },
+   {
+    "n": 269,
+    "position": 181,
+    "stadium": {
+     "card": 59,
+     "card_id": "PRN-015",
+     "owner": 0
+    },
+    "chosen": "c2"
+   },
+   {
+    "n": 270,
+    "position": 181,
+    "stadium": {
+     "card": 59,
+     "card_id": "PRN-015",
+     "owner": 0
+    },
+    "chosen": "c1"
+   }
+  ],
+  "tr8_unresolved_positions": 0,
+  "stadium_placed": {
+   "old": 4,
+   "tr7": 4,
+   "tr8": 2
+  },
+  "stadium_used": {
+   "old": 52,
+   "tr7": 52,
+   "tr8": 48
+  },
+  "tr8_convention_applied": 1
+ },
+ "reference_old_vs_new_tr7": {
+  "attempts_equal": true,
+  "attempts": [
+   274,
+   274
+  ],
+  "public_events_equal": true,
+  "events": [
+   540,
+   540
+  ],
+  "sequences_equal": true
+ },
+ "not_observed": [
+  "heads_draw",
+  "deck_zero_heads",
+  "tr8_turn63_scene",
+  "other_12_saved_positions",
+  "completion_rate"
+ ],
+ "failures": [
+  "F1 PowerShell variable name case collision during the script copy (nothing written)",
+  "F2 gate trace set check did not trip in the negative smoke test; fixed and re-tested before use",
+  "F3 analyzer view entry offset and missing turn on unbuildable attempts; fixed, first output overwritten",
+  "F4 Bash heredoc for the JSON builder failed to parse (nothing written); written with the editor"
+ ],
+ "not_done": [
+  "product code / conventions / policy / judge / GUI / version changes",
+  "retries / seed changes / extra games / stop release",
+  "main push / merge / PR"
+ ]
+}
