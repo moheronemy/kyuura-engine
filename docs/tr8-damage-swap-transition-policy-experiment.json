@@ -2884,5 +2884,9 @@
   "retries / seed changes / extra games",
   "kyuura"
  ],
- "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-exp-run/ and plans vai-batch-tr8v4-v3, vai-batch-tr8v4-v4"
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-exp-run/ and plans vai-batch-tr8v4-v3, vai-batch-tr8v4-v4",
+ "followup": {
+  "doc": "docs/tr8-rules-v4-9022-guard-analysis.md",
+  "summary": "9022 turn 36: 17 swaps, configuration returned once (= detection); recommend per-turn Damage Swap count N = 6 (rank 7), keeping S5 1->3"
+ }
 }

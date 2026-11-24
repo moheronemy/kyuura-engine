@@ -1,0 +1,1507 @@
+{
+ "status": "analysis_done",
+ "doc": "docs/tr8-rules-v4-9022-guard-analysis.md",
+ "date": "2026-11-24",
+ "base": "c4e8b24a3975355102ad21c7e191f643df6466c2",
+ "execution_commit": "8dc96a2a3a8ddf5adf3d8389a6fe514c91b5f56b",
+ "engine_version": "0.198.0",
+ "tool_version": 15,
+ "branch": "claude/tr8-rules-v4-9022-guard-analysis",
+ "kind": "read-only analysis and design decision (no code change, no runs)",
+ "answers": {
+  "returns_in_17": {
+   "config_return_points": 1,
+   "ops_in_return_segments": 2,
+   "distinct_configs_of_points": [
+    17,
+    18
+   ]
+  },
+  "detection_gap": "none: config returns = full view returns = detections (turn 36: 1 = 1 = 1; 9 games: 290 = 290 = 290); only own damage fields changed inside runs",
+  "why_long": "rank 5 Damage Swap beat end_turn (6) at every position; retreat (5) unbuildable 15 times; no attack / trainer candidates; only brake was the rules-v2 pair cap 2 (two capped picks in one episode); 5-12 pairs (a 0-damage basic was played at the start of the turn); rules-v4 restricted once",
+  "add_guard": "yes: per-turn accepted Damage Swap count, N = 6, rank 7 after N (policy ranking only); keeps S5 1->3 (ordinal 3) 4/4"
+ },
+ "replay": {
+  "policies_sha256": "bbd2da52b99c6dcef3e4f2044e80253621eeebbf8a97ba746d3b4928f6a91ddd",
+  "actions_sha256": "b3a5029844107a6cf07f54ec0d789b244f4adaacfe8ca6a84490ed6b158883a8",
+  "ok": true,
+  "detections_matched_games": [
+   "9023 v3",
+   "9022 v3",
+   "9024 v3",
+   "9023 v4",
+   "9022 v4",
+   "9024 v4"
+  ],
+  "restrictions_matched": 79,
+  "positions_with_view": 2186,
+  "views_not_ok": 0
+ },
+ "turn36": {
+  "actor": 0,
+  "turn": [
+   0,
+   36
+  ],
+  "positions": [
+   156,
+   174
+  ],
+  "start_config_after_play_basic": [
+   [
+    1,
+    20
+   ],
+   [
+    7,
+    30
+   ],
+   [
+    9,
+    50
+   ],
+   [
+    12,
+    0
+   ]
+  ],
+  "swaps": 17,
+  "runs": [
+   17
+  ],
+  "other_accepted": {
+   "play_basic": 1,
+   "end_turn": 1
+  },
+  "attempts": {
+   "play_basic|ok|below_threshold|accepted": 1,
+   "retreat|unbuildable:total_units_unreachable|None|None": 15,
+   "use_power|ok|below_threshold|accepted": 17,
+   "use_power|suppressed_by_policy|repeat_suppressed|None": 5,
+   "use_power|suppressed_by_policy|repeat_suppressed:candidate_demoted|None": 1,
+   "end_turn|ok|below_threshold|accepted": 1
+  },
+  "pair_use": {
+   "1->7": 2,
+   "1->9": 1,
+   "1->12": 2,
+   "7->1": 2,
+   "7->9": 2,
+   "7->12": 1,
+   "9->1": 1,
+   "9->7": 2,
+   "9->12": 2,
+   "12->1": 1,
+   "12->9": 1
+  },
+  "operations": [
+   {
+    "ordinal": 1,
+    "position": 157,
+    "n": 203,
+    "holder": 9,
+    "move": [
+     7,
+     9
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      30
+     ],
+     [
+      9,
+      50
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "0163beea2dae6805",
+    "view_after": "a8e171dd91e1b135",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 9,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 2,
+    "position": 158,
+    "n": 204,
+    "holder": 9,
+    "move": [
+     7,
+     1
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "a8e171dd91e1b135",
+    "view_after": "db3d047aeac29b32",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 0,
+    "pairs_available": 9,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power:tie2"
+   },
+   {
+    "ordinal": 3,
+    "position": 159,
+    "n": 205,
+    "holder": 9,
+    "move": [
+     7,
+     1
+    ],
+    "config_before": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      40
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "db3d047aeac29b32",
+    "view_after": "b040f9decd1780c4",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 0,
+    "pairs_available": 9,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power:tie2"
+   },
+   {
+    "ordinal": 4,
+    "position": 160,
+    "n": 207,
+    "holder": 9,
+    "move": [
+     1,
+     9
+    ],
+    "config_before": [
+     [
+      1,
+      40
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "b040f9decd1780c4",
+    "view_after": "0df83312e446c3ba",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 6,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 5,
+    "position": 161,
+    "n": 209,
+    "holder": 9,
+    "move": [
+     1,
+     12
+    ],
+    "config_before": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      10
+     ]
+    ],
+    "view_before": "0df83312e446c3ba",
+    "view_after": "040b6a6fce54d119",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 5,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 6,
+    "position": 162,
+    "n": 211,
+    "holder": 9,
+    "move": [
+     12,
+     1
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      10
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "040b6a6fce54d119",
+    "view_after": "0df83312e446c3ba",
+    "config_return_to_point": 4,
+    "view_return_to_point": 4,
+    "detected_after": true,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 7,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 7,
+    "position": 163,
+    "n": 213,
+    "holder": 9,
+    "move": [
+     1,
+     7
+    ],
+    "config_before": [
+     [
+      1,
+      30
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "view_before": "0df83312e446c3ba",
+    "view_after": "0cb750aff6a0d12f",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": {
+     "deferred_at_view": [
+      [
+       1,
+       12
+      ]
+     ],
+     "excluded": [
+      [
+       1,
+       12
+      ]
+     ],
+     "holder": "3b2225e2b6617233",
+     "pairs": 5,
+     "result": "restricted",
+     "view": "0df83312e446c3ba"
+    },
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 5,
+    "p_pick_at_v2_threshold": 0.0,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 8,
+    "position": 164,
+    "n": 216,
+    "holder": 9,
+    "move": [
+     1,
+     12
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      0
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      10
+     ]
+    ],
+    "view_before": "0cb750aff6a0d12f",
+    "view_after": "46e9a564b28869f7",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 1,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 7,
+    "p_pick_at_v2_threshold": 0.1667,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 9,
+    "position": 165,
+    "n": 219,
+    "holder": 9,
+    "move": [
+     7,
+     12
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      10
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      20
+     ]
+    ],
+    "view_before": "46e9a564b28869f7",
+    "view_after": "a998df77922b7a0b",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 1,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 9,
+    "p_pick_at_v2_threshold": 0.25,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 10,
+    "position": 166,
+    "n": 221,
+    "holder": 9,
+    "move": [
+     9,
+     12
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      70
+     ],
+     [
+      12,
+      20
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "view_before": "a998df77922b7a0b",
+    "view_after": "38e5acbf3fd7882b",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 7,
+    "p_pick_at_v2_threshold": 0.1667,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 11,
+    "position": 167,
+    "n": 223,
+    "holder": 9,
+    "move": [
+     9,
+     7
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      0
+     ],
+     [
+      9,
+      60
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      50
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "view_before": "38e5acbf3fd7882b",
+    "view_after": "2496e530355391f1",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 9,
+    "p_pick_at_v2_threshold": 0.1111,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 12,
+    "position": 168,
+    "n": 226,
+    "holder": 9,
+    "move": [
+     9,
+     12
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      50
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      40
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "view_before": "2496e530355391f1",
+    "view_after": "6112eb864de14cec",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 1,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.1667,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 13,
+    "position": 169,
+    "n": 228,
+    "holder": 9,
+    "move": [
+     9,
+     7
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      10
+     ],
+     [
+      9,
+      40
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "view_before": "6112eb864de14cec",
+    "view_after": "5e3d771c227d9f0d",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.25,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 14,
+    "position": 170,
+    "n": 230,
+    "holder": 9,
+    "move": [
+     9,
+     1
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      20
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "view_before": "5e3d771c227d9f0d",
+    "view_after": "b483d37ef7514483",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.3333,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 15,
+    "position": 171,
+    "n": 233,
+    "holder": 9,
+    "move": [
+     12,
+     9
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      20
+     ],
+     [
+      12,
+      40
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "view_before": "b483d37ef7514483",
+    "view_after": "58038a4354a2b160",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 1,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.3333,
+    "reason": "rule4:priority5:use_power"
+   },
+   {
+    "ordinal": 16,
+    "position": 172,
+    "n": 234,
+    "holder": 9,
+    "move": [
+     1,
+     7
+    ],
+    "config_before": [
+     [
+      1,
+      20
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      30
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "view_before": "58038a4354a2b160",
+    "view_after": "8d5b6dc408583d54",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 0,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.3333,
+    "reason": "rule4:priority5:use_power:tie2"
+   },
+   {
+    "ordinal": 17,
+    "position": 173,
+    "n": 236,
+    "holder": 9,
+    "move": [
+     7,
+     9
+    ],
+    "config_before": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      30
+     ],
+     [
+      9,
+      30
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "config_after": [
+     [
+      1,
+      10
+     ],
+     [
+      7,
+      20
+     ],
+     [
+      9,
+      40
+     ],
+     [
+      12,
+      30
+     ]
+    ],
+    "view_before": "8d5b6dc408583d54",
+    "view_after": "fc0a5905fed6dd31",
+    "config_return_to_point": null,
+    "view_return_to_point": null,
+    "detected_after": false,
+    "input_restriction": null,
+    "suppressed_before_accept": 0,
+    "retreat_unbuildable_before_accept": 1,
+    "pairs_available": 12,
+    "p_pick_at_v2_threshold": 0.4167,
+    "reason": "rule4:priority5:use_power"
+   }
+  ],
+  "stop_model_estimate": {
+   "stop_rule": "rules-v2: a pick of a pair already accepted twice this turn is suppressed; two suppressions in one episode demote the candidate (rank 7) -> end_turn",
+   "p_first_pick_at_threshold_per_accepted_swap": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.1667,
+    0.25,
+    0.1667,
+    0.1111,
+    0.1667,
+    0.25,
+    0.3333,
+    0.3333,
+    0.3333,
+    0.4167
+   ],
+   "survival_product_along_path": 0.463,
+   "p_at_final_episode": 0.5
+  },
+  "net_min_moves": 3
+ },
+ "games": [
+  {
+   "seed": "9023",
+   "policy": "rules-v2",
+   "termination": "limit_accepted",
+   "swaps": 775,
+   "config_return_points": 251,
+   "view_return_points": 251,
+   "detections": 251,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 84
+  },
+  {
+   "seed": "9022",
+   "policy": "rules-v2",
+   "termination": "game_over",
+   "swaps": 38,
+   "config_return_points": 9,
+   "view_return_points": 9,
+   "detections": 9,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 18
+  },
+  {
+   "seed": "9024",
+   "policy": "rules-v2",
+   "termination": "game_over",
+   "swaps": 9,
+   "config_return_points": 5,
+   "view_return_points": 5,
+   "detections": 5,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 4
+  },
+  {
+   "seed": "9023",
+   "policy": "rules-v3",
+   "termination": "game_over",
+   "swaps": 11,
+   "config_return_points": 3,
+   "view_return_points": 3,
+   "detections": 3,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 5
+  },
+  {
+   "seed": "9022",
+   "policy": "rules-v3",
+   "termination": "game_over",
+   "swaps": 19,
+   "config_return_points": 3,
+   "view_return_points": 3,
+   "detections": 3,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 6
+  },
+  {
+   "seed": "9024",
+   "policy": "rules-v3",
+   "termination": "game_over",
+   "swaps": 5,
+   "config_return_points": 2,
+   "view_return_points": 2,
+   "detections": 2,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 3
+  },
+  {
+   "seed": "9023",
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "swaps": 12,
+   "config_return_points": 5,
+   "view_return_points": 5,
+   "detections": 5,
+   "restricted_accepted": 2,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 4
+  },
+  {
+   "seed": "9022",
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "swaps": 46,
+   "config_return_points": 9,
+   "view_return_points": 9,
+   "detections": 9,
+   "restricted_accepted": 8,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 17
+  },
+  {
+   "seed": "9024",
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "swaps": 6,
+   "config_return_points": 3,
+   "view_return_points": 3,
+   "detections": 3,
+   "restricted_accepted": 0,
+   "view_fields_changed_in_swap_runs": [
+    "/observation/players/#/active/damage",
+    "/observation/players/#/bench/#/damage"
+   ],
+   "max_swaps_in_a_turn": 4
+  }
+ ],
+ "rules_v4_9022_turns": [
+  {
+   "turn": [
+    0,
+    36
+   ],
+   "swaps": 17,
+   "config_return_points": 1,
+   "detections": 1,
+   "restricted_ordinals": [
+    7
+   ],
+   "start_equals_end": [
+    false
+   ],
+   "net_min_moves": [
+    3
+   ]
+  },
+  {
+   "turn": [
+    0,
+    32
+   ],
+   "swaps": 12,
+   "config_return_points": 7,
+   "detections": 7,
+   "restricted_ordinals": [
+    4,
+    7,
+    9,
+    10,
+    11,
+    12
+   ],
+   "start_equals_end": [
+    true
+   ],
+   "net_min_moves": [
+    0
+   ]
+  },
+  {
+   "turn": [
+    0,
+    34
+   ],
+   "swaps": 9,
+   "config_return_points": 1,
+   "detections": 1,
+   "restricted_ordinals": [
+    5
+   ],
+   "start_equals_end": [
+    false
+   ],
+   "net_min_moves": [
+    1
+   ]
+  },
+  {
+   "turn": [
+    0,
+    30
+   ],
+   "swaps": 6,
+   "config_return_points": 0,
+   "detections": 0,
+   "restricted_ordinals": [],
+   "start_equals_end": [
+    false
+   ],
+   "net_min_moves": [
+    3
+   ]
+  }
+ ],
+ "options": {
+  "status_quo": "9022 swaps 46 > rules-v2 38; both returning (turn 32) and non-returning (turn 36) runs remain",
+  "per_turn_count": {
+   "count": "own accepted Damage Swaps in own (segment, turn), all holders summed; suppressed / unbuildable / rejected not counted; reset at turn change; not reset by other accepted operations",
+   "effect": "rank 7 (after end_turn) from the (N+1)th choice; only policy ranking; no engine prohibition",
+   "estimates_on_saved_records": {
+    "3": {
+     "boards_key_kept_of_24": 16,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": false,
+     "9024_v4_unchanged": false,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       30
+      ],
+      "position_of_swap_n_plus_1": 124
+     },
+     "9022_v4_swaps_beyond_on_record_path": 32,
+     "9022_v4_restricted_beyond_on_record_path": 8
+    },
+    "4": {
+     "boards_key_kept_of_24": 24,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": true,
+     "9024_v4_unchanged": true,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       30
+      ],
+      "position_of_swap_n_plus_1": 125
+     },
+     "9022_v4_swaps_beyond_on_record_path": 28,
+     "9022_v4_restricted_beyond_on_record_path": 7
+    },
+    "5": {
+     "boards_key_kept_of_24": 24,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": true,
+     "9024_v4_unchanged": true,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       30
+      ],
+      "position_of_swap_n_plus_1": 126
+     },
+     "9022_v4_swaps_beyond_on_record_path": 24,
+     "9022_v4_restricted_beyond_on_record_path": 6
+    },
+    "6": {
+     "boards_key_kept_of_24": 24,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": true,
+     "9024_v4_unchanged": true,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       32
+      ],
+      "position_of_swap_n_plus_1": 136
+     },
+     "9022_v4_swaps_beyond_on_record_path": 20,
+     "9022_v4_restricted_beyond_on_record_path": 6
+    },
+    "7": {
+     "boards_key_kept_of_24": 24,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": true,
+     "9024_v4_unchanged": true,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       32
+      ],
+      "position_of_swap_n_plus_1": 137
+     },
+     "9022_v4_swaps_beyond_on_record_path": 17,
+     "9022_v4_restricted_beyond_on_record_path": 4
+    },
+    "8": {
+     "boards_key_kept_of_24": 24,
+     "s5_key_kept_of_4": 4,
+     "9023_v4_unchanged": true,
+     "9024_v4_unchanged": true,
+     "9022_v4_first_binding": {
+      "turn": [
+       0,
+       32
+      ],
+      "position_of_swap_n_plus_1": 138
+     },
+     "9022_v4_swaps_beyond_on_record_path": 14,
+     "9022_v4_restricted_beyond_on_record_path": 4
+    }
+   },
+   "board_key_ordinals": {
+    "S5": 3,
+    "K1": 3,
+    "K2": 4,
+    "K3": 3,
+    "K4_same_move_other_view": 4
+   },
+   "note": "after the first binding position the game leaves the saved record; values beyond it are the record path, not results"
+  },
+  "narrow_view_fields": {
+   "excluded_candidates": [
+    "hand",
+    "deck / discard counts",
+    "prizes",
+    "opponent field",
+    "special conditions / attached cards",
+    "pending decisions / event fields"
+   ],
+   "effect": "none: these never changed inside a run (9 games) and cannot change by the run definition; extra detections 0; non-returning moves not caught"
+  },
+  "detection_count": {
+   "1": {
+    "turns_binding": 3,
+    "swaps_after": 25,
+    "restricted_after": 8,
+    "game_unchanged": false,
+    "turn36_caught": true,
+    "s5_1_to_3_kept": false
+   },
+   "2": {
+    "turns_binding": 1,
+    "swaps_after": 6,
+    "restricted_after": 5,
+    "game_unchanged": false,
+    "turn36_caught": false,
+    "s5_1_to_3_kept": true
+   },
+   "3": {
+    "turns_binding": 1,
+    "swaps_after": 4,
+    "restricted_after": 4,
+    "game_unchanged": false,
+    "turn36_caught": false,
+    "s5_1_to_3_kept": true
+   }
+  }
+ },
+ "recommendation": {
+  "option": "per_turn_count",
+  "N": 6,
+  "as": "new explicit test policy over rules-v4 (e.g. rules-v5); rules-v4 kept",
+  "N_basis": [
+   "N >= 4: board key events (S5 / K1 / K3 at 3, K2 / K4 at 4)",
+   "N >= 4: rules-v4 9023 / 9024 max 4 per turn -> record-identical (deterministic argument, not run)",
+   "N >= 6: rules-v3 3 games and the shared pre-divergence 9022 turn 30 (6 non-returning swaps) unchanged",
+   "9022 first binding at position 136 (turn 32, 7th), after the first deferral at 133"
+  ],
+  "evaluations": {
+   "S5_1_to_3": "kept 4/4 (ordinal 3)",
+   "9022_long_runs": "binds at 136; later unknown (needs a run)",
+   "9023": "record-identical (game_over, 41 turns, 161 accepted)",
+   "9024_non_returning": "record-identical incl. the unrestricted 10->2 at position 77"
+  },
+  "minimal_cases": [
+   "unit: counting rules, reset, rank 7, only-rank-7 fallback, deferral unchanged, rules-v2/v3/v4 sequences unchanged",
+   "boards: S5 / K1-K5 key events as rules-v4 (4 seeds); new long non-returning walk (>= 7 swaps, >= 4 pokemon) -> end_turn at the 7th; intervening operation does not reset",
+   "games C1: 9023 / 9024 equal to the rules-v4 records; 9022 equal up to position 136 and differs there"
+  ]
+ },
+ "uncertainties": [
+  "9022 after position 136 not run",
+  "N = 6 from 3 seeds (C1) and 5 boards",
+  "stop probability is along the realized path only",
+  "strategic value of moves not evaluated"
+ ],
+ "not_done": [
+  "policy / product code change",
+  "game limit change",
+  "board or game runs",
+  "re-running old games",
+  "default change",
+  "push to main / merge / PR",
+  "kyuura"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-guard-run/"
+}
