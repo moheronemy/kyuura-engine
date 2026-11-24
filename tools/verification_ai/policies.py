@@ -342,6 +342,208 @@ class LoopRulePolicy(RulePolicy):
         return {**LOOP_DEMOTION, "counts": dict(sorted(self.loop_counts.items()))}
 
 
+# ---------------------------------------------------------------- rules-v4（試験の方策）: 確認した［ダメージスワップ］の周期の移動だけを後回しにする
+# （docs/tr8-damage-swap-transition-policy-design.md 3 章・4 章・docs/tr8-damage-swap-transition-policy-experiment.md）。rules-v2 の順位・同順位の選び方・
+# 入力単位の再送抑止はそのまま。周期の検出は rules-v3 と同じ。下げるのは持ち主の候補の全体ではなく（操作前の本人の観測, 持ち主, 移動元, 移動先）の鍵。
+# 1 番あたりの追加の上限・検出の回数による持ち主の全体の降格は入れない（設計の U1 を「追加の抑制なしで試す」と決めた）。合法性を判定しない
+
+RULES4_VERSION = 4
+RULES4_DISTRIBUTION = "rules-v4-candidate+uniform-stage"
+DEFER_ALL = "transition_deferred_all"  # input_restriction の返り値: 新しい inputs の応答で外さない組が 0（その候補をこのエピソードで順位 7 にして選び直す）
+TRANSITION_DEFERRAL = {"version": 1, "kind": LOOP_KIND, "powers": list(LOOP_POWER_NAMES),
+                       "key": "(pre-move own view, holder kind+pokemon, source pokemon, target pokemon), directed",
+                       "detection": "same as rules-v3 (same actor, same turn, run of accepted target powers, own view returns; latest match)",
+                       "effect": "deferred pairs removed from the input choices at that view; candidate rank 7 (after end_turn) only when every buildable pair "
+                                 "at the view is deferred; restriction lifted when only rank-7 candidates remain",
+                       "scope": "deep processability only (supported, may_stop_later)", "extra_guard": None, "reset": "turn change"}
+
+
+def move_of(meaning: list[dict[str, Any]]) -> tuple[int, int] | None:
+    """受理した入力の意味の（移動元, 移動先）の場のポケモンの番号。2 段の選べるもので番号が整数でなければ None（記録しない）。"""
+    if not isinstance(meaning, list) or len(meaning) != 2 or [m.get("stage") for m in meaning] != [1, 2]:
+        return None
+    refs = [(m.get("option") or {}).get("pokemon") for m in meaning]
+    return (refs[0], refs[1]) if all(type(r) is int for r in refs) else None
+
+
+def holder_of(candidate: dict[str, Any]) -> str | None:
+    """持ち主の鍵（rules-v3 の ``loop_key`` と同じ値）。場のポケモンの番号がなければ None（記録しない・後回しにしない）。"""
+    if type((candidate.get("pokemon") or {}).get("pokemon")) is not int:
+        return None
+    return loop_key(candidate)
+
+
+class TransitionRulePolicy(RulePolicy):
+    """rules-v4: rules-v2 に、rules-v3 と同じ検出で確認した周期の各移動を（操作前の本人の観測, 持ち主, 移動元, 移動先）で記録し、その観測でだけ後回しにする規則を加える。
+
+    ランナーの差し込み口（この方策だけが持つ。rules-v2・rules-v3 の物にはない）:
+    - ``observe_view(view, position)``: エピソードの始めの本人の観測（rules-v3 と同じ）
+    - ``observe_inputs(candidate, stages, allowed)``: inputs の応答を受けたあと・組み立ての前。(今の観測, 持ち主) の組の写しを保存する
+    - ``input_restriction(candidate, stages, allowed)``: 組み立ての直前。外す組の集合（なければ None）か ``DEFER_ALL``
+    - ``accepted_input(candidate, meaning, position)``: 本人の受理のあと（rules-v3 の ``accepted_candidate`` の代わり）
+
+    候補の順位: 今の観測 V・持ち主 h に鍵がなければ、また (V, h) の組の写しがなければ、順位は rules-v2 のまま。写しの組がすべて鍵にあれば順位 7。
+    順位 7 の候補しか残らず、後回しで下げた候補を選んだときは、その試みの入力を制限しない（理由 :no_alternative）。"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD):
+        super().__init__(seed, STAGE, version=2, threshold=threshold)
+        self.version = RULES4_VERSION
+        self.distribution = RULES4_DISTRIBUTION
+        self.transition_deferral = TRANSITION_DEFERRAL
+        self._turn = None
+        self._sig: str | None = None
+        self._run: dict[str, Any] | None = None
+        self._pending: dict[str, Any] | None = None
+        self._deferred: set[tuple] = set()  # (観測, 持ち主, 移動元, 移動先)
+        self._pairs: dict[tuple, frozenset] = {}  # (観測, 持ち主) → 組み立てられる組
+        self._episode_deferred: set[str] = set()  # このエピソードで新しい応答の組が 0 になった持ち主
+        self._demoted_now: set[str] = set()  # 直近の候補の選択で後回しにより順位 7 にした持ち主
+        self._lifted: str | None = None  # 直近の候補の選択で制限を外した持ち主（:no_alternative）
+        self._detection: dict[str, Any] | None = None
+        self.last_restriction: dict[str, Any] | None = None
+        self.loop_counts = Counter()
+
+    # -- 観測と検出（rules-v3 と同じ区間・同じ一致）
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        sig = view_signature(view)
+        turn = turn_of(view) if sig is not None else self._turn
+        if turn != self._turn:
+            if self._deferred:
+                self.loop_counts["turn_resets_with_deferral"] += 1
+            self._turn, self._run, self._pending, self._deferred, self._pairs = turn, None, None, set(), {}
+        self._sig = sig
+        pending, self._pending, self._detection = self._pending, None, None
+        if pending is not None and pending["target"] and pending["position"] == position and self._run is not None:
+            run = self._run
+            run["moves"].append(pending["move"])
+            if sig is None:
+                run["valid"] = False
+                self.loop_counts["runs_without_view"] += 1
+            if run["valid"]:
+                matched = [i for i, v in enumerate(run["views"]) if v == sig]
+                if matched:
+                    j = matched[-1]
+                    new = []
+                    for k in range(j, len(run["moves"])):
+                        move = run["moves"][k]
+                        if move is None:
+                            self.loop_counts["keys_missing_ref"] += 1
+                            continue
+                        key = (run["views"][k], *move)
+                        if key not in self._deferred:
+                            self._deferred.add(key)
+                            new.append(key)
+                    self.loop_counts["detections"] += 1
+                    self.loop_counts["deferred_keys"] += len(new)
+                    self._detection = {"position": position, "turn": list(turn) if turn is not None else None, "returned_to": j,
+                                       "run_accepts": len(run["moves"]), "cycle_length": len(run["moves"]) - j, "view": short_key(sig),
+                                       "newly_deferred": [{"view": short_key(k[0]), "holder": short_key(k[1]), "move": [k[2], k[3]]} for k in new],
+                                       "deferred_this_turn": len(self._deferred)}
+            run["views"].append(sig)
+        else:  # 区間の始め（番の始め・ほかの操作の受理・ほかの主体の受理・最初の観測）
+            self._run = {"views": [sig], "moves": [], "valid": sig is not None}
+
+    def accepted_input(self, candidate: dict[str, Any], meaning: list[dict[str, Any]], position: int) -> None:
+        target = loop_target(candidate)
+        move = None
+        if target:
+            holder, pair = holder_of(candidate), move_of(meaning)
+            move = (holder, *pair) if holder is not None and pair is not None else None
+        self._pending = {"position": position, "target": target, "move": move}
+
+    # -- 組の写しと入力の制限
+    def _deferred_pairs(self, holder: str) -> frozenset:
+        return frozenset((s, t) for v, h, s, t in self._deferred if v == self._sig and h == holder)
+
+    def observe_inputs(self, candidate: dict[str, Any], stages: list[dict[str, Any]], allowed) -> None:
+        from .actions import DEEP_PROCESSABILITY, transition_pairs  # actions は kyuura_engine を import しない
+        holder = holder_of(candidate) if loop_target(candidate) else None
+        if holder is None or self._sig is None or frozenset(allowed) != DEEP_PROCESSABILITY:
+            return
+        pairs = transition_pairs(stages, allowed)
+        if pairs is None:
+            return
+        old = self._pairs.get((self._sig, holder))
+        if old is not None and old != pairs:
+            self.loop_counts["pairs_cache_mismatch"] += 1
+        self._pairs[(self._sig, holder)] = pairs
+
+    def input_restriction(self, candidate: dict[str, Any], stages: list[dict[str, Any]], allowed):
+        from .actions import DEEP_PROCESSABILITY, transition_pairs
+        self.last_restriction = None
+        holder = holder_of(candidate) if loop_target(candidate) else None
+        if holder is None or self._sig is None:
+            return None
+        deferred = self._deferred_pairs(holder)
+        if not deferred:
+            return None
+        record = {"view": short_key(self._sig), "holder": short_key(holder), "deferred_at_view": sorted([list(p) for p in deferred])}
+        self.last_restriction = record
+        if self._lifted == holder:
+            record["result"] = "lifted_no_alternative"
+            self.loop_counts["restrictions_lifted"] += 1
+            return None
+        pairs = transition_pairs(stages, allowed) if frozenset(allowed) == DEEP_PROCESSABILITY else None
+        if pairs is None:
+            record["result"] = "restriction_unavailable"
+            self.loop_counts["restriction_unavailable"] += 1
+            return None
+        excluded = deferred & pairs
+        record.update({"pairs": len(pairs), "excluded": sorted([list(p) for p in excluded])})
+        if not pairs - deferred:
+            record["result"] = DEFER_ALL
+            self._episode_deferred.add(holder)
+            self.loop_counts["deferred_all_after_inputs"] += 1
+            return DEFER_ALL
+        if not excluded:
+            record["result"] = "no_deferred_pair_buildable"
+            return None
+        record["result"] = "restricted"
+        self.loop_counts["restricted_builds"] += 1
+        return frozenset(excluded)
+
+    # -- 候補の順位
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        self._episode_deferred, self._lifted, self._demoted_now = set(), None, set()
+        if self._detection is not None:
+            info["loop_detection"] = dict(self._detection)
+        if self._deferred:
+            info["transition_deferred"] = len(self._deferred)
+        return info
+
+    def _all_deferred(self, holder: str) -> bool:
+        if holder in self._episode_deferred:
+            return True
+        deferred = self._deferred_pairs(holder)
+        pairs = self._pairs.get((self._sig, holder))
+        return bool(deferred) and pairs is not None and pairs <= deferred
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        holders = [holder_of(c) if r is not None and loop_target(c) else None for r, c in zip(ranks, items)]
+        hit = [h is not None and self._all_deferred(h) for h in holders]
+        self._demoted_now = {h for h, x in zip(holders, hit) if x}
+        ranks = [DEMOTED_RANK if x else r for r, x in zip(ranks, hit)]
+        n = sum(hit)
+        if n:
+            self.loop_counts["choices_with_deferred_all"] += 1
+        return ranks, "rule4", (f":deferred_all{n}" if n else "")
+
+    def _rule_candidate(self, items, context) -> tuple[int, str]:
+        self._lifted = None
+        index, reason = super()._rule_candidate(items, context)
+        chosen = items[index]
+        holder = holder_of(chosen) if isinstance(chosen, dict) and loop_target(chosen) else None
+        if holder is not None and holder in self._demoted_now and ":demoted:" in reason:
+            self._lifted = holder
+            self.loop_counts["no_alternative"] += 1
+            reason += ":no_alternative"
+        return index, reason
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**TRANSITION_DEFERRAL, "counts": dict(sorted(self.loop_counts.items()))}
+
+
 def mix_seed(policy_seed: int, player: int) -> str:
     """混合の判定の乱数の種（候補・入力の選択の乱数と別。ゲームの乱数とも別）。"""
     return f"kyuura-vai-v2:mix:{policy_seed}:{player}"

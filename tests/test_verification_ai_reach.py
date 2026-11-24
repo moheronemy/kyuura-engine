@@ -293,7 +293,7 @@ class PlanTest(unittest.TestCase):
     def test_plan_fixes_reach_settings_and_identity(self):
         plan = self.plan("p")
         self.assertEqual((plan["format"], B.PLAN_FORMAT, B.COMPLETE_FORMAT, B.TOOL_VERSION),
-                         ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7", 14))  # 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は形式 6・10。10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2 を加えた（版 1 の設定・選び方は同じ）
+                         ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7", 15))  # 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は形式 6・10。10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2 を加えた（版 1 の設定・選び方は同じ）
         for entry, settings in zip(plan["games"], (P6_SETTINGS, UR3A_SETTINGS)):
             self.assertEqual((entry["config"]["policy"], entry["config"]["profile"], entry["config"]["rules_version"], entry["config"]["reach"]),
                              ("reach", "boundary", 2, settings))

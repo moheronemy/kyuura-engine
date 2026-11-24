@@ -67,7 +67,7 @@ def game_header(config: Config, ident: dict[str, Any], argv: list[str], result: 
             "game_seed": config.game_seed, "policy_seed": config.policy_seed, "host_seed": config.host_seed, "distribution": config.distribution,
             "policy": config.policy, "epsilon": config.epsilon if config.policy == "mixed" else None,
             "rules_version": config.rules_version if config.policy in ("rules", "mixed") else None,
-            "repeat_threshold": config.repeat_threshold if config.policy in ("rules", "mixed") and config.rules_version in (2, 3) else None,
+            "repeat_threshold": config.repeat_threshold if config.policy in ("rules", "mixed") and config.rules_version in (2, 3, 4) else None,
             "policies": result["policies"], "profile": config.profile, "limits": result["limits"], "started": started, "finished": finished}
 
 

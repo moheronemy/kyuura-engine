@@ -128,7 +128,7 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis_p2=None):
 class VersionTest(unittest.TestCase):
     def test_versions_registration_and_basis(self):
         self.assertEqual(J.JUDGE_RULES_VERSION, 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。
-        self.assertEqual(B.TOOL_VERSION, 14)  # 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。
+        self.assertEqual(B.TOOL_VERSION, 15)  # 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。
         self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 形式は変えない
         self.assertEqual(J.LOST_TARGET_P2_EVIDENCE, KEY)
         self.assertEqual(J.KNOWN_STOP_EVIDENCE[KEY]["code"], CODE)

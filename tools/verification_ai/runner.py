@@ -23,7 +23,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import RULES3_VERSION, STAGE, TUPLE, BoundaryPolicy, LoopRulePolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, STAGE, TUPLE, BoundaryPolicy, LoopRulePolicy, MixedPolicy, RulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -423,13 +423,23 @@ class Runner:
                     entry["build"] = {"stage_problems": problems}
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_dependency_problems", "problems": problems, "attempt": entry["n"]})
                 entry["stages"] = stages
+                restriction = None
+                if hasattr(policy, "input_restriction"):  # rules-v4（TOOL_VERSION 15）: 組の写しを保存し、後回しの組を外す（ほかの方策は持たない）
+                    policy.observe_inputs(candidate, stages, allowed)
+                    restriction = policy.input_restriction(candidate, stages, allowed)
+                    if policy.last_restriction is not None:
+                        entry["input_restriction"] = dict(policy.last_restriction)
+                    if restriction == DEFER_ALL:  # 新しい応答で外さない組が 0: 組み立てずに、この候補をエピソードの残りで順位 7 にして選び直す
+                        entry["build"] = DEFER_ALL
+                        continue
                 method = None
                 try:
                     if policy.distribution == TUPLE:
                         choices, picks, meaning, method = B.build_choices_tuple(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
                         entry["build_method"] = method
                     else:
-                        choices, picks, meaning = B.build_choices(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
+                        choices, picks, meaning = B.build_choices(stages, policy, {"view": own_view, "candidate": candidate}, allowed,
+                                                                  **({"restriction": restriction} if restriction is not None else {}))
                 except B.ContractUnknown as error:
                     entry["build"] = {"contract_unknown": error.detail}
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_contract", "detail": error.detail, "attempt": entry["n"]}) from None
@@ -530,6 +540,8 @@ class Runner:
                     policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
                 if hasattr(policy, "accepted_candidate"):  # rules-v3: 本人の受理の候補と、受理のあとの通し番号
                     policy.accepted_candidate(candidate, self.position)
+                if hasattr(policy, "accepted_input"):  # rules-v4: 本人の受理の候補・入力の意味・受理のあとの通し番号
+                    policy.accepted_input(candidate, meaning, self.position)
                 if self.negative is not None:  # V3-1: 受理のあとの古い取っ手の試験（元の入力を正常に送り直すのではない）
                     self.negative.after_accept(self, actor, endpoint, entry)
                 if self.until is not None and self.until(self, entry):
@@ -719,6 +731,9 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES4_VERSION:  # rules-v4（試験。明示的に選んだときだけ）
+        players = {p: TransitionRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES3_VERSION:  # rules-v3（試験。明示的に選んだときだけ）
         players = {p: LoopRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
