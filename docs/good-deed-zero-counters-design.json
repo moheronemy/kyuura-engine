@@ -1425,5 +1425,56 @@
   "kyuura",
   "push to main / PR / merge"
  ],
- "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-gooddeed-zero-run/"
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-gooddeed-zero-run/",
+ "correction_2026_11_25": {
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v5-audit-plan-run/out/gooddeed_counts.json",
+  "finding": "reference_past_audits (16 decisions) and good_deed_uses (111 uses) both include the 2 main positions / 10 main-audit uses",
+  "same_population": true,
+  "decisions": {
+   "main_audit": {
+    "decisions": 2,
+    "games": 2,
+    "plans": 1
+   },
+   "past_only": {
+    "decisions": 14,
+    "games": 5,
+    "plans": 4,
+    "by_plan": {
+     "vai-batch-p2n1": 6,
+     "vai-batch-tr3u1-m3": 4,
+     "vai-batch-tr8v3-c3-r2": 2,
+     "vai-batch-tr8v3-c3-r3": 2
+    }
+   },
+   "total": {
+    "decisions": 16,
+    "games": 7,
+    "plans": 5
+   }
+  },
+  "uses": {
+   "total": 111,
+   "games": 27,
+   "main_audit": {
+    "uses": 10,
+    "games": 4,
+    "by_class": {
+     "no_decision": 7,
+     "remove_counters_decision": 2,
+     "target_without_counters": 1
+    }
+   },
+   "past_only": {
+    "uses": 101,
+    "games": 23
+   }
+  },
+  "correct_wording": "past records 14 decisions + main audit 2 decisions = 16 decisions",
+  "wrong_wording": "16 past decisions + 2 main (double counts the 2 main positions; in the commit message of 3b449b2 and that unit's report)",
+  "population": "vai store verifier/runs, trace.jsonl only (attempt dirs)",
+  "attempt_dirs_without_trace": 0,
+  "other_store_remove_counters_files": 0,
+  "conclusions_changed": false
+ }
 }
