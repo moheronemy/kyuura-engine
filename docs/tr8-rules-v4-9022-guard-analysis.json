@@ -1503,5 +1503,10 @@
   "push to main / merge / PR",
   "kyuura"
  ],
- "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-guard-run/"
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-guard-run/",
+ "followup": {
+  "doc": "docs/tr8-rules-v5-damage-swap-guard-experiment.md",
+  "summary": "rules-v5 (N = 6) implemented and compared: S5 / K2 / K4 kept 4/4; 9022 first rank change at position 127 (not the estimated 136); 9022 max per turn 17 -> 6; 9023 / 9024 unchanged",
+  "correction": "return points 9 = 7 (turn 32) + 1 (turn 34) + 1 (turn 36); the ch. 0 sentence omitted turn 34"
+ }
 }
