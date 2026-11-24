@@ -88,7 +88,7 @@ class RecordedConditionTest(unittest.TestCase):
         self.assertEqual(J.judge_normal(candidate(), [], rejected(), stages=stages()),
                          (J.UNDETERMINED, [f"stop_condition_not_evidenced:{ER9}"]))
         self.assertEqual(J.JUDGE_RULES_VERSION, 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9 は LOST_TARGET の P2-min だけを足した（旧の期待は 8）。 規則 8 は LOST_TARGET の P3s だけを足した。規則 7 は LOST_TARGET の P1 だけを足した（ER9 の条件・この判定は変えていない）
-        self.assertEqual(B.TOOL_VERSION, 15)  # 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2。7: 到達目的の方策 reach（6: 明示的なデッキリスト・方式 boundary。5: 主体別の観測の記録）
+        self.assertEqual(B.TOOL_VERSION, 16)  # 16: rules-v5（旧の期待は 15）。 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2。7: 到達目的の方策 reach（6: 明示的なデッキリスト・方式 boundary。5: 主体別の観測の記録）
 
     def test_policy_and_input_generation_do_not_use_it(self):
         """方策・行動生成・runner は規則 6 の部品を直接使わない（判定は保存する trace にあとから当てるだけ。乱数・入力の作り方は変わらない）。規則 7 から、runner は

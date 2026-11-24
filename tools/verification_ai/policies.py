@@ -544,6 +544,76 @@ class TransitionRulePolicy(RulePolicy):
         return {**TRANSITION_DEFERRAL, "counts": dict(sorted(self.loop_counts.items()))}
 
 
+# ---------------------------------------------------------------- rules-v5（試験の方策）: rules-v4 に、1 番の［ダメージスワップ］の受理の回数による順位の変更を加える
+# （docs/tr8-rules-v4-9022-guard-analysis.md 6 章・docs/tr8-rules-v5-damage-swap-guard-experiment.md）。rules-v4 の周期の検出・入力の制限・後回し、rules-v2 の順位・
+# 同順位の選び方・入力単位の再送抑止はそのまま。候補を消さず、合法性を判定しない（エンジンでの使用の禁止ではない。方策の順位だけ）
+
+RULES5_VERSION = 5
+RULES5_DISTRIBUTION = "rules-v5-candidate+uniform-stage"
+SWAP_CAP = 6  # 同じ番に本人の［ダメージスワップ］が 6 回受理されたら、その番の残りで候補を順位 7（end_turn より後ろ）に置く
+SWAP_CAP_RULE = {"version": 1, "kind": LOOP_KIND, "powers": list(LOOP_POWER_NAMES), "cap": SWAP_CAP,
+                 "count": "own accepted target powers in the own (segment, turn), all holders summed; rejected / unbuildable / suppressed not counted; "
+                          "other accepted operations do not reset",
+                 "effect": f"after {SWAP_CAP} accepted, target power candidates rank {DEMOTED_RANK} (after end_turn) for the rest of the turn; "
+                           "candidate kept (chosen only when nothing ranks higher; rules-v4 input restriction and rules-v2 repeat suppression unchanged)",
+                 "base": "rules-v4", "reset": "turn change"}
+
+
+class SwapCapRulePolicy(TransitionRulePolicy):
+    """rules-v5: rules-v4 に、同じ番の本人の［ダメージスワップ］の受理の回数（持ち主をまたいで合計）が ``SWAP_CAP`` に達したら、その番の残りで
+    対象の候補を ``DEMOTED_RANK``（end_turn より後ろ）に置く規則を加える。
+
+    - 数えるのは本人の受理だけ（``accepted_input``）。拒否・入力を作れない・送信の抑止・後回しで組み立てなかった試みは数えない
+    - ほかの操作の受理では消さない。番（本人の観測の（区間, 番））が変われば消す（rules-v4 の番の更新と同じ所）
+    - 順位 7 の候補しか残らなければ rules-v2 と同じく順位 7 の中から選ぶ。そのときの入力の制限は rules-v4 のまま（回数では制限を外さない）"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP):
+        super().__init__(seed, STAGE, threshold=threshold)
+        if type(cap) is not int or cap < 1:
+            raise ValueError("cap は 1 以上の整数")
+        self.version = RULES5_VERSION
+        self.distribution = RULES5_DISTRIBUTION
+        self.swap_cap = {**SWAP_CAP_RULE, "cap": cap}
+        self.cap = cap
+        self._swaps = 0  # この番の本人の対象の受理の回数
+        self._swap_turn = None
+
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        super().observe_view(view, position)
+        if self._turn != self._swap_turn:
+            if self._swaps >= self.cap:
+                self.loop_counts["turn_resets_with_swap_cap"] += 1
+            self._swap_turn, self._swaps = self._turn, 0
+
+    def accepted_input(self, candidate: dict[str, Any], meaning: list[dict[str, Any]], position: int) -> None:
+        super().accepted_input(candidate, meaning, position)
+        if loop_target(candidate):
+            self._swaps += 1
+            self.loop_counts["swaps_accepted"] += 1
+            if self._swaps == self.cap:
+                self.loop_counts["swap_cap_reached"] += 1
+
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        if self._swaps:
+            info["swap_count"] = {"accepted_this_turn": self._swaps, "cap": self.cap, "capped": self._swaps >= self.cap}
+        return info
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        ranks, _, note = super()._adjust_ranks(items, ranks, prefix)
+        n = 0
+        if self._swaps >= self.cap:
+            hit = [r is not None and loop_target(c) for r, c in zip(ranks, items)]
+            n = sum(hit)
+            ranks = [DEMOTED_RANK if x else r for r, x in zip(ranks, hit)]
+            if n:
+                self.loop_counts["choices_with_swap_cap"] += 1
+        return ranks, "rule5", note + (f":swap_cap{n}" if n else "")
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "counts": dict(sorted(self.loop_counts.items()))}
+
+
 def mix_seed(policy_seed: int, player: int) -> str:
     """混合の判定の乱数の種（候補・入力の選択の乱数と別。ゲームの乱数とも別）。"""
     return f"kyuura-vai-v2:mix:{policy_seed}:{player}"
