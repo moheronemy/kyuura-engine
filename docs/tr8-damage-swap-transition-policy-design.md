@@ -257,3 +257,5 @@ C1 の 8 局で、入力の段を記録した［ダメージスワップ］の�
 - 照合: `out/reconcile_c1_fresh_r3.json`（15 回）・`out/reconcile_c1_known_r3.json`（補足の 8 回）・`out/divergence_v2_records.json`（`rules-v2` の 11 局の分かれ目と番ごとの数）。
 - 道具: `scripts/reconcile_tr8d.py`・`scripts/divergence_tr8d.py`。写しは `scripts/derive_tr8d.py` で作った。
 - 前後の照合: `out/protection_*`・`out/evidence_*`・`out/manifests_*`。
+
+実装と比較の結果は [rules-v4 の実装と比較](tr8-damage-swap-transition-policy-experiment.md) にある（U1 は追加の抑制なしで試し、S5 は 4／4、C1 の 9023 は完走、9022 で使用数が `rules-v2` を上回った）。

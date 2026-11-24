@@ -1027,5 +1027,9 @@
   "engine / convention / judge / limits change",
   "push to main / merge / PR"
  ],
- "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-design-run/"
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-design-run/",
+ "followup": {
+  "doc": "docs/tr8-damage-swap-transition-policy-experiment.md",
+  "summary": "rules-v4 implemented (tool 15, 8dc96a2) without an extra guard; S5 4/4; C1 9023 game_over; 9022 swaps above rules-v2 (evidence for an extra guard)"
+ }
 }
