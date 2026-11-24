@@ -1,0 +1,873 @@
+{
+ "status": "comparison_done",
+ "doc": "docs/tr8-rules-v3-c2-c4-comparison.md",
+ "date": "2026-11-24",
+ "base": "6cf6270f527c4567283a63f89d2f3b553bee27fd",
+ "policy_commit": "001210fa09dfd0e40512985fe95cf0a51cd5150b",
+ "branch": "claude/tr8-rules-v3-c2-c4-comparison",
+ "previous": [
+  "docs/tr8-rules-v3-fresh-seed-comparison.md",
+  "docs/tr8-rules-v3-buildable-alternatives.md"
+ ],
+ "runtime": {
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "engine": "0.198.0",
+  "tool_version": 14,
+  "identity_equal_to_previous_plans": true,
+  "execution_worktree": "kyuura-engine-lt102r (detached 001210f, 0 entries incl. ignored before and after)",
+  "pyc_cache": "checked-hash, 185 files, same before and after every game",
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "profile": "deep",
+  "observation": true,
+  "prestop": true,
+  "negative": false,
+  "limits": "same as the TR8 audit (accepted 1,000 per game included)"
+ },
+ "conditions": {
+  "C3": {
+   "decks": "P42 (seat 0) vs L67-U (seat 1, Alakazam = actor 1)",
+   "audit_plan": "vai-batch-tr8a-m3",
+   "seeds": [
+    9037,
+    9038,
+    9039,
+    9040,
+    9041,
+    9042
+   ]
+  },
+  "C2": {
+   "decks": "hitmonchan-dewgong-v2 vs venusaur-parasect-v2",
+   "audit_plan": "vai-batch-tr8a-m2",
+   "seeds": [
+    9035
+   ]
+  },
+  "C4": {
+   "decks": "LUCKY_DECK vs CONNECT_DECK",
+   "audit_plan": "vai-batch-tr8a-m4",
+   "seeds": [
+    9036
+   ]
+  }
+ },
+ "seed_selection": {
+  "rule": "first 8 consecutive unused values >= 9035",
+  "plans_scanned": 90,
+  "headers_scanned": 434,
+  "docs_with_seeds": 16,
+  "errors": 0,
+  "max_used_seed": 9034,
+  "seeds": [
+   9035,
+   9036,
+   9037,
+   9038,
+   9039,
+   9040,
+   9041,
+   9042
+  ],
+  "order": "seed ascending, rules-v2 then rules-v3 per pair"
+ },
+ "plans": {
+  "sha256": {
+   "vai-batch-tr8v3-c2-r2": "d9d697f765cca92692a588e02c26dedb1238c1a35634660ab22f69ed6d86ce23",
+   "vai-batch-tr8v3-c2-r3": "b53606813ce7c10f33c787eaaae11a9bb48f76e931647fdf56923c688798d2d6",
+   "vai-batch-tr8v3-c4-r2": "5bdff052ace3020b00e722cdf4126dfff1c3e32a91efa13d4d3a6ee15e5e9b1f",
+   "vai-batch-tr8v3-c4-r3": "afc11ec2360975f36a11b870567017447e62eeabfe3891562de4125d638e7946",
+   "vai-batch-tr8v3-c3-r2": "39657ff96732f8002d3b60a89a0568594adf9ae37e2dd31c12a80134f508b183",
+   "vai-batch-tr8v3-c3-r3": "975460681135c9e116be30c3681e951d00846e03230956a3d64f277b92c95902"
+  },
+  "check_ok": true,
+  "limits": {
+   "plan_tool_seconds": 900,
+   "plan_evidence_mib": 1024,
+   "program_tool_seconds": 3600,
+   "program_outer_seconds": 7200,
+   "program_evidence_mib": 2048
+  },
+  "dry_run": "6 plans: use_cache true, not started"
+ },
+ "execution": {
+  "planned": 16,
+  "started": 16,
+  "complete": 16,
+  "incomplete": 0,
+  "not_started": 0,
+  "budget_checks_ok": 16,
+  "gates_go": 16,
+  "policy_stop": 0,
+  "aborted": false
+ },
+ "by_condition": {
+  "C3": {
+   "rules_v2": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "terminations": {
+     "game_over": 6
+    },
+    "accepted": 752,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 12,
+    "end_turn_accepted": 72,
+    "attack_accepted": 171,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "terminations": {
+     "game_over": 6
+    },
+    "accepted": 752,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 12,
+    "end_turn_accepted": 72,
+    "attack_accepted": 171,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "completion_classes": {
+    "both": 6
+   },
+   "identical_pairs": 6,
+   "end_turn_with_demoted": {
+    "count": 0,
+    "with_other_legal_move_confirmed": 0,
+    "with_selected_accepted_after_detection": 0,
+    "with_presented_unbuildable": 0,
+    "with_record_insufficient": 0,
+    "by_actor": {}
+   }
+  },
+  "C2": {
+   "rules_v2": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 1,
+    "terminations": {
+     "game_over": 1
+    },
+    "accepted": 81,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 0,
+    "end_turn_accepted": 8,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 1,
+    "terminations": {
+     "game_over": 1
+    },
+    "accepted": 81,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 0,
+    "end_turn_accepted": 8,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "completion_classes": {
+    "both": 1
+   },
+   "identical_pairs": 1,
+   "end_turn_with_demoted": {
+    "count": 0,
+    "with_other_legal_move_confirmed": 0,
+    "with_selected_accepted_after_detection": 0,
+    "with_presented_unbuildable": 0,
+    "with_record_insufficient": 0,
+    "by_actor": {}
+   }
+  },
+  "C4": {
+   "rules_v2": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 1,
+    "terminations": {
+     "game_over": 1
+    },
+    "accepted": 227,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 0,
+    "end_turn_accepted": 30,
+    "attack_accepted": 44,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 1,
+    "terminations": {
+     "game_over": 1
+    },
+    "accepted": 227,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "policy_suppressed": 0,
+    "end_turn_accepted": 30,
+    "attack_accepted": 44,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "completion_classes": {
+    "both": 1
+   },
+   "identical_pairs": 1,
+   "end_turn_with_demoted": {
+    "count": 0,
+    "with_other_legal_move_confirmed": 0,
+    "with_selected_accepted_after_detection": 0,
+    "with_presented_unbuildable": 0,
+    "with_record_insufficient": 0,
+    "by_actor": {}
+   }
+  }
+ },
+ "pairs": [
+  {
+   "condition": "C2",
+   "seed": 9035,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    89,
+    89
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g001-rules-v2-s9035",
+    "termination": "game_over",
+    "turns": 19,
+    "accepted": 81,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 8,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g001-rules-v3-s9035",
+    "termination": "game_over",
+    "turns": 19,
+    "accepted": 81,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 8,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C4",
+   "seed": 9036,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    274,
+    274
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g001-rules-v2-s9036",
+    "termination": "game_over",
+    "turns": 74,
+    "accepted": 227,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 30,
+    "attack_accepted": 44,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g001-rules-v3-s9036",
+    "termination": "game_over",
+    "turns": 74,
+    "accepted": 227,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 30,
+    "attack_accepted": 44,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9037,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    220,
+    220
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g001-rules-v2-s9037",
+    "termination": "game_over",
+    "turns": 65,
+    "accepted": 202,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 8,
+    "end_turn_accepted": 17,
+    "attack_accepted": 48,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g001-rules-v3-s9037",
+    "termination": "game_over",
+    "turns": 65,
+    "accepted": 202,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 8,
+    "end_turn_accepted": 17,
+    "attack_accepted": 48,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9038,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    55,
+    55
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g002-rules-v2-s9038",
+    "termination": "game_over",
+    "turns": 14,
+    "accepted": 53,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 4,
+    "attack_accepted": 10,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g002-rules-v3-s9038",
+    "termination": "game_over",
+    "turns": 14,
+    "accepted": 53,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 4,
+    "attack_accepted": 10,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9039,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    125,
+    125
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g003-rules-v2-s9039",
+    "termination": "game_over",
+    "turns": 37,
+    "accepted": 113,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 11,
+    "attack_accepted": 26,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g003-rules-v3-s9039",
+    "termination": "game_over",
+    "turns": 37,
+    "accepted": 113,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 11,
+    "attack_accepted": 26,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9040,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    102,
+    102
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g004-rules-v2-s9040",
+    "termination": "game_over",
+    "turns": 28,
+    "accepted": 94,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 2,
+    "end_turn_accepted": 8,
+    "attack_accepted": 20,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g004-rules-v3-s9040",
+    "termination": "game_over",
+    "turns": 28,
+    "accepted": 94,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 2,
+    "end_turn_accepted": 8,
+    "attack_accepted": 20,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9041,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    269,
+    269
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g005-rules-v2-s9041",
+    "termination": "game_over",
+    "turns": 84,
+    "accepted": 234,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 28,
+    "attack_accepted": 56,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g005-rules-v3-s9041",
+    "termination": "game_over",
+    "turns": 84,
+    "accepted": 234,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 0,
+    "end_turn_accepted": 28,
+    "attack_accepted": 56,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9042,
+   "completion_class": "both",
+   "identical": true,
+   "sent_identical": true,
+   "termination_equal": true,
+   "attempts": [
+    60,
+    60
+   ],
+   "first_choice_change": null,
+   "first_send_change": null,
+   "first_detection_rules_v3": null,
+   "rules_v2": {
+    "game_id": "g006-rules-v2-s9042",
+    "termination": "game_over",
+    "turns": 15,
+    "accepted": 56,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "offline replay of the record through the detector",
+    "policy_suppressed": 2,
+    "end_turn_accepted": 4,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0
+   },
+   "rules_v3": {
+    "game_id": "g006-rules-v3-s9042",
+    "termination": "game_over",
+    "turns": 15,
+    "accepted": 56,
+    "swaps_chosen": 0,
+    "swaps_sent": 0,
+    "swaps_accepted": 0,
+    "swaps_suppressed": 0,
+    "returns_damage_config": 0,
+    "loop_detections_full_view": 0,
+    "loop_detections_source": "policy (trace)",
+    "policy_suppressed": 2,
+    "end_turn_accepted": 4,
+    "attack_accepted": 11,
+    "rejected": 0,
+    "anomalies": 0,
+    "choices_with_loop_demoted": 0,
+    "end_turn_with_demoted": []
+   }
+  }
+ ],
+ "damage_swap_presented": [
+  {
+   "condition": "C3",
+   "seed": 9041,
+   "mode": "rules-v2",
+   "actor": 1,
+   "attempts": 6,
+   "chosen_swap": 0,
+   "chosen_instead": {
+    "attach_energy:priority3": 2,
+    "use_attack:priority4": 3,
+    "play_basic:priority1": 1
+   }
+  },
+  {
+   "condition": "C3",
+   "seed": 9041,
+   "mode": "rules-v3",
+   "actor": 1,
+   "attempts": 6,
+   "chosen_swap": 0,
+   "chosen_instead": {
+    "attach_energy:priority3": 2,
+    "use_attack:priority4": 3,
+    "play_basic:priority1": 1
+   }
+  }
+ ],
+ "end_turn_with_demoted": {
+  "C3": {
+   "count": 0,
+   "with_other_legal_move_confirmed": 0,
+   "with_selected_accepted_after_detection": 0,
+   "with_presented_unbuildable": 0,
+   "with_record_insufficient": 0,
+   "by_actor": {}
+  },
+  "C2": {
+   "count": 0,
+   "with_other_legal_move_confirmed": 0,
+   "with_selected_accepted_after_detection": 0,
+   "with_presented_unbuildable": 0,
+   "with_record_insufficient": 0,
+   "by_actor": {}
+  },
+  "C4": {
+   "count": 0,
+   "with_other_legal_move_confirmed": 0,
+   "with_selected_accepted_after_detection": 0,
+   "with_presented_unbuildable": 0,
+   "with_record_insufficient": 0,
+   "by_actor": {}
+  }
+ },
+ "c1_reread": {
+  "source": "vai-batch-tr8v3-fresh-r3 (saved records, read only)",
+  "rows": [
+   {
+    "seed": 9028,
+    "count": 5,
+    "presented_unbuildable": 5,
+    "with_unused_legal_move": 5,
+    "unused_legal_pairs": [
+     3,
+     8,
+     7,
+     10,
+     12
+    ],
+    "record_insufficient": 0
+   },
+   {
+    "seed": 9029,
+    "count": 5,
+    "presented_unbuildable": 5,
+    "with_unused_legal_move": 5,
+    "unused_legal_pairs": [
+     3,
+     3,
+     1,
+     2,
+     5
+    ],
+    "record_insufficient": 0
+   },
+   {
+    "seed": 9032,
+    "count": 2,
+    "presented_unbuildable": 2,
+    "with_unused_legal_move": 2,
+    "unused_legal_pairs": [
+     4,
+     2
+    ],
+    "record_insufficient": 0
+   },
+   {
+    "seed": 9034,
+    "count": 3,
+    "presented_unbuildable": 3,
+    "with_unused_legal_move": 0,
+    "unused_legal_pairs": [
+     0,
+     0,
+     0
+    ],
+    "record_insufficient": 0
+   }
+  ],
+  "total": 15,
+  "with_unused_legal_move": 12,
+  "unused_legal_pairs": 60,
+  "method": "input stages (eligible source/target) recorded at an earlier position of the same actor whose view response equals the current one; pairs not used this turn and not reverses",
+  "note": "legality only; strategic value not judged"
+ },
+ "conclusions": {
+  "c3_difference": "none: 6/6 pairs identical (attempts, sends, termination); no Damage Swap run, no detection, no demotion",
+  "end_turn_with_demoted": 0,
+  "controls_identical": {
+   "C2": true,
+   "C4": true
+  },
+  "holder_level_constraint_in_normal_games": "observed in the C1 re-read (12 of 15)",
+  "rules_v3": "explicit-only, not default"
+ },
+ "budget": {
+  "tool_seconds": 87.706,
+  "outer_seconds": 341.549,
+  "evidence_bytes": 151038415
+ },
+ "unconfirmed": [
+  "no Damage Swap run in the 6 C3 pairs; the policy effect in C3 is not measured",
+  "no end turn with a demoted Damage Swap in this unit",
+  "strategic value of the unused legal moves in the C1 re-read not judged",
+  "C2 and C4 one pair each",
+  "the C1 re-read uses input stages recorded at an earlier identical view, not inputs fetched at the end-turn point"
+ ],
+ "not_done": [
+  "policy change",
+  "rules-v3 as default",
+  "engine / convention / judge / limits change",
+  "retries / seed changes / extra games",
+  "push to main / merge / PR"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v3-c2c4-run/ (+ vai-batch-tr8v3-c2-r2, -c2-r3, -c4-r2, -c4-r3, -c3-r2, -c3-r3)",
+ "failures": [
+  "F1: the plan-creation step wrote the 6 CLI stdout/stderr to one file name (wrong word taken as the batch name); 5 stdout lines overwritten. Exit codes 0 x6; plans checked by check_plans and dry-run; games not affected"
+ ]
+}

@@ -5397,5 +5397,9 @@
  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v3-board-run/",
  "failures": [
   "F1: a version check run without -B wrote kyuura_engine/__pycache__ and kyuura_engine/resolution/__pycache__ (45 .pyc) into the read-only execution worktree lt102r; listed and removed; lt102r back to 0 entries incl. ignored; the board runs were repeated after the removal and matched (66 / 66)"
- ]
+ ],
+ "followup": {
+  "doc": "docs/tr8-rules-v3-c2-c4-comparison.md",
+  "summary": "C3 6 pairs, C2 and C4 identical under both policies; C1 re-read shows the holder-level constraint in 12 of 15 demoted end turns"
+ }
 }
