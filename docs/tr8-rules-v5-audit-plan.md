@@ -1,0 +1,383 @@
+# 0.198.0・TR8・`rules-v5` の新しい seed で完走と残る未裁定を測る監査の計画（計画だけ）
+
+2026-11-25。計画と文書化だけです。次のことはしていません（次の単位）:
+
+- 確定計画（`plan.json`・`plan.sha256`）の生成、キャッシュの準備、dry-run、対戦、judge、replay
+- エンジン・検証用 AI・GUI・方策・規約・judge・既定の方策・版の変更
+
+**基点と実行候補:**
+
+- **文書の基点:** `claude/good-deed-zero-counters-design` の `3b449b2c4e8e6c7ad5ff853792899cf04535b2f5`（origin と一致）。
+- **実行の候補:** `rules-v5` の実装 `2a76d577212b76240dee28ae3506ce586730397c`（`claude/tr8-rules-v5-damage-swap-guard` の 1 つ目のコミット。`3b449b2` の祖先）。
+  - `2a76d57..3b449b2` の差は docs だけです（`kyuura_engine`・`tools`・`scripts`・`tests`・`pyproject.toml` の差の名前 0）。
+  - `a358378..2a76d57` の `kyuura_engine`・`pyproject.toml` の差の名前は 0 です。エンジンの部分は 0.198.0 の配布の固定 `a3583786cf93ee67ce95b94a5b94505f5fcef1b0` と同じです。
+- **作業の場所:** worktree `C:\dev\kyuura-engine-lt111`、ブランチ `claude/tr8-rules-v5-audit-plan`。識別とデッキの検査は、`2a76d57` に切り離した既存の worktree `C:\dev\kyuura-engine-lt109r` で、`-B`・`PYTHONDONTWRITEBYTECODE` を付けて行いました（前後とも、無視をふくめ変更 0・`__pycache__` 0）。
+- **機械可読の下書き:** [tr8-rules-v5-audit-plan.json](tr8-rules-v5-audit-plan.json)（`status: draft`。実行のときに決まる値は `null`）。
+- **証跡:** `kyuura-engine-verification-vai/verifier/runs/vai-tr8v5-audit-plan-run/`。
+
+**重複の確かめ（新しい計画を作る前）:**
+
+| 調べた場所 | 結果 |
+|---|---|
+| 公開のブランチの名前 | `rules-v5` の監査・新しい seed の計画にあたるものはない（`rules-v5` の名前は実装と比較のブランチ `claude/tr8-rules-v5-damage-swap-guard` だけ） |
+| 証跡の実行フォルダ・公開の要約・索引（`MANIFEST.md`） | `rules-v5` の計画は `vai-batch-tr8v5-v5` だけ。C1 の 3 局（旧 seed 9022〜9024）の rules-v4 との比較で、新しい seed・4 条件の監査ではない |
+
+→ 同じ監査は、計画済み・進行中・完了済みのどれでもありません。新しい計画を作りました。
+
+**目的:** `rules-v5` を明示して選び、TR8@1 の通常の対戦で、未使用の seed での完走率、操作の上限に達した局、未裁定による終了、規約で実際に使えた手を測ります。あわせて、［ダメージスワップ］の 1 番あたりの使用が 6 回で止まり、そのあとの手に移るかを、新しい seed で観測します。
+
+- 旧 TR8 の監査（rules-v2）は 23／24 局が完走で、完走しなかった 1 局は受理 1,000 の上限でした（[tr8-unresolved-batch-plan](tr8-unresolved-batch-plan.md) 13 章）。
+- `rules-v5` の限定の比較（C1・3 局）では、9022 の 1 番あたりの最大が 17 回から 6 回に減りました（[tr8-rules-v5-damage-swap-guard-experiment](tr8-rules-v5-damage-swap-guard-experiment.md)）。
+- seed が違うので、旧監査との差を `rules-v5` の効果としては扱いません。28 局から一般の頻度も推定しません。この監査で既定の方策は決めません。
+
+## 0. 推奨案（要約）
+
+| 項目 | 値 |
+|---|---|
+| 方式 | `rules-v5` だけ（`--modes rules-v5`。方策 `rules`・`rules_version` 5・`repeat_threshold` 2・回数の上限 6・プロファイル `deep`・分布 `rules-v5-candidate+uniform-stage`） |
+| 規約集合 | `CS-KYUURA-PLAY-TR8@1`（`--conventions` で明示） |
+| 記録 | `--observation`・`--prestop-inputs`（上限は既定） |
+| 停止方針 | 既定（`--undetermined-evidence-missing continue`。旧 TR8 の監査と同じ） |
+| 変異 | なし。単一のプロセス・逐次。1 局ごとに止めて確かめる |
+| 対戦の条件 | 4 つ（2 章）。C1 L67-U どうし・C2 固定デッキ v2 の組・C3 P42 対 L67-U・C4 LUCKY_DECK 対 CONNECT_DECK（旧監査と同じ） |
+| seed | 先行 9043、本実行 9044〜9049（3 章） |
+| 局 | 先行 4（条件ごとに 1）＋本実行 24（条件ごとに 6）＝ 28 |
+| 計画 | 8 つ。先行 `vai-batch-tr8v5a-p1`〜`-p4`（各 1 局）、本実行 `vai-batch-tr8v5a-m1`〜`-m4`（各 6 局）。番号は条件 C1〜C4 に対応 |
+| 単局の上限 | 既定（`runner.Limits`: 操作 2000・受理 1000・番 200・120 秒） |
+| 実行のコミット | エンジン `a3583786cf93ee67ce95b94a5b94505f5fcef1b0`（`--engine-commit`）・道具 `2a76d577212b76240dee28ae3506ce586730397c`（`--tool-commit`）。`2a76d57` に切り離した worktree で実行する（rules-v5 の比較と同じ） |
+| 予算 | 4 章（先行の各計画 300 秒・512 MiB、本実行の各計画 900 秒・1,024 MiB、全体 道具 3,600 秒・実時間 7,200 秒・証跡 2,048 MiB） |
+
+入れないもの:
+
+- `rules-v2`〜`rules-v4` との比べの対戦（同じ seed で方策だけを変える比べは別の単位）
+- boundary・reach・mixed などほかの方式、デッキの向きの入れ替え・改造
+- 先行の結果を見た seed・デッキ・条件の差し替え、局の追加、予算の延長、再試行、停止の解除
+
+## 1. 基点と実行の条件の確認
+
+| 確かめたこと | 結果 |
+|---|---|
+| `3b449b2` の位置 | `origin/claude/good-deed-zero-counters-design` と一致（`fetch` のあとの `rev-parse`） |
+| `2a76d57` の位置 | 完全なハッシュが commit として存在し、`origin/claude/tr8-rules-v5-damage-swap-guard~1` と一致。`3b449b2` の祖先（`merge-base --is-ancestor` 真） |
+| 実行コードの差 | `2a76d57..3b449b2`: 0（docs だけ）。`a358378..2a76d57` のエンジン: 0 |
+| 作業ツリー | `lt109r`（`2a76d57` に切り離し）は測定・デッキの検査の前後とも変更 0（無視をふくむ）・`__pycache__` 0 |
+
+**識別**（`lt109r` で読み取りで測った値。証跡 `out/identity_run.json`・`out/sets_and_formats.json`。実行のときに測り直す）:
+
+| 項目 | 値 | 旧 TR8 の監査の計画（`a358378`）との違い |
+|---|---|---|
+| エンジン | 0.198.0・behavior `c9912dd8…`（58 ファイル・`kyuura-package-files-sha256/1`）・instrumentation `61f09812…`（4 ファイル） | 同じ |
+| 道具 | `tools.verification_ai.batch`・`TOOL_VERSION` 16・digest `c9202041…`（27 ファイル） | 版 13 → 16、digest `be95aa1e…` → `c9202041…`（rules-v3〜v5 の追加。比較の計画 `vai-batch-tr8v5-v5` の `identity.tool` と同じ） |
+| 判定の規則 | 10 | 同じ |
+| 形式 | 計画 `kyuura-vai-batch-plan/7`・完了 `kyuura-vai-batch-complete/7` | 同じ |
+| basis | P1 `e27dfe1d…`・P3 `69d05615…`・P2 `e1ab9ac0…`・R `2e912bee…` | 同じ |
+| 規約集合 | `CS-KYUURA-PLAY-TR8@1`・27 規約・固定値 `sha256:27dfe27a…` = 計算値・検証の問題 0。TR8 − TR7 は `PC-LUCKY-STADIUM-REPLACEMENT@1` だけ | 同じ |
+| 既定の集合 | `CS-KYUURA-CURRENT@1`（TR8 は明示したときだけ） | 同じ |
+
+- 識別の 90 項目のうち、旧計画と違うのは道具の版と digest、エンジンのファイルの場所の 3 つだけでした。
+
+## 2. 対戦の条件
+
+旧 TR8 の監査と同じ 4 条件・席の向き・ファイルです。
+
+| 条件 | 主体 0 | 主体 1 | 指定 | 合法性（`2a76d57`） |
+|---|---|---|---|---|
+| C1 | 明示リスト L67-U | 明示リスト L67-U | `--decklist0/1 verifier/runs/vai-batch-d/decklists/decklist-L67-U.json` | exit 0・`legality.ok` 真・problems 空 |
+| C2 | 固定デッキ `hitmonchan-dewgong-v2` | 固定デッキ `venusaur-parasect-v2` | `--deck0`・`--deck1` | `deck_problems` 空 |
+| C3 | 明示リスト P42 | 明示リスト L67-U | `--decklist0 verifier/runs/p2-min-batch-plan/decklists/decklist-P42.json --decklist1 <L67-U>` | exit 0・ok・空 |
+| C4 | 明示リスト LUCKY_DECK | 明示リスト CONNECT_DECK | `--decklist0/1 verifier/runs/vai-batch-d/decklists/decklist-*.json` | exit 0・ok・空 |
+
+- **カードの版の照合:** `batch decklist --file` の 4 つの出力は、旧 TR8 の監査の計画の出力と全行が同じでした（差の行 0）。デッキの調べ（`out/deck_profile.json`）も、旧計画の出力と同じです（合法性・確認値・カード ID・ER9・H4・T19b・RS1・TR3 のカード・変身の力）。
+- **確認値:** L67-U `5fb91539…`・P42 `243c137f…`・LUCKY_DECK `857abd7d…`・CONNECT_DECK `6ae10e56…`（展開の sha256）。どれも 60 枚です。
+- **［ダメージスワップ］を持つフーディン（PMCG1-049）:** L67-U だけに 2 枚あります。出うるのは C1（両方）と C3（主体 1）だけで、C2・C4 には出ません。
+- ER9・H4・T19b・RS1 にかかわるカードの分布は、旧計画 2 章の表と同じです。
+- **引き継ぐ設定:** `deep`・既定の単局上限・観測と prestop あり・変異なし・逐次実行。方策だけを `rules-v2` から `rules-v5` に替えます。
+
+## 3. seed・局数・並び
+
+- **調べ:** 証跡のストア 30 か所の `plan.json`・`header.json` 572 ファイルを読みました。読めないものは 0 です（`out/seed_scan.json`）。
+  - 使われた値は 136 種類でした。9000〜9200 で使われていたのは 9001〜9042 で、最大値は 9042 です。
+  - 9043 以上には、使われた値がありません。
+- **規則:** 9043 から上へ、連続 7 値がすべて未使用の最初の組を選びます。先頭の 1 値を先行、残りの 6 値を本実行に使います。
+  - → **先行 9043、本実行 9044〜9049**
+- 実行のときに同じ規則で調べ直します。選んだ値が変わっていたら（ほかの作業で使われていたら）、差し替えずに止め、計画を直します。対戦の結果による差し替えもしません。
+
+**並び（固定）:**
+
+| 段 | 局 | 順 |
+|---|---|---|
+| 先行 | 4 | p1（C1・9043）→ p2（C2・9043）→ p3（C3・9043）→ p4（C4・9043） |
+| 本実行 | 24 | seed の昇順に、seed の中で条件を回す: 9044 で m1→m2→m3→m4、9045 で m1→…→m4、…、9049 で m1→…→m4 |
+
+- 1 回の呼び出しで 1 局（`--sessions 1`）にし、計画をまたいで上の順に呼びます。予算が足りなくなったとき、未着手は並びの後ろに寄ります。
+- 8 つの計画は、先行の 1 局目の前にまとめて作り、`plan.sha256` を記録して固定します。先行が不合格なら、本実行の計画は未着手のまま残します。
+
+## 4. 時間・容量の見積もりと予算
+
+### 4.1 保存済みの記録から作った見積もり
+
+`out/budget_estimate.json`（0.198.0・TR8@1 の完了マーカー 34 局と、計画の台帳・作業記録の外側の台帳の読み取り）です。
+
+| 記録 | 方策 | 局 | 終わり方 | 1 局の時間の中央値・最大 | 1 局の量の最大 | 道具の累積 | 外側（game_end の和・最大） |
+|---|---|---|---|---|---|---|---|
+| 旧 TR8 の監査の先行 | rules-v2 | 4 | game_over 4 | C1 0.39・C2 4.35・C3 0.85・C4 2.18 秒 | 15.8 MB（C2） | 17.059 秒 | 80.6 秒・23.5 秒 |
+| 旧 TR8 の監査の本実行 | rules-v2 | 24 | game_over 23・limit_accepted 1 | C1 2.15・37.32／C2 2.70・3.77／C3 1.01・2.20／C4 4.99・6.50 秒 | 97.6 MB（C1・受理 1,000） | 166.315 秒 | 596.0 秒・72.1 秒 |
+| rules-v5 の比較（C1・旧 seed 9022〜9024） | rules-v4 | 3 | game_over 3 | 2.44・4.45 秒 | 12.5 MB | 17.012 秒 | 63.7 秒・23.5 秒 |
+| 同上 | rules-v5 | 3 | game_over 3 | 2.17・2.39 秒 | 9.6 MB | 13.738 秒 | 59.6 秒・20.2 秒 |
+
+- **見込み（参考）:** 記録ごとの 1 局あたりの平均のうち最大（道具 6.930 秒は旧監査の本実行・外側 24.833 秒・証跡 12,878,026 バイト）× 28 局で、道具 194.0 秒・外側 695.3 秒・証跡 360,584,742 バイト（343.9 MiB）です。1.5 倍で道具 291.0 秒・外側 1,042.9 秒・証跡 515.8 MiB、全体の上限の 8%・14%・25% です。
+- **rules-v5 で変わりうること:** 旧監査の上限の局（C1・9023。受理 1,000 のうち 775 が［ダメージスワップ］）のような長い番は、6 回で順位が下がるので短くなる見込みです。ただし、比較で 1 番が 6 回に達したのは 9022 の 1 番だけで、ほかの長い番は出ていません。上側は旧監査の値のままにします。
+- **上側:** 1 局は単局の上限の 120 秒で終わりえます。28 × 122 秒 ＝ 3,416 秒が全体の道具の上限に入ります。量の上側は、受理 1,000 の局で約 100 MB（旧監査の最大 97.6 MB）です。
+- **起動と照合の費用**（rules-v5 の比較・旧監査の実測）: キャッシュの準備 185 ファイル・約 13.9 MB・約 30 秒。1 局の外側は 20.2〜23.5 秒（旧監査の本実行の最大は 72.1 秒）。集計の作り直しは 1 計画 約 2 秒。
+
+### 4.2 予算（確定値）
+
+| 項目 | 値 |
+|---|---|
+| 計画ごとの CLI | 先行: `--max-games 1 --budget-seconds 300 --evidence-max-mb 512`。本実行: `--max-games 6 --budget-seconds 900 --evidence-max-mb 1024` |
+| 計画の中の既定 | 次の局を始める時間の余り 150 秒（`game_reserve_seconds`）・証跡の余り 64 MiB（`evidence_reserve_bytes`）・1 局の試行 3 回まで |
+| 全体の道具の累積時間 | 3,600 秒（8 計画の台帳の `accounted_seconds_total` の和） |
+| 全体の実時間 | 7,200 秒（1 局の呼び出しと毎局の照合の外側の時間。起動・計画の生成・キャッシュの準備・最後の集計・文書は別に記録） |
+| 全体の証跡 | 2,048 MiB（8 計画のディレクトリの合計） |
+| 各局の開始条件（時間。すべて） | その計画の道具の残り 150 秒以上・全体の道具の残り 150 秒以上・全体の実時間の残り 600 秒以上 |
+| 各局の開始条件（容量。すべて） | その計画の証跡の残り 384 MiB 以上・全体の証跡の残り 384 MiB 以上・出力先のドライブの空き 4,096 MiB 以上 |
+
+- 証跡の残りの下限は max(384 MiB, 保存済みの最大 1 局 × 1.5) です。保存済みの最大 1 局（97.6 MB）× 1.5 は 139.6 MiB なので 384 MiB を使います。先行でこれを超える 1 局が出たら、その × 1.5 を下限にします（下げない）。
+- 本実行の各計画（1,024 MiB）は、計画の証跡が 640 MiB を超えたあとは次の局を始めません。
+- **予算が足りないとき:** 次の局を始めず、未着手を残して終えます。延長・局の追加・`--acknowledge-stop`・unlock はしません。計画の打ち切り（`stopped_budget_time`・`stopped_budget_evidence`・全体の上限）として記録します。
+- 当日のドライブの空きは、実行のときに測ります（下書きでは `null`）。
+
+### 4.3 先行の実測で見積もりを更新する手順
+
+1. 先行の 4 局のあと、各条件の 1 局の道具の時間・外側の実時間・量を記録する（台帳と完了マーカー）。
+2. 本実行の見通しを作る: 本体は条件ごとに「先行 1 局 × 6」の和。上側はその 1.5 倍と、4.1 節の過去の 1 局の最大 × 24 を並べる。
+3. 見通しを全体の残り（道具・実時間・証跡）と並べて記録する。見通しが残りを超えても進み、毎局の前の確かめで足りなくなったら未着手を残して終える。予算は変えない。
+4. 先行の最大 1 局 × 1.5 が 384 MiB を超えたら、証跡の下限をその値にする。
+5. 更新した見通しを文書の結果の節と証跡に書く。局数・seed・並びは変えない。
+
+## 5. 記録と集計の設計
+
+項目ごとに別々に数えます。0 であることや多いことを、どの項目でも合否の条件にしません。数えるのは、完了した局の試行で照合に通ったものです。未完了の試行と未着手の局は「未実行」として別にします。**主集計は本実行の 24 局で、先行の 4 局は別の欄です。**
+
+### 5.1 局の終了と完走率
+
+| 分類 | 数え方 | 証拠の出所 |
+|---|---|---|
+| `game_over` | 局の終わり方 | `result.json` の `termination.class`・完了マーカーの `summary.termination`・`summary.judge.termination` |
+| 未裁定による終了 | `halted_known` で `detail.halt.category` が `unresolved_ruling`。`diagnostic_id` を実測のコードとして数える | `result.json`・`trace.jsonl` |
+| `no_progress` | 同じ状態の引き直しの上限。直前の拒否のコード（あれば実測）と最後の局面の候補の処理可能性を併記 | 同上・試みの行 |
+| 単局の上限 | `limit_operations`・`limit_accepted`・`limit_turns`・`limit_time` を別に。受理の上限なら、受理のうち［ダメージスワップ］の数と、1 番あたりの最大を併記 | 同上（`termination.detail`）・5.2 節 |
+| ほかの続けられない終わり方 | `halted_known` のほかの分類・`input_unavailable` | 同上 |
+| 異常 | 完了マーカーの `stop`（`prestop:*`・観測の問題・`inconsistency`・`suspect`・`api_contract_unknown`・`state_integrity`・`exception` ほか）と、外側の照合の問題 | 完了マーカー・台帳・外側の照合の出力 |
+| 計画の打ち切り | 停止方針の発動・実行や照合の異常・予算の不足で、次の局を呼ばなかったこと。未着手の局の数として、局の終わり方とは別に数える | 計画の台帳の `session_end` の `status`・外側の台帳 |
+
+- **件数は 5 つを別に数えます:** 予定（28。本実行 24）・着手・完了・未完了（`INCOMPLETE.json`）・未着手。
+- **完走率 ＝ `game_over` の局の数 ÷ 着手した局の数**です。必ず件数を併記します（例「22／24」）。
+  - 未着手は分母に入れません。未完了は分母に入り、`game_over` には入りません。
+  - 本実行が主、先行は別の欄です。条件ごと（C1〜C4）と全体を出します。
+  - 旧 TR8 の監査の 23／24 は参考の列だけに置きます。seed が違うので、差を `rules-v5` の効果として扱いません。
+
+### 5.2 ［ダメージスワップ］の使用と順位の変更
+
+対象は C1・C3 の局です（フーディンは L67-U だけ。C2・C4 は「対象のカードなし」として 0 と区別する）。数えるのは、本人の［ダメージスワップ］（`use_power`・フーディン PMCG1-049）の受理です。
+
+| 項目 | 数え方 | 分母 | 証拠 | 区分 |
+|---|---|---|---|---|
+| 局ごと・番ごとの受理 | 受理した試みの行を（主体, 番）でまとめる。局の合計・1 番の最大・6 回以上の番の数 | C1・C3 の局、（主体, 番） | `trace.jsonl` の受理の行の `turn`・候補 | 実測 |
+| 6 回に達した地点 | エピソードの `swap_count.capped` が最初に真になった（主体, 番, エピソード）。方策の記録の `loop.counts.swap_cap_reached` と照らす | 6 回に達した番 | `trace.jsonl` のエピソードの行・`result.json` の `policies.<主体>.loop` | 実測 |
+| v5 の順位の変更 | 選んだ候補の理由（`candidate_reason`）に `:swap_capN` がある試み（N は順位 7 に下げた対象の候補の数）。`loop.counts.choices_with_swap_cap` と照らす | 6 回に達した番の試みの行 | `trace.jsonl` の `candidate_reason` | 実測 |
+| 変更のあとの提示 | 順位が変わった試みと同じ（主体, 位置）の候補の応答の、種類ごとの候補と `processability` | 順位が変わった（主体, 位置） | `actors/<主体>.jsonl` の試みの行の `candidates.response.candidates[]` | 実測（提示だけ） |
+| 変更のあとの選択 | その（主体, 位置）の、最初の順位の変更から後の試みで方策が選んだ候補の種類 | 同上 | `trace.jsonl` の候補・理由 | 実測 |
+| 変更のあとの組み立て | 選んだ候補の入力を作れたか（`build`。`unbuildable` を別に） | 選んだ試み | 同上 | 実測 |
+| 変更のあとの送信 | `submit` のある試み。方策の抑止（`policy_review.send` 偽・`policy_suppressed`）を別に | 組み立てた試み | 同上・`counters` | 実測 |
+| 変更のあとの受理 | `check` が valid・`submit` が accepted・judge が expected。受理された手の種類 | 送信した試み | 同上・`judge.json` | 実測 |
+| v4 の周期による後回し | 入力の制限（`input_restriction.result` が `restricted`・`transition_deferred_all`）、理由の `:deferred_allN`、エピソードの `loop_detection`（復帰点）、`loop.counts` の v4 の項目 | 試みの行・エピソード | `trace.jsonl`・`result.json` | 実測 |
+| 送信の抑止（v2） | `policy_review` の `send` 偽 | 試みの行 | `trace.jsonl` | 実測 |
+
+- **「実行できる手」と数えるのは、選択・組み立て・送信・受理まで進んだ手だけです。** 別の手が提示されただけでは数えません。提示だけ・選んだが組み立てられない・組み立てたが抑止・送信したが拒否を、別の列にします。
+- **v4 と v5 の区別:**
+  - v4 は周期（観測の戻り）による後回しです。入力の選択肢を外すか、すべての組が後回しのときだけ候補を順位 7 にします（`:deferred_all`）。
+  - v5 は回数による順位の変更です（`:swap_cap`）。
+  - 1 つの理由に両方の印が付くことがあるので、試みごとに両方の印を別の列で数えます。
+- **現行の記録で直接は分からないこと（扱い）:**
+  - 選ばれなかった候補の順位は、記録にありません。候補の種類と `PRIORITY`（`use_power`・`retreat` 5、`end_turn` 6、下げた候補 7）から組み立てて、**静的照合**とします。
+  - 上限がなければ［ダメージスワップ］が選ばれたか（反事実）は、**未確認**とします。同じ seed で方策だけを変える比べ（rules-v5 の比較と同じ形）が要り、この監査ではしません。
+  - 順位が変わった時点の相手の場のダメージの配置は、本人の観測で読める範囲だけを書きます（読めなければ未確認）。
+- **読み取りの確かめ（先行の前。出力は証跡の外）:** rules-v5 の比較の 3 局で、9022 の 1 番の最大 6、最初の順位の変更の位置 127（番 30）、そこで受理された `end_turn` が、保存済みの `compare.json` と同じになることを確かめます。
+
+### 5.3 拒否と除外の 5 区分
+
+旧 TR8 の監査の計画 5.2 節と同じ定義・単位・分母・コードの 3 区分（実測・静的照合・不明）・未記録の扱いです。
+
+| # | 区分 | 数え方（要約） | 分母 | 証拠の出所 |
+|---|---|---|---|---|
+| R1 | 送信した拒否 | `submit.outcome` が `rejected`。コード・`category`・`continuable` ごと | 送信の数・check の数 | `actors/<主体>.jsonl`（`trace.jsonl` と照合） |
+| R2 | 答え直して続いた拒否 | R1 のあと、同じ（主体, position）で送信して受理された拒否 | R1 | 試みの行の並び |
+| R3 | 道具が送信を抑止した試み | R1 のあとの送信のない行と `retry_same_input`。拒否とかかわらない `policy_suppressed` は別の欄 | R1 の局面 | 試みの行・`counters` |
+| R4 | 候補全体の除外 | 候補の `processability` が `unresolved_ruling` | 候補の応答のある試みの行 | 候補の応答・`prestop/inputs.jsonl`・本人の観測 |
+| R5 | 取得済み入力の中の選択肢の除外 | 取得した inputs の選択肢で `processability` が `unresolved_ruling` | 取得した inputs の選択肢（選んだ候補だけ） | `inputs.response.stages[].options[]` |
+
+- R4・R5 は候補・選択肢の記録に停止のコードがないので、カードを特定できても静的照合です（実測にしない）。
+- 旧監査で R5 に出た［よいおこない］の 0 個（C3）・きずぐすりの対象は、出た・出なかったを並べるだけにします。
+
+### 5.4 規約で使えた手（ER9・H4・T19b・RS1）
+
+旧 TR8 の監査の計画 5.3 節と同じです。規約ごとに、`convention_applied` の付いた受理と、残った拒否（経路ごと）を別の欄にします。RS1 は局面・提示・選択・受理の段階を並べます。
+
+| 規約 | 受理 | 残った拒否 | 出うる条件（デッキの構成） |
+|---|---|---|---|
+| ER9 `PC-ENERGY-RETRIEVAL-ZERO@1` | `convention_applied` の数と送信の判定 | `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE`（経路ごと） | C2 |
+| H4 `PC-ENERGY-CONVERSION-ZERO@1` | 同上（経路: 元のワザ・ゆびをふる） | `UNRESOLVED_RECOVER_ZERO_ENERGY` | C3 |
+| T19b `PC-T19B-NULLIFIED-STATUS-COIN@1` | 同上（出来事の並びを併記） | `UNRESOLVED_EVADED_EFFECT_COIN` | C3 |
+| RS1 `PC-LUCKY-STADIUM-REPLACEMENT@1` | 同上（`scene`・`used_cards` を併記。局面・提示・選択・受理） | RS1 の候補全体の除外（`#other` の静的照合）と送信の拒否 | C4 |
+
+- 受理の数から、ほかの局での解消を推定しません。未出現から「解消した」とは言いません。
+- ほかの規約は、規約 ID ごとの `convention_applied` と、`eligible` 偽かつ規約 ID のある選択肢を別の表にします。`convention_applied` の数を、3 人の見る人の公開ログで照らします。
+
+### 5.5 入力の提示の制約（参考の欄）
+
+旧計画 5.4 節と同じです（`not_implemented`・`unverified`・`coverage.residual`・`withheld_input_candidates`・`unbuildable`）。未裁定ではないので、表 A・表 B に入れません。
+
+### 5.6 集計の項目と証拠の対応
+
+| 項目 | prestop | actors | 観測 | trace | 保存済みの判定 | ほか |
+|---|---|---|---|---|---|---|
+| 5.1 局の終了・完走率 | — | 最後の局面の候補 | — | 停止の結果 | `judge.json` の `termination` | `result.json`・完了マーカー・台帳 |
+| 5.2 ［ダメージスワップ］ | — | 順位が変わった位置の候補の応答（提示） | 相手の場のダメージ（読める範囲） | 受理・番・理由の印・エピソードの `swap_count`・`loop_detection`・入力の制限・`policy_review` | 送信の行の判定 | `result.json` の `policies.*.loop` |
+| 5.3 R1〜R3 | — | 送信・check の結果とコード | — | `submit`・`check` | `rows`・`known_stop`・`undetermined` | `counters` |
+| 5.3 R4・R5 | 候補の inputs | 候補・選択肢の `processability` | 局面の結び付け | `candidate_class`・`input_processability` | — | 分類表とソース（静的照合） |
+| 5.4 規約 | `use_stadium` の inputs | 送信の結果 | `convention_applied`・出来事の並び | 選んだ候補 | 送信の行の判定 | 経路の見分け |
+
+- 分析は、保存済みのファイルだけを読む新しいスクリプトで行います（次の単位で作る `analyze_tr8v5a.py`）。
+  - もとにするのは、旧監査の `analyze_tr8a.py` と、rules-v5 の比較の `compare_tr8v5.py`・`analyze_swap_tr8s.py` です。
+  - 標準ライブラリだけを使い、エンジンを import せず、ゲームの証跡に書きません。
+- **先行の前の読み取りの確かめ**（出力は証跡の外）:
+  - 旧監査の本実行 24 局: R4・R5・規約の受理の数と終わり方が、保存済みの `analyze_tr8a_main.json` と同じ。
+  - rules-v5 の比較の 3 局: 5.2 節の値が `compare.json` と同じ。
+  - 方策の識別の照合は、rules-v5 の局だけで真になります（ほかの局は数の照合だけに使う）。
+
+## 6. 実行の手順（次の単位。ここでは実行しない）
+
+1. **作業の場所:** 新しい worktree と作業ブランチを、この計画のコミットから作る。実行用の worktree を `2a76d57` に切り離し、無視をふくめ変更 0・識別が 1 章と同じことを確かめる。
+2. **事前の照合:** seed の調べ直し（3 章の規則。結果が変わっていたら止める）・4 つの明示リストの検査と固定デッキの `deck_problems`・TR8 の照合値（固定値と計算値）・道具の版 16。
+3. **計画の作成と固定:** 8 つの計画を作り（CLI は下）、照合して、`plan.sha256` を 8 つ、1 局目の前に記録する。照合には rules-v5 の比較の `check_plans_tr8v5.py` の写しを使い、期待値（計画名・局・seed・デッキ・方式 `rules-v5`・規約集合・上限・実行コミット）だけを変える。
+4. **キャッシュ:** 新しい空の場所 `C:\dev\kyuura-engine-pyc-cache\cpython-314-2a76d57-tr8v5a` に、同じ Python で checked-hash の pyc を準備する。準備の時間・容量はバッチ本体と分ける。
+5. **外側のスクリプト:** 旧監査の本実行と rules-v5 の比較の写しを使う（逐次の実行・キャッシュの準備と照合・局の照合・全体の予算・1 局の手順・ハッシュ・prestop の分析）。変えるのは計画名・28 局の並び・全体の予算・5 章の分析・先行の関門だけで、差分を証跡に残す。
+6. **dry-run:** 8 計画とも `use_cache` 真・容量の確認・`batch run` を呼ばない・計画のディレクトリが `plan.json`・`plan.sha256` だけであること。
+7. **先行の 4 局:** 1 局ずつ、状態の確かめ → 残予算と空き容量 → キャッシュの照合 → `--sessions 1` → 局の照合 → 分析 → 関門（7 章）→ キャッシュの照合。失敗したら次を呼ばない。
+8. **本実行へ進むか:** 7 章の条件を確かめて記録してから進む。4.3 節の見通しも記録する。
+9. **本実行:** 3 章の並びで 1 局ずつ（7 と同じ確かめ）。開始条件が満たせなければ未着手を残して終える。
+10. **終わったあと:** 計画ごとの集計の作り直しを 1 回、ゲームの証跡のハッシュの不変・局ごとの和と集計の一致・prestop の分析・`analyze_tr8v5a.py`、8 章の報告。
+
+**計画の CLI:**
+
+- `<L67-U>` などは 2 章のファイル（`C:\dev\kyuura-engine-verification-vai\verifier\runs\…` の完全なパス）です。
+- 共通の部分 `<共通>` は `--engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue` です。
+
+```
+python -X utf8 -B -m tools.verification_ai.batch plan --out C:\dev\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p1 --seeds 9043 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 <共通>
+python -X utf8 -B -m tools.verification_ai.batch plan --out C:\dev\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p2 --seeds 9043 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 <共通>
+python -X utf8 -B -m tools.verification_ai.batch plan --out C:\dev\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p3 --seeds 9043 --decklist0 <P42> --decklist1 <L67-U> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 <共通>
+python -X utf8 -B -m tools.verification_ai.batch plan --out C:\dev\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p4 --seeds 9043 --decklist0 <LUCKY_DECK> --decklist1 <CONNECT_DECK> --max-games 1 --budget-seconds 300 --evidence-max-mb 512 <共通>
+python -X utf8 -B -m tools.verification_ai.batch plan --out C:\dev\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-m1 --seeds 9044 9045 9046 9047 9048 9049 --decklist0 <L67-U> --decklist1 <L67-U> --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 <共通>
+（m2〜m4 は p2〜p4 と同じデッキの指定で、seed・上限は m1 と同じ）
+```
+
+## 7. 先行の 4 局の確かめと、本実行へ進む条件
+
+**先行の各局で確かめること（関門）:**
+
+| # | 条件 |
+|---|---|
+| P-1 | 計画と識別: 実行コミットが `2a76d57`（エンジンの記録は `a358378`）で、無視をふくめ変更 0。識別（エンジン・behavior・instrumentation・道具の版 16 と digest・判定の規則・形式・basis）が 1 章と同じ。`plan.json` の sha256 が先行の前に記録した `plan.sha256` と同じ。計画の照合の問題 0 |
+| P-2 | 規約集合と方策の一致: 計画の各局の `conventions`、`header.json`・`full_record.json` の `convention_set`、観測と送信の結果の規約集合が `CS-KYUURA-PLAY-TR8@1`・`sha256:27dfe27a…`。header の `mode` が `rules-v5`・`rules_version` 5・各主体の方策の分布が `rules-v5-candidate+uniform-stage`、`result.json` の方策の記録に回数の上限 6（`swap_cap`） |
+| P-3 | 完了記録とハッシュ: `batch.verify_complete` の問題 0。試行 1 つ・完了マーカーあり |
+| P-4 | 観測・prestop・judge・replay: 観測 `complete`・問題 0。prestop の対応の問題 0。判定の termination の分類が記録と同じ。既存の最終状態の replay の照合が期待どおり。anomalies なし |
+| P-5 | 契約の外の記録 0: trace・actors の値に `contract_unknown`・`api_contract_unknown` 0。規約で `eligible` 偽の選択肢の選択・check・送信 0 |
+| P-6 | 5 章の項目が記録で読める（`analyze_tr8v5a.py` が例外なく終わり、読めない形の行が 0。値が 0 なのはよい） |
+| P-7 | 集計の一致: 計画の集計のカウンタ・prestop の数が局の値と同じ。分析の合計（試みの行・受理・拒否・`convention_applied`・［ダメージスワップ］の受理）が局ごとの和と完了マーカーと同じ。`convention_applied` の数が 3 人の見る人の公開ログで同じ。`loop.counts` が試みの行の印の数と同じ |
+| P-8 | キャッシュの不変: 中身が準備のときと同じ（各局の前後） |
+
+**本実行へ進む条件（すべて）:**
+
+1. 先行の 4 局で P-1〜P-8 がすべて成り立つ。
+2. 4.2 節の開始条件で、本実行の最初の局（m1 の 9044）を始められる。
+
+- **進む条件に入れないもの:** 完走率・特定の停止・特定の規約の出現・順位の変更の出現。先行で 6 回に達する番が 1 回もなくても進みます。
+- **進まないとき:** 本実行を始めず、先行の結果と原因を報告して終えます。道具・スクリプトの直しは別の単位にし、同じ計画での再実行・seed やデッキの替えはしません。
+
+**打ち切り（先行・本実行の途中をふくむ）:** 旧 TR8 の監査の計画 7 章の表と同じです。
+
+| 起きたこと | 扱い |
+|---|---|
+| 単局の上限の到達・`halted_known`・`input_unavailable` | 局の終わり方として記録して続ける |
+| `no_progress` | 局を記録する。judge が undetermined なら停止方針で計画が止まり、打ち切り |
+| judge の undetermined の分類で止まるもの | 停止方針のとおり止める（打ち切り） |
+| prestop の上限（`capped`） | 未記録として数えて続ける |
+| known_stop の拒否・`evidence_missing_stop`（答え直して続いたもの） | 記録して続ける |
+| 記録の失敗・照合の不一致・ファイルの欠け・suspect・状態の不整合・replay の不一致・`api_contract_unknown`・保存の失敗・キャッシュの不一致・方策の識別の不一致 | 止める（異常。打ち切り） |
+| 重大な例外 | 吸収しない（未完了の試行として記録して止める） |
+| 残予算・空き容量の不足 | 未着手を残して終える（打ち切りとして記録） |
+| `--acknowledge-stop`・unlock・予算の延長・局の追加・再試行・seed の差し替え | 自動で使わない（別の判断） |
+
+- 打ち切ったときは、未着手（呼んでいない局）と未完了（`INCOMPLETE.json` で終わった局）を分けて記録し、報告します。
+
+## 8. 実行後の報告の様式と、次の候補の選び方
+
+旧 TR8 の監査の計画 8 章と同じ様式です（件数の表・表 A・表 B・規約の表・次の候補の選び方・言わないこと）。違うのは次の 2 つです。
+
+- **［ダメージスワップ］の表**を、表 A・表 B とは別に置きます（5.2 節の項目。C1・C3 の局ごと・6 回に達した番ごと）。
+  - 列は、受理・6 回に達した地点・順位の変更の数と、変更のあとの提示・選択・組み立て・送信・受理（受理された手の種類）です。v4 の後回しの印と v5 の印は別の列にします。
+- 単局の上限で終わった局があれば、表 A に、上限の種類と、受理のうち［ダメージスワップ］の数・1 番の最大を書きます。
+
+**次に調査する候補（最大 3 件）:**
+
+1. 表 A・表 B の上位から、条件（カードと場面）を特定できたものだけを選ぶ。
+2. 研究上の未解決（`UNRESOLVED_…`）だけを候補にする。エンジンの未対応・記録の異常・入力 API の制約・方策や道具の扱いは別の一覧に回す。
+3. 表 A を先に、次に表 B の影響した局の数の順。同じなら影響した条件の数の順。
+4. 各候補に見込みの区分を付け、分けて並べる:
+   - **続行や受理できる手が増える見込み:** 規約か実装で、今は止まる・除外される・拒否される候補・選択肢・回答を受理できるようになるもの。
+   - **表示・診断だけが変わる見込み:** 受理できる手は変わらず、理由の表示・コードの記録・候補の説明だけが変わるもの。
+5. 各候補に、判断に要ること（場面・使えない選択肢と続行の選択肢・カードの消費・既存の規約との重なり）を書く。
+6. ［ダメージスワップ］の繰り返しは方策の扱いで、未裁定ではありません。候補にせず、別の一覧にします。
+
+**言わないこと:**
+
+- `rules-v5` だけの結果から、`rules-v2`〜`rules-v4` に対する完走率の改善を推定しません。
+- 28 局から一般の頻度を推定せず、過去の監査・比較と合算しません。
+- この監査で既定の方策を決めません。
+- 公開の要約は件数と状態だけにします（カード ID・seed・局の識別・停止のコードを出さない）。
+
+## 9. 実行の前に確定する値（下書きでは null）
+
+- 実行の worktree（`2a76d57`）・未コミット 0・識別の測り直し
+- seed の調べ直しの結果（9043〜9049 が未使用のまま）
+- デッキの合法性・確認値（明示リストの content・展開・ファイルの sha256、固定デッキの展開）
+- 8 つの計画の `plan.sha256`・局の並び・各局の `conventions`・方式・`observation`・`prestop_inputs`・上限
+- キャッシュの場所・準備の記録（Python の実体と版・ファイルの数・checked hash）・dry-run の `use_cache`
+- 当日の出力先のドライブの空き（4,096 MiB 以上）
+- 外側のスクリプトの写しの sha256 と、原本との差分
+- `analyze_tr8v5a.py` の sha256 と、保存済みの局での読み取りの確かめの結果
+- 先行の実測と、4.3 節の更新した見通し
+
+## 10. 採用の判断が要る事項と推奨値
+
+| 事項 | 推奨 | 別の選択 |
+|---|---|---|
+| 条件・局 | C1〜C4、先行 4・本実行 24（旧監査と同じ） | — |
+| seed | 先行 9043・本実行 9044〜9049（規則で選んだ新しい値） | — |
+| 方策 | `rules-v5`（全局で明示） | 同じ seed で v2〜v4 と比べる対戦は別の単位 |
+| 予算 | 4.2 節 | — |
+| 実行コミット | 道具 `2a76d57`・エンジン `a358378`（rules-v5 の比較と同じ） | この計画のコミット（コードは差 0。識別は同じ） |
+| 停止方針 | 既定 | 続ける方針は CLI を変える別の判断 |
+| 選ばれなかった候補の順位の記録 | 足さない（静的照合として数える） | 道具の記録を広げる別の単位（`TOOL_VERSION` が変わる） |
+
+## 11. 失敗・未確認
+
+- **失敗:** 対戦・計画の生成はしていません。証跡の作業記録に 2 件を残しています。
+  - F1: seed の調べの写しを作るスクリプトの確かめが、引き継いだ説明の行の 9020 を数えずに止まりました（何も書いていない）。確かめの数を直して作り直しました。
+  - F2: この JSON を作るスクリプトが、seed の調べの `errors`（空の一覧）を数として照らして止まりました（何も書いていない）。一覧として照らすように直しました。
+- **未確認（実行で分かること）:**
+  - 新しい seed の 4 条件での時間と量、完走率と終わり方、未裁定の出現。
+  - 1 番に 6 回に達する番が出るか、そのあとに選ばれ受理される手。
+  - ER9・H4・T19b・RS1 の規約が当たる回数と、範囲の外の経路の出現。

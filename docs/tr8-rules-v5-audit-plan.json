@@ -1,0 +1,557 @@
+{
+ "status": "draft",
+ "doc": "docs/tr8-rules-v5-audit-plan.md",
+ "date": "2026-11-25",
+ "base": "3b449b2c4e8e6c7ad5ff853792899cf04535b2f5",
+ "branch": "claude/tr8-rules-v5-audit-plan",
+ "execution": {
+  "tool_commit": "2a76d577212b76240dee28ae3506ce586730397c",
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "code_diff_tool_to_base": 0,
+  "engine_diff_distribution_to_tool": 0,
+  "worktree": null,
+  "uncommitted": null,
+  "cache": null,
+  "cache_prepare": null,
+  "dry_run_use_cache": null,
+  "drive_free_bytes": null,
+  "outer_scripts_sha256": null,
+  "analyze_script_sha256": null
+ },
+ "duplicates": {
+  "branches": "none for a rules-v5 audit",
+  "evidence": "only vai-batch-tr8v5-v5 (C1, 3 old seeds, comparison)",
+  "result": "new"
+ },
+ "identity_measured": {
+  "engine_version": "0.198.0",
+  "tool_version": 16,
+  "tool_digest": "c92020414a0054c5160e91836cd79e55826634ec85b3044b9759ebcc6d8a58fd",
+  "differs_from_old_tr8_plan": [
+   "tool_version 13 -> 16",
+   "tool.digest",
+   "engine_file (path)"
+  ],
+  "convention_set": {
+   "id": "CS-KYUURA-PLAY-TR8@1",
+   "count": 27,
+   "pinned": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "computed": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01"
+  },
+  "formats": {
+   "plan": "kyuura-vai-batch-plan/7",
+   "complete": "kyuura-vai-batch-complete/7"
+  },
+  "judge_rules": 10,
+  "remeasured_at_run": null
+ },
+ "policy": {
+  "mode": "rules-v5",
+  "rules_version": 5,
+  "repeat_threshold": 2,
+  "swap_cap": 6,
+  "distribution": "rules-v5-candidate+uniform-stage",
+  "profile": "deep",
+  "default_policy_changed": false
+ },
+ "conditions": {
+  "C1": {
+   "0": {
+    "kind": "decklist",
+    "name": "L67-U"
+   },
+   "1": {
+    "kind": "decklist",
+    "name": "L67-U"
+   }
+  },
+  "C2": {
+   "0": {
+    "kind": "deck",
+    "name": "hitmonchan-dewgong-v2"
+   },
+   "1": {
+    "kind": "deck",
+    "name": "venusaur-parasect-v2"
+   }
+  },
+  "C3": {
+   "0": {
+    "kind": "decklist",
+    "name": "P42"
+   },
+   "1": {
+    "kind": "decklist",
+    "name": "L67-U"
+   }
+  },
+  "C4": {
+   "0": {
+    "kind": "decklist",
+    "name": "LUCKY_DECK"
+   },
+   "1": {
+    "kind": "decklist",
+    "name": "CONNECT_DECK"
+   }
+  }
+ },
+ "decks": {
+  "legality_ok": true,
+  "equal_to_old_tr8_plan_profile": true,
+  "decklist_check_diff_lines": 0,
+  "damage_swap_holder": {
+   "card": "PMCG1-049",
+   "decks": {
+    "L67-U": 2
+   },
+   "conditions": [
+    "C1",
+    "C3"
+   ]
+  },
+  "remeasured_at_run": null
+ },
+ "seeds": {
+  "rule": "9043 から上へ、連続 7 値がすべて未使用の最初の組（先頭 1 値が先行・残り 6 値が本実行）",
+  "files_read": 572,
+  "stores": 30,
+  "values_used": 136,
+  "max_used": 9042,
+  "errors": 0,
+  "pilot": 9043,
+  "main": [
+   9044,
+   9045,
+   9046,
+   9047,
+   9048,
+   9049
+  ],
+  "rescan_at_run": null,
+  "on_change": "stop; do not replace"
+ },
+ "games": {
+  "pilot": 4,
+  "main": 24,
+  "total": 28,
+  "order": [
+   "vai-batch-tr8v5a-p1:9043",
+   "vai-batch-tr8v5a-p2:9043",
+   "vai-batch-tr8v5a-p3:9043",
+   "vai-batch-tr8v5a-p4:9043",
+   "vai-batch-tr8v5a-m1:9044",
+   "vai-batch-tr8v5a-m2:9044",
+   "vai-batch-tr8v5a-m3:9044",
+   "vai-batch-tr8v5a-m4:9044",
+   "vai-batch-tr8v5a-m1:9045",
+   "vai-batch-tr8v5a-m2:9045",
+   "vai-batch-tr8v5a-m3:9045",
+   "vai-batch-tr8v5a-m4:9045",
+   "vai-batch-tr8v5a-m1:9046",
+   "vai-batch-tr8v5a-m2:9046",
+   "vai-batch-tr8v5a-m3:9046",
+   "vai-batch-tr8v5a-m4:9046",
+   "vai-batch-tr8v5a-m1:9047",
+   "vai-batch-tr8v5a-m2:9047",
+   "vai-batch-tr8v5a-m3:9047",
+   "vai-batch-tr8v5a-m4:9047",
+   "vai-batch-tr8v5a-m1:9048",
+   "vai-batch-tr8v5a-m2:9048",
+   "vai-batch-tr8v5a-m3:9048",
+   "vai-batch-tr8v5a-m4:9048",
+   "vai-batch-tr8v5a-m1:9049",
+   "vai-batch-tr8v5a-m2:9049",
+   "vai-batch-tr8v5a-m3:9049",
+   "vai-batch-tr8v5a-m4:9049"
+  ]
+ },
+ "plans": [
+  {
+   "batch": "vai-batch-tr8v5a-p1",
+   "stage": "pilot",
+   "condition": "C1",
+   "seeds": [
+    9043
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p1 --seeds 9043 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-p2",
+   "stage": "pilot",
+   "condition": "C2",
+   "seeds": [
+    9043
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p2 --seeds 9043 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-p3",
+   "stage": "pilot",
+   "condition": "C3",
+   "seeds": [
+    9043
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p3 --seeds 9043 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-p4",
+   "stage": "pilot",
+   "condition": "C4",
+   "seeds": [
+    9043
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-p4 --seeds 9043 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-m1",
+   "stage": "main",
+   "condition": "C1",
+   "seeds": [
+    9044,
+    9045,
+    9046,
+    9047,
+    9048,
+    9049
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-m1 --seeds 9044 9045 9046 9047 9048 9049 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-m2",
+   "stage": "main",
+   "condition": "C2",
+   "seeds": [
+    9044,
+    9045,
+    9046,
+    9047,
+    9048,
+    9049
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-m2 --seeds 9044 9045 9046 9047 9048 9049 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-m3",
+   "stage": "main",
+   "condition": "C3",
+   "seeds": [
+    9044,
+    9045,
+    9046,
+    9047,
+    9048,
+    9049
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-m3 --seeds 9044 9045 9046 9047 9048 9049 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v5a-m4",
+   "stage": "main",
+   "condition": "C4",
+   "seeds": [
+    9044,
+    9045,
+    9046,
+    9047,
+    9048,
+    9049
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v5a-m4 --seeds 9044 9045 9046 9047 9048 9049 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 2a76d577212b76240dee28ae3506ce586730397c --modes rules-v5 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  }
+ ],
+ "budget": {
+  "pilot_plan": {
+   "seconds": 300,
+   "evidence_mib": 512
+  },
+  "main_plan": {
+   "seconds": 900,
+   "evidence_mib": 1024
+  },
+  "total": {
+   "tool_seconds": 3600,
+   "wall_seconds": 7200,
+   "evidence_mib": 2048
+  },
+  "start_conditions": {
+   "plan_tool_remaining_s": 150,
+   "total_tool_remaining_s": 150,
+   "total_wall_remaining_s": 600,
+   "plan_evidence_remaining_mib": 384,
+   "total_evidence_remaining_mib": 384,
+   "drive_free_mib": 4096
+  },
+  "estimate": {
+   "from": {
+    "tr8a_pilot": {
+     "engine": "0.198.0",
+     "set": "TR8@1",
+     "games": 4,
+     "terminations": {
+      "game_over": 4
+     },
+     "tool_accounted_seconds": 17.059,
+     "plan_dir_bytes": 29307152,
+     "outer_game_end": {
+      "n": 4,
+      "sum": 80.648,
+      "max": 23.463
+     }
+    },
+    "tr8a_main": {
+     "engine": "0.198.0",
+     "set": "TR8@1",
+     "games": 24,
+     "terminations": {
+      "limit_accepted": 1,
+      "game_over": 23
+     },
+     "tool_accounted_seconds": 166.315,
+     "plan_dir_bytes": 309072636,
+     "outer_game_end": {
+      "n": 24,
+      "sum": 595.997,
+      "max": 72.083
+     }
+    },
+    "tr8v5_v4": {
+     "engine": "0.198.0",
+     "set": "TR8@1",
+     "games": 3,
+     "terminations": {
+      "game_over": 3
+     },
+     "tool_accounted_seconds": 17.012,
+     "plan_dir_bytes": 30693555,
+     "outer_game_end": {
+      "n": 3,
+      "sum": 63.72,
+      "max": 23.517
+     }
+    },
+    "tr8v5_v5": {
+     "engine": "0.198.0",
+     "set": "TR8@1",
+     "games": 3,
+     "terminations": {
+      "game_over": 3
+     },
+     "tool_accounted_seconds": 13.738,
+     "plan_dir_bytes": 26520033,
+     "outer_game_end": {
+      "n": 3,
+      "sum": 59.633,
+      "max": 20.175
+     }
+    }
+   },
+   "body": {
+    "tool_seconds": 194.0,
+    "outer_seconds": 695.3,
+    "bytes": 360584742
+   },
+   "upper_x1_5": {
+    "tool_seconds": 291.0,
+    "outer_seconds": 1042.9,
+    "bytes": 540877113.0
+   },
+   "largest_game": {
+    "plan": "vai-batch-tr8a-m1",
+    "condition": "C1",
+    "game": "g003-rules-v2-s9023",
+    "bytes": 97554032,
+    "accepted": 1000,
+    "elapsed_seconds": 37.315
+   },
+   "largest_game_x1_5_mib": 139.6,
+   "worst_case_limit_time": {
+    "per_game_seconds": 122,
+    "tool_seconds": 3416,
+    "note": "単局の上限 120 秒 + 照合の余り。全体の道具の上限 3,600 秒に入る"
+   }
+  },
+  "pilot_measured": null,
+  "updated_outlook": null
+ },
+ "gates": {
+  "P-1": "plan and identity (tool 2a76d57, engine a358378, tool version 16, plan.sha256)",
+  "P-2": "TR8@1 and rules-v5 identity (mode, rules_version 5, distribution, swap_cap 6)",
+  "P-3": "verify_complete 0 problems",
+  "P-4": "observation / prestop / judge / final-state replay",
+  "P-5": "no contract-unknown records",
+  "P-6": "analysis reads the records",
+  "P-7": "aggregates equal (incl. Damage Swap and loop.counts)",
+  "P-8": "cache unchanged",
+  "proceed": [
+   "P-1..P-8 on all 4 pilot games",
+   "start conditions allow m1 9044"
+  ],
+  "not_conditions": [
+   "completion rate",
+   "specific stops",
+   "specific conventions",
+   "rank change appearing"
+  ]
+ },
+ "stop": {
+  "continue": [
+   "limit_*",
+   "halted_known",
+   "input_unavailable",
+   "prestop capped",
+   "known_stop answered again"
+  ],
+  "stop": [
+   "policy stop (undetermined)",
+   "record / check anomalies",
+   "cache mismatch",
+   "policy identity mismatch",
+   "budget / space shortage (leave not started)"
+  ],
+  "never_automatic": [
+   "--acknowledge-stop",
+   "unlock",
+   "budget extension",
+   "extra games",
+   "retries",
+   "seed replacement"
+  ],
+  "record": [
+   "not_started",
+   "incomplete"
+  ]
+ },
+ "measures": {
+  "completion": {
+   "rate": "game_over / started (with counts)",
+   "main_primary": true,
+   "pilot_separate": true,
+   "classes": [
+    "game_over",
+    "unresolved halt",
+    "no_progress",
+    "limit_operations",
+    "limit_accepted",
+    "limit_turns",
+    "limit_time",
+    "other halts",
+    "anomaly",
+    "plan stopped"
+   ],
+   "reference_old_tr8": "23/24 (rules-v2, other seeds; not a rules-v5 effect)"
+  },
+  "damage_swap": {
+   "conditions": [
+    "C1",
+    "C3"
+   ],
+   "not_applicable": [
+    "C2",
+    "C4"
+   ],
+   "items": {
+    "accepted_per_game_turn": "trace accepted rows by (actor, turn)",
+    "cap_reached": "episode swap_count.capped; loop.counts.swap_cap_reached",
+    "rank_change": "candidate_reason :swap_capN; loop.counts.choices_with_swap_cap",
+    "after_change": {
+     "presented": "actors candidates.response.candidates[] (not counted as executable)",
+     "selected": "trace candidate",
+     "built": "build",
+     "sent": "submit (policy_review.send false separate)",
+     "accepted": "check valid + accepted + judge expected"
+    },
+    "v4_deferral": "input_restriction restricted / transition_deferred_all; :deferred_allN; loop_detection",
+    "v2_suppression": "policy_review.send false"
+   },
+   "executable": "selected, built, sent and accepted only",
+   "static": "ranks of non-chosen candidates (PRIORITY table and candidate kinds)",
+   "unconfirmed": [
+    "counterfactual choice without the cap (needs a same-seed comparison)",
+    "opponent board layout beyond the own view"
+   ],
+   "reading_check": "rules-v5 comparison 9022: max 6, first rank change position 127 (turn 30), end_turn accepted"
+  },
+  "unresolved": {
+   "R1": "sent rejection",
+   "R2": "answered again",
+   "R3": "send suppressed after rejection (policy_suppressed separate)",
+   "R4": "whole candidate excluded",
+   "R5": "option excluded in fetched input",
+   "codes": [
+    "measured",
+    "static",
+    "unknown"
+   ],
+   "unrecorded_separate": true
+  },
+  "conventions": {
+   "ER9": "C2",
+   "H4": "C3",
+   "T19b": "C3",
+   "RS1": "C4 (scene, presented, selected, accepted)",
+   "accepted_and_remaining_rejections_separate": true
+  },
+  "next_candidates": {
+   "max": 3,
+   "only": "research UNRESOLVED",
+   "split": [
+    "more continuation / acceptable moves",
+    "display / diagnosis only"
+   ],
+   "damage_swap_repetition": "policy matter, separate list"
+  }
+ },
+ "runtime_values_null": [
+  "execution.*",
+  "plans[].plan_sha256",
+  "seeds.rescan_at_run",
+  "decks.remeasured_at_run",
+  "identity_measured.remeasured_at_run",
+  "budget.pilot_measured",
+  "budget.updated_outlook"
+ ],
+ "not_done": [
+  "plan.json / plan.sha256",
+  "cache",
+  "dry-run",
+  "games",
+  "judge / replay",
+  "policy / engine / convention / judge / default changes",
+  "kyuura",
+  "push to main / PR / merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v5-audit-plan-run/"
+}
