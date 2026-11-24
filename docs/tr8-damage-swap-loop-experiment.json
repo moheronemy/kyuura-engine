@@ -622,5 +622,6 @@
   "F1: full verification_ai test run fails 1 pre-existing prestop byte-count test (also on base)",
   "F2: driver derivation first written inline with unescaped Windows paths (nothing written for the two ps1); rewritten as derive_drivers_tr8v.py",
   "F3: exec.json first written with doubled backslashes; rewritten before use"
- ]
+ ],
+ "followup": "docs/tr8-rules-v3-fresh-seed-comparison.md"
 }
