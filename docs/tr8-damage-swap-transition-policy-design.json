@@ -1,0 +1,1031 @@
+{
+ "status": "design_only",
+ "doc": "docs/tr8-damage-swap-transition-policy-design.md",
+ "date": "2026-11-24",
+ "base": "dd7ffbfaabcfb47202961e4f6ddd46001c6dceb5",
+ "policy_commit_read": "001210fa09dfd0e40512985fe95cf0a51cd5150b",
+ "branch": "claude/tr8-damage-swap-transition-policy-design",
+ "policy_name": "rules-v4 (provisional, explicit-only, not default)",
+ "previous": [
+  "docs/tr8-rules-v3-c2-c4-comparison.md",
+  "docs/tr8-rules-v3-buildable-alternatives.md",
+  "docs/tr8-rules-v3-fresh-seed-comparison.md",
+  "docs/tr8-damage-swap-loop-experiment.md"
+ ],
+ "answers": {
+  "of_60_retained_by_design": 60,
+  "of_60_matching_cycle_key": 0,
+  "of_60_record_insufficient": 0,
+  "buildable_pair_determinable_with_current_api": "yes: options_by_choice of the source stage in the inputs response; candidate selection does not see pairs, so three tool-side hooks are needed",
+  "verification": "S5 first (deferred 1->2, select and send 1->3 through the normal candidates/inputs/check/submit path), controls in 6.1, then C1 9023 rules-v3 vs rules-v4 with 9022/9024 regression; hold adoption if 9023 hits the accepted limit"
+ },
+ "reconciliation": {
+  "method": {
+   "view": "own view response, request_id/operation_id removed (as rules-v3)",
+   "key": "(pre-move own view, holder pokemon number, source pokemon number, target pokemon number), directed",
+   "buildable": "source-stage options x options_by_choice refs, eligible and processability in supported/may_stop_later, from stage records at an earlier position with the same view",
+   "classes": [
+    "cycle_key_match",
+    "cycle_move_other_view",
+    "used_not_in_cycle",
+    "reverse_of_used",
+    "other_unused",
+    "record_insufficient"
+   ]
+  },
+  "c1_fresh_r3": {
+   "source": "vai-batch-tr8v3-fresh-r3 (saved records, read only)",
+   "totals": {
+    "cycles": 15,
+    "end_turns": 15,
+    "end_turns_with_other": 12,
+    "end_turns_with_selectable_under_v4": 12,
+    "end_turns_with_sendable_under_v4": 12,
+    "end_turns_with_stage_record": 15,
+    "end_view_is_cycle_pre_view": 15,
+    "holders_without_stage_record": 0,
+    "pairs_cycle_key_match": 15,
+    "pairs_cycle_move_other_view": 6,
+    "pairs_other": 60,
+    "pairs_retained_v2_suppressed": 2,
+    "pairs_reverse_of_used": 27,
+    "pairs_used_not_in_cycle": 12,
+    "problems": 0
+   },
+   "rows": [
+    {
+     "game": "g002-rules-v3-s9028",
+     "seed": 9028,
+     "turn": 22,
+     "position": 81,
+     "swaps_accepted_this_turn": 5,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       5,
+       8,
+       6
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 3,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 4,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9028",
+     "seed": 9028,
+     "turn": 24,
+     "position": 92,
+     "swaps_accepted_this_turn": 7,
+     "distinct_cycle_moves": 4,
+     "deferred_at_end_view": [
+      [
+       5,
+       11,
+       9
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 8,
+     "reverse_of_used": 3,
+     "used_not_in_cycle": 2,
+     "cycle_move_other_view": 1,
+     "retained": 14,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9028",
+     "seed": 9028,
+     "turn": 26,
+     "position": 112,
+     "swaps_accepted_this_turn": 15,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       5,
+       8,
+       11
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 7,
+     "reverse_of_used": 5,
+     "used_not_in_cycle": 4,
+     "cycle_move_other_view": 0,
+     "retained": 16,
+     "retained_rules_v2_would_suppress": 1,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9028",
+     "seed": 9028,
+     "turn": 28,
+     "position": 122,
+     "swaps_accepted_this_turn": 7,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       5,
+       11,
+       5
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 10,
+     "reverse_of_used": 4,
+     "used_not_in_cycle": 1,
+     "cycle_move_other_view": 1,
+     "retained": 16,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9028",
+     "seed": 9028,
+     "turn": 30,
+     "position": 131,
+     "swaps_accepted_this_turn": 6,
+     "distinct_cycle_moves": 3,
+     "deferred_at_end_view": [
+      [
+       5,
+       2,
+       11
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 12,
+     "reverse_of_used": 5,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 2,
+     "retained": 19,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9029",
+     "seed": 9029,
+     "turn": 34,
+     "position": 113,
+     "swaps_accepted_this_turn": 6,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       15,
+       13,
+       14
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 3,
+     "reverse_of_used": 2,
+     "used_not_in_cycle": 1,
+     "cycle_move_other_view": 0,
+     "retained": 6,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9029",
+     "seed": 9029,
+     "turn": 36,
+     "position": 120,
+     "swaps_accepted_this_turn": 3,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       15,
+       15,
+       17
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 3,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 4,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9029",
+     "seed": 9029,
+     "turn": 38,
+     "position": 133,
+     "swaps_accepted_this_turn": 9,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       15,
+       17,
+       13
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 1,
+     "reverse_of_used": 3,
+     "used_not_in_cycle": 3,
+     "cycle_move_other_view": 1,
+     "retained": 8,
+     "retained_rules_v2_would_suppress": 1,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9029",
+     "seed": 9029,
+     "turn": 40,
+     "position": 143,
+     "swaps_accepted_this_turn": 6,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       15,
+       15,
+       17
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 2,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 1,
+     "cycle_move_other_view": 1,
+     "retained": 5,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9029",
+     "seed": 9029,
+     "turn": 42,
+     "position": 149,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       15,
+       13,
+       17
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 5,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 5,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g006-rules-v3-s9032",
+     "seed": 9032,
+     "turn": 20,
+     "position": 81,
+     "swaps_accepted_this_turn": 4,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       4,
+       4,
+       8
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 4,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 5,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g006-rules-v3-s9032",
+     "seed": 9032,
+     "turn": 22,
+     "position": 88,
+     "swaps_accepted_this_turn": 3,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       4,
+       4,
+       13
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 2,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 3,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g008-rules-v3-s9034",
+     "seed": 9034,
+     "turn": 39,
+     "position": 127,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       13,
+       8,
+       13
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 0,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g008-rules-v3-s9034",
+     "seed": 9034,
+     "turn": 41,
+     "position": 133,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       13,
+       8,
+       13
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 0,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g008-rules-v3-s9034",
+     "seed": 9034,
+     "turn": 43,
+     "position": 139,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       13,
+       8,
+       13
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 0,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    }
+   ],
+   "id_stability": {
+    "swap_attempts_with_stages": 80,
+    "holders_without_pokemon": 0,
+    "options_without_pokemon": 0,
+    "holder_turns": 15,
+    "holder_turns_with_several_candidate_ids": 1,
+    "pokemon_turn_stages": 123,
+    "pokemon_turn_stages_with_several_option_ids": 77
+   },
+   "matches_previous_60": true
+  },
+  "c1_known_r3_supplement": {
+   "source": "vai-batch-tr8v3-r3 (saved records, read only)",
+   "totals": {
+    "cycles": 8,
+    "end_turns": 8,
+    "end_turns_with_other": 3,
+    "end_turns_with_selectable_under_v4": 7,
+    "end_turns_with_sendable_under_v4": 7,
+    "end_turns_with_stage_record": 7,
+    "end_view_is_cycle_pre_view": 7,
+    "holders_without_stage_record": 1,
+    "pairs_cycle_key_match": 7,
+    "pairs_cycle_move_other_view": 7,
+    "pairs_other": 5,
+    "pairs_retained_v2_suppressed": 1,
+    "pairs_reverse_of_used": 6,
+    "pairs_used_not_in_cycle": 4,
+    "problems": 0
+   },
+   "rows": [
+    {
+     "game": "g001-rules-v3-s9023",
+     "seed": 9023,
+     "turn": 19,
+     "position": 85,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       2,
+       2,
+       8
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 1,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 1,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g001-rules-v3-s9023",
+     "seed": 9023,
+     "turn": 21,
+     "position": 93,
+     "swaps_accepted_this_turn": 4,
+     "distinct_cycle_moves": 4,
+     "deferred_at_end_view": [
+      [
+       2,
+       2,
+       7
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 1,
+     "retained": 1,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g001-rules-v3-s9023",
+     "seed": 9023,
+     "turn": 23,
+     "position": 104,
+     "swaps_accepted_this_turn": 5,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       2,
+       2,
+       7
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 1,
+     "cycle_move_other_view": 1,
+     "retained": 3,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9022",
+     "seed": 9022,
+     "turn": 32,
+     "position": 133,
+     "swaps_accepted_this_turn": 3,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       9,
+       9,
+       7
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 1,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 1,
+     "retained": 3,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9022",
+     "seed": 9022,
+     "turn": 34,
+     "position": 141,
+     "swaps_accepted_this_turn": 6,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       9,
+       7,
+       1
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 1,
+     "used_not_in_cycle": 3,
+     "cycle_move_other_view": 1,
+     "retained": 5,
+     "retained_rules_v2_would_suppress": 1,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g002-rules-v3-s9022",
+     "seed": 9022,
+     "turn": 36,
+     "position": 149,
+     "swaps_accepted_this_turn": 4,
+     "distinct_cycle_moves": 3,
+     "deferred_at_end_view": [
+      [
+       9,
+       7,
+       9
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 3,
+     "reverse_of_used": 3,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 2,
+     "retained": 8,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    },
+    {
+     "game": "g003-rules-v3-s9024",
+     "seed": 9024,
+     "turn": 19,
+     "position": 77,
+     "swaps_accepted_this_turn": 2,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [],
+     "end_view_is_cycle_pre_view": false,
+     "cycle_key_match": 0,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 0,
+     "retained": 0,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 1
+    },
+    {
+     "game": "g003-rules-v3-s9024",
+     "seed": 9024,
+     "turn": 23,
+     "position": 87,
+     "swaps_accepted_this_turn": 3,
+     "distinct_cycle_moves": 2,
+     "deferred_at_end_view": [
+      [
+       10,
+       10,
+       2
+      ]
+     ],
+     "end_view_is_cycle_pre_view": true,
+     "cycle_key_match": 1,
+     "other_unused": 0,
+     "reverse_of_used": 0,
+     "used_not_in_cycle": 0,
+     "cycle_move_other_view": 1,
+     "retained": 1,
+     "retained_rules_v2_would_suppress": 0,
+     "record_insufficient_holders": 0
+    }
+   ],
+   "id_stability": {
+    "swap_attempts_with_stages": 38,
+    "holders_without_pokemon": 0,
+    "options_without_pokemon": 0,
+    "holder_turns": 9,
+    "holder_turns_with_several_candidate_ids": 1,
+    "pokemon_turn_stages": 50,
+    "pokemon_turn_stages_with_several_option_ids": 32
+   }
+  },
+  "s5": {
+   "board": "Hitmonchan(1, damage 30), Alakazam(2, holder), Diglett(3)",
+   "prefix": "1->2, 2->1",
+   "deferred_at_returned_view": [
+    "2: 1->2"
+   ],
+   "kept": [
+    "2: 1->3 (probe accepted, damage 20/0/10, no detection)"
+   ],
+   "not_buildable_at_returned_view": [
+    "2: 2->1 (Alakazam has no damage)"
+   ]
+  }
+ },
+ "rules_v2_divergence_replay": {
+  "source": "vai-batch-tr8v3-r2, vai-batch-tr8v3-fresh-r2 (detector rules only, no re-run)",
+  "games": {
+   "g001-rules-v2-s9023": {
+    "detections": 251,
+    "swaps_accepted": 775,
+    "max_swaps_in_a_turn": 84,
+    "first_v3": {
+     "actor": 1,
+     "position": 85,
+     "attempt": 97,
+     "turn": [
+      0,
+      19
+     ]
+    },
+    "first_v4": {
+     "actor": 1,
+     "position": 85,
+     "attempt": 97,
+     "turn": [
+      0,
+      19
+     ]
+    },
+    "first_v3_swaps_accepted_before": 2,
+    "first_v4_swaps_accepted_before": 2,
+    "top_turn": {
+     "actor": 1,
+     "turn": [
+      0,
+      69
+     ],
+     "swaps": 84,
+     "distinct_moves": 52,
+     "max_uses_of_one_move": 2
+    }
+   },
+   "g002-rules-v2-s9022": {
+    "detections": 9,
+    "swaps_accepted": 38,
+    "max_swaps_in_a_turn": 18,
+    "first_v3": {
+     "actor": 0,
+     "position": 133,
+     "attempt": 160,
+     "turn": [
+      0,
+      32
+     ]
+    },
+    "first_v4": {
+     "actor": 0,
+     "position": 133,
+     "attempt": 160,
+     "turn": [
+      0,
+      32
+     ]
+    },
+    "first_v3_swaps_accepted_before": 9,
+    "first_v4_swaps_accepted_before": 9,
+    "top_turn": {
+     "actor": 0,
+     "turn": [
+      0,
+      36
+     ],
+     "swaps": 18,
+     "distinct_moves": 10,
+     "max_uses_of_one_move": 2
+    }
+   },
+   "g003-rules-v2-s9024": {
+    "detections": 5,
+    "swaps_accepted": 9,
+    "max_swaps_in_a_turn": 4,
+    "first_v3": {
+     "actor": 0,
+     "position": 76,
+     "attempt": 80,
+     "turn": [
+      0,
+      19
+     ]
+    },
+    "first_v4": {
+     "actor": 0,
+     "position": 76,
+     "attempt": 80,
+     "turn": [
+      0,
+      19
+     ]
+    },
+    "first_v3_swaps_accepted_before": 2,
+    "first_v4_swaps_accepted_before": 2,
+    "top_turn": {
+     "actor": 0,
+     "turn": [
+      0,
+      19
+     ],
+     "swaps": 4,
+     "distinct_moves": 2,
+     "max_uses_of_one_move": 2
+    }
+   },
+   "g001-rules-v2-s9027": {
+    "detections": 0,
+    "swaps_accepted": 0,
+    "max_swaps_in_a_turn": 0,
+    "first_v3": null,
+    "first_v4": null,
+    "first_v3_swaps_accepted_before": null,
+    "first_v4_swaps_accepted_before": null,
+    "top_turn": null
+   },
+   "g002-rules-v2-s9028": {
+    "detections": 52,
+    "swaps_accepted": 175,
+    "max_swaps_in_a_turn": 37,
+    "first_v3": {
+     "actor": 1,
+     "position": 81,
+     "attempt": 110,
+     "turn": [
+      0,
+      22
+     ]
+    },
+    "first_v4": {
+     "actor": 1,
+     "position": 81,
+     "attempt": 110,
+     "turn": [
+      0,
+      22
+     ]
+    },
+    "first_v3_swaps_accepted_before": 5,
+    "first_v4_swaps_accepted_before": 5,
+    "top_turn": {
+     "actor": 1,
+     "turn": [
+      0,
+      26
+     ],
+     "swaps": 37,
+     "distinct_moves": 24,
+     "max_uses_of_one_move": 2
+    }
+   },
+   "g003-rules-v2-s9029": {
+    "detections": 33,
+    "swaps_accepted": 79,
+    "max_swaps_in_a_turn": 19,
+    "first_v3": {
+     "actor": 1,
+     "position": 113,
+     "attempt": 124,
+     "turn": [
+      0,
+      34
+     ]
+    },
+    "first_v4": {
+     "actor": 1,
+     "position": 113,
+     "attempt": 124,
+     "turn": [
+      0,
+      34
+     ]
+    },
+    "first_v3_swaps_accepted_before": 6,
+    "first_v4_swaps_accepted_before": 6,
+    "top_turn": {
+     "actor": 1,
+     "turn": [
+      0,
+      34
+     ],
+     "swaps": 19,
+     "distinct_moves": 11,
+     "max_uses_of_one_move": 2
+    }
+   },
+   "g004-rules-v2-s9030": {
+    "detections": 0,
+    "swaps_accepted": 0,
+    "max_swaps_in_a_turn": 0,
+    "first_v3": null,
+    "first_v4": null,
+    "first_v3_swaps_accepted_before": null,
+    "first_v4_swaps_accepted_before": null,
+    "top_turn": null
+   },
+   "g005-rules-v2-s9031": {
+    "detections": 0,
+    "swaps_accepted": 0,
+    "max_swaps_in_a_turn": 0,
+    "first_v3": null,
+    "first_v4": null,
+    "first_v3_swaps_accepted_before": null,
+    "first_v4_swaps_accepted_before": null,
+    "top_turn": null
+   },
+   "g006-rules-v2-s9032": {
+    "detections": 41,
+    "swaps_accepted": 143,
+    "max_swaps_in_a_turn": 29,
+    "first_v3": {
+     "actor": 1,
+     "position": 81,
+     "attempt": 91,
+     "turn": [
+      0,
+      20
+     ]
+    },
+    "first_v4": {
+     "actor": 1,
+     "position": 81,
+     "attempt": 91,
+     "turn": [
+      0,
+      20
+     ]
+    },
+    "first_v3_swaps_accepted_before": 4,
+    "first_v4_swaps_accepted_before": 4,
+    "top_turn": {
+     "actor": 1,
+     "turn": [
+      0,
+      28
+     ],
+     "swaps": 29,
+     "distinct_moves": 16,
+     "max_uses_of_one_move": 3
+    }
+   },
+   "g007-rules-v2-s9033": {
+    "detections": 0,
+    "swaps_accepted": 0,
+    "max_swaps_in_a_turn": 0,
+    "first_v3": null,
+    "first_v4": null,
+    "first_v3_swaps_accepted_before": null,
+    "first_v4_swaps_accepted_before": null,
+    "top_turn": null
+   },
+   "g008-rules-v2-s9034": {
+    "detections": 8,
+    "swaps_accepted": 12,
+    "max_swaps_in_a_turn": 4,
+    "first_v3": {
+     "actor": 1,
+     "position": 127,
+     "attempt": 140,
+     "turn": [
+      0,
+      39
+     ]
+    },
+    "first_v4": {
+     "actor": 1,
+     "position": 127,
+     "attempt": 140,
+     "turn": [
+      0,
+      39
+     ]
+    },
+    "first_v3_swaps_accepted_before": 2,
+    "first_v4_swaps_accepted_before": 2,
+    "top_turn": {
+     "actor": 1,
+     "turn": [
+      0,
+      39
+     ],
+     "swaps": 4,
+     "distinct_moves": 2,
+     "max_uses_of_one_move": 2
+    }
+   }
+  },
+  "detections_equal_to_previous_replays": true,
+  "note": "first attempt where rules-v3 / rules-v4 could change the rules-v2 choice is the same in all 7 games with detections"
+ },
+ "design": {
+  "detection": "same as rules-v3 (same actor, same turn, run of accepted Damage Swap, own view returns to an earlier view of the run; latest match)",
+  "record": "only when a cycle is confirmed: each move from the latest match to this acceptance, keyed by its pre-move view, holder, source, target; missing refs -> not recorded (counted)",
+  "keep_reset": "keys kept until the turn changes; another accepted operation cuts the run but keeps keys; turn change clears run, keys and pair cache; rejection / unbuildable / suppression do not advance",
+  "priority": [
+   "no key for (view, holder): rank unchanged, no restriction",
+   "some buildable pair not keyed: rank unchanged, input restricted to non-keyed pairs",
+   "all buildable pairs keyed: candidate rank 7 (after end_turn), reason :transition_deferred_all",
+   "only rank-7 candidates left: choose among them as rules-v2, restriction lifted, reason :no_alternative"
+  ],
+  "hooks": {
+   "observe_inputs(candidate, stages)": "after inputs, before building: cache pairs per (view, holder)",
+   "input_restriction(candidate, stages)": "before building: source -> allowed targets; None = no restriction",
+   "accepted_input(candidate, meaning, position)": "after acceptance: pre-move view, source, target",
+   "actions.build_choices(..., restriction=None)": "filters stage 1 / stage 2 options only when given"
+  },
+  "kept": [
+   "rules-v2 ranks, ties, input-level review (2 per key per turn, candidate demoted after 2 suppressions per episode)",
+   "rules-v3 unchanged",
+   "engine legality and per-game limits",
+   "uniform-stage, one policy RNG",
+   "one inputs fetch per attempt; none when all pairs keyed"
+  ]
+ },
+ "verification_plan": {
+  "acceptance_first": "S5: deferred 1->2 not chosen; Damage Swap candidate stays rank 5; 1->3 chosen, checked, submitted and accepted via the normal path; no new detection; seeds 1-4",
+  "controls": [
+   "reverse direction",
+   "cycle of 3 or more",
+   "two holders",
+   "same move at a different view",
+   "all pairs deferred (no Diglett)",
+   "no other operation (unit test only)",
+   "turn change",
+   "other operation cuts the run",
+   "rejection / unbuildable / suppression do not advance",
+   "rules-v2 / rules-v3 sequences unchanged"
+  ],
+  "main_comparison": {
+   "conditions": "0.198.0, TR8@1, C1, deep, observation and prestop on, accepted limit 1,000",
+   "main": "seed 9023 rules-v3 vs rules-v4",
+   "regression": [
+    9022,
+    9024
+   ],
+   "judged_separately": [
+    "other legal move chosen and accepted",
+    "returns and detections",
+    "accepted operations and Damage Swap accepts",
+    "limit reached",
+    "game_over"
+   ],
+   "hold_if": "9023 rules-v4 reaches the accepted limit again",
+   "not_counted": "retention in normal games when the old board does not reappear after the branch"
+  }
+ },
+ "open_points": {
+  "U1": "per-turn upper bound equals rules-v2's input-level cap (9023 rules-v2: 84 swaps in one turn over 52 distinct moves); extra guard not included, user decision",
+  "U2": "pairs assumed equal at equal own views; no repeated same-view stage record in the saved records (0), fresh response wins",
+  "U3": "pairs suppressed by the rules-v2 review stay in the restriction; 2 of 105 retained pairs in the saved records",
+  "U4": "missing pokemon refs -> not recorded; 0 in the saved records",
+  "U5": "holder in the key lets another holder re-enter the same move; no two-holder scene in the saved records",
+  "U6": "restriction only for deep-profile pairs; unverified fallback undecided",
+  "U7": "TOOL_VERSION, mode table, record field names decided in the implementation unit"
+ },
+ "unconfirmed": [
+  "strategic value of the retained moves not judged",
+  "buildable = stage records at an earlier identical view, not refetched at the end-turn point",
+  "effect of rules-v4 on returns, accepted counts and completion not estimated"
+ ],
+ "not_done": [
+  "policy implementation",
+  "constructed-board run",
+  "new games",
+  "re-run of old games",
+  "default change",
+  "engine / convention / judge / limits change",
+  "push to main / merge / PR"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-design-run/"
+}

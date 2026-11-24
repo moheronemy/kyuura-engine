@@ -869,5 +869,9 @@
  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v3-c2c4-run/ (+ vai-batch-tr8v3-c2-r2, -c2-r3, -c4-r2, -c4-r3, -c3-r2, -c3-r3)",
  "failures": [
   "F1: the plan-creation step wrote the 6 CLI stdout/stderr to one file name (wrong word taken as the batch name); 5 stdout lines overwritten. Exit codes 0 x6; plans checked by check_plans and dry-run; games not affected"
- ]
+ ],
+ "followup": {
+  "doc": "docs/tr8-damage-swap-transition-policy-design.md",
+  "summary": "rules-v4 (provisional) design: defer only (pre-move view, holder, source, target) of a confirmed cycle; all 60 unused pairs of the C1 re-read stay selectable"
+ }
 }
