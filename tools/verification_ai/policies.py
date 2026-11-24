@@ -213,18 +213,133 @@ class RulePolicy(UniformPolicy):
         if self.memory is not None:  # rules-v2: このエピソードで下げた候補は end_turn より後ろ
             prefix = "rule2"
             ranks = [DEMOTED_RANK if r is not None and candidate_identity(c) in self.memory.demoted else r for r, c in zip(ranks, items)]
+        ranks, prefix, note = self._adjust_ranks(items, ranks, prefix)
         known = [r for r in ranks if r is not None]
         if not known:
             index, _ = UniformPolicy.choose(self, "candidate", items, context)
-            return index, f"{prefix}:fallback:no_priority"
+            return index, f"{prefix}:fallback:no_priority{note}"
         best = min(known)
         tag = "demoted:" if best == DEMOTED_RANK else ""
         pool = [i for i, r in enumerate(ranks) if r == best]
         if len(pool) == 1:
-            return pool[0], f"{prefix}:{tag}priority{best}:{items[pool[0]]['kind']}"
+            return pool[0], f"{prefix}:{tag}priority{best}:{items[pool[0]]['kind']}{note}"
         self.draws += 1
         pick = pool[self._rng.randrange(len(pool))]
-        return pick, f"{prefix}:{tag}priority{best}:{items[pick]['kind']}:tie{len(pool)}"
+        return pick, f"{prefix}:{tag}priority{best}:{items[pick]['kind']}:tie{len(pool)}{note}"
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        """rules-v3（LoopRulePolicy）の差し込み口。rules-v1・rules-v2 は順位・理由のコードを変えない（同じ値を返す）。"""
+        return ranks, prefix, ""
+
+
+# ---------------------------------------------------------------- rules-v3（試験の方策）: 観測が戻った［ダメージスワップ］の周期の候補を、その番の残りで下げる
+# （docs/tr8-damage-swap-loop-analysis.md 5 章の案 C・docs/tr8-damage-swap-loop-experiment.md）。rules-v2 の順位・同順位の選び方・入力単位の再送抑止はそのまま使う。
+# 履歴は方策の中だけに持つ（ランナーが渡すのは、本人の入口の観測の応答・本人の受理の候補・受理の通し番号だけ）。合法性を判定しない
+
+RULES3_VERSION = 3
+RULES3_DISTRIBUTION = "rules-v3-candidate+uniform-stage"
+LOOP_KIND = "use_power"
+LOOP_POWER_NAMES = ("ダメージスワップ",)  # 検出の対象の特殊能力（候補の power.name_ja。公開の値）
+VIEW_OUTSIDE_FIELDS = frozenset({"request_id", "operation_id"})  # 観測の内容の外の識別子（比べない）。今の view の応答には現れない
+LOOP_DEMOTION = {"version": 1, "kind": LOOP_KIND, "powers": list(LOOP_POWER_NAMES), "key": "kind+holder(pokemon)",
+                 "compare": "own view response (canonical JSON, outside identifiers removed)", "scope": "same actor, same turn, run of accepted target powers only",
+                 "effect": f"rank {DEMOTED_RANK} (after end_turn) until the turn changes", "reset": "turn change"}
+
+
+def loop_target(candidate: dict[str, Any]) -> bool:
+    """周期の検出の対象（［ダメージスワップ］の宣言の候補）か。"""
+    return (isinstance(candidate, dict) and candidate.get("kind") == LOOP_KIND
+            and (candidate.get("power") or {}).get("name_ja") in LOOP_POWER_NAMES)
+
+
+def loop_key(candidate: dict[str, Any]) -> str:
+    """周期の候補を追う鍵: 操作の種類と能力の持ち主の参照（場のポケモンの番号）。候補の番号・場所（バトル場・ベンチ）・入力（移動元・移動先）を含めない。"""
+    holder = candidate.get("pokemon") or {}
+    ref = holder.get("pokemon") if holder.get("pokemon") is not None else {"card": holder.get("card")}
+    return _canon({"kind": candidate.get("kind"), "holder": ref})
+
+
+def view_signature(view: dict[str, Any]) -> str | None:
+    """本人の観測の応答の比較の値（観測の外の識別子だけを除く。ダメージ・付いたカード・特殊状態・手札・決定などを省かない）。取れなければ None。"""
+    if not isinstance(view, dict) or not view.get("ok") or not isinstance(view.get("observation"), dict):
+        return None
+    return _canon({k: v for k, v in view.items() if k not in VIEW_OUTSIDE_FIELDS})
+
+
+class LoopRulePolicy(RulePolicy):
+    """rules-v3: rules-v2 に、同じ番の［ダメージスワップ］だけが続いた受理の区間で本人の観測が以前の観測に戻ったとき、直近の一致から今回の受理までに
+    使った［ダメージスワップ］の候補（``loop_key``）を、その番の残りで ``DEMOTED_RANK``（end_turn より後ろ）に置く規則を加える。
+
+    - ランナーは本人の選択のエピソードの始めに ``observe_view``（本人の観測の応答と受理の通し番号）、本人の受理のあとに ``accepted_candidate`` を呼ぶ
+    - 区間: 本人の受理が対象の特殊能力で、次の本人の観測までにほかの受理がない（通し番号が続く）あいだ。ほかの操作の受理・ほかの主体の受理で区間を切る
+    - 拒否・入力を作れない・送信の抑止では観測を取らず、履歴を進めない（同じエピソードの選び直し）
+    - 観測を取れない受理があった区間では下げない。番が変われば区間と下げた候補の両方を消す
+    - 下げた候補しか残らなければ、rules-v2 と同じく順位 ``DEMOTED_RANK`` の中から選ぶ（入力単位の抑止は rules-v2 の評価のまま）"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD):
+        super().__init__(seed, STAGE, version=2, threshold=threshold)
+        self.version = RULES3_VERSION
+        self.distribution = RULES3_DISTRIBUTION
+        self.loop_demotion = LOOP_DEMOTION
+        self._turn = None
+        self._run: dict[str, Any] | None = None
+        self._pending: dict[str, Any] | None = None
+        self._loop_demoted: set[str] = set()
+        self._detection: dict[str, Any] | None = None
+        self.loop_counts = Counter()
+
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        sig = view_signature(view)
+        turn = turn_of(view) if sig is not None else self._turn  # 観測が取れなければ番を変えない（その区間を下げない区間にする）
+        if turn != self._turn:
+            if self._loop_demoted:
+                self.loop_counts["turn_resets_with_demotion"] += 1
+            self._turn, self._run, self._pending, self._loop_demoted = turn, None, None, set()
+        pending, self._pending, self._detection = self._pending, None, None
+        if pending is not None and pending["target"] and pending["position"] == position and self._run is not None:
+            run = self._run
+            run["keys"].append(pending["key"])
+            if sig is None:
+                run["valid"] = False
+                self.loop_counts["runs_without_view"] += 1
+            if run["valid"]:
+                matched = [i for i, v in enumerate(run["views"]) if v == sig]
+                if matched:
+                    j = matched[-1]
+                    keys = run["keys"][j:]
+                    new = sorted(set(keys) - self._loop_demoted)
+                    self._loop_demoted.update(keys)
+                    self.loop_counts["detections"] += 1
+                    self.loop_counts["demoted_keys"] += len(new)
+                    self._detection = {"position": position, "turn": list(turn) if turn is not None else None, "returned_to": j,
+                                       "run_accepts": len(run["keys"]), "cycle_length": len(keys), "view": short_key(sig),
+                                       "newly_demoted": [short_key(k) for k in new], "demoted_this_turn": len(self._loop_demoted)}
+            run["views"].append(sig)
+        else:  # 区間の始め（番の始め・ほかの操作の受理・ほかの主体の受理・最初の観測）
+            self._run = {"views": [sig], "keys": [], "valid": sig is not None}
+
+    def accepted_candidate(self, candidate: dict[str, Any], position: int) -> None:
+        target = loop_target(candidate)
+        self._pending = {"position": position, "target": target, "key": loop_key(candidate) if target else None}
+
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        if self._detection is not None:
+            info["loop_detection"] = dict(self._detection)
+        if self._loop_demoted:
+            info["loop_demoted"] = len(self._loop_demoted)
+        return info
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        hit = [r is not None and loop_target(c) and loop_key(c) in self._loop_demoted for r, c in zip(ranks, items)]
+        n = sum(hit)
+        ranks = [DEMOTED_RANK if h else r for r, h in zip(ranks, hit)]
+        if n:
+            self.loop_counts["choices_with_loop_demoted"] += 1
+        return ranks, "rule3", (f":loop_demoted{n}" if n else "")
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**LOOP_DEMOTION, "counts": dict(sorted(self.loop_counts.items()))}
 
 
 def mix_seed(policy_seed: int, player: int) -> str:

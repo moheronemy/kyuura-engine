@@ -23,7 +23,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import STAGE, TUPLE, BoundaryPolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import RULES3_VERSION, STAGE, TUPLE, BoundaryPolicy, LoopRulePolicy, MixedPolicy, RulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -194,6 +194,7 @@ class Runner:
                                          if isinstance(p, MixedPolicy) else {}),
                                       **({"repeat_threshold": p.memory.threshold, "demote_after": p.memory.demote_after}
                                          if isinstance(p, RulePolicy) and p.memory is not None else {}),
+                                      **({"loop": p.loop_summary()} if hasattr(p, "loop_summary") else {}),
                                       **({"reach": p.reach, "reach_state": p.state()} if isinstance(p, ReachPolicy) else {})}
                              for k, p in self.policies.items()},
                 "limits": asdict(self.limits), "elapsed_seconds": round(self.clock() - self._started, 3),
@@ -336,6 +337,8 @@ class Runner:
         endpoint = self.endpoints[actor]
         policy = self.policies[actor]
         own_view = request(endpoint, "view")
+        if hasattr(policy, "observe_view"):  # rules-v3: 本人の観測の応答と受理の通し番号だけを渡す（ほかの方策は持たない）
+            policy.observe_view(own_view, self.position)
         # V2: 選択のエピソード（この状態でのこの主体の選択。受理・対戦の終わり・上限で区切る。拒否では状態が変わらないので同じエピソードのまま）
         info = policy.begin_episode() if hasattr(policy, "begin_episode") else {"mode": "random"}
         self.episode_count += 1
@@ -525,6 +528,8 @@ class Runner:
                 self._episode["result"] = "accepted"
                 if hasattr(policy, "observe_accepted"):
                     policy.observe_accepted(turn, key)  # 混合のランダムの側で受理された操作も履歴に入れる
+                if hasattr(policy, "accepted_candidate"):  # rules-v3: 本人の受理の候補と、受理のあとの通し番号
+                    policy.accepted_candidate(candidate, self.position)
                 if self.negative is not None:  # V3-1: 受理のあとの古い取っ手の試験（元の入力を正常に送り直すのではない）
                     self.negative.after_accept(self, actor, endpoint, entry)
                 if self.until is not None and self.until(self, entry):
@@ -714,6 +719,9 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES3_VERSION:  # rules-v3（試験。明示的に選んだときだけ）
+        players = {p: LoopRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules":
         players = {p: RulePolicy(player_seed(config.policy_seed, p), version=config.rules_version, threshold=config.repeat_threshold) for p in (0, 1)}
