@@ -1261,6 +1261,7 @@
   "push to main / merge / PR"
  ],
  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v3-fresh-run/ (+ vai-batch-tr8v3-fresh-r2, -r3)",
+ "followup": "docs/tr8-rules-v3-buildable-alternatives.md",
  "failures": [
   "F1: PowerShell variable $r (plan sha) overwrote $R (run dir); a stray folder with r3 plan copies was created in the main checkout and removed; the step was redone (no plan or game file affected)"
  ]
