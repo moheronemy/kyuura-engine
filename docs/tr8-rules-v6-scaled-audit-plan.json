@@ -1,5 +1,5 @@
 {
- "status": "draft",
+ "status": "fixed_pilot_and_b1_executed",
  "doc": "docs/tr8-rules-v6-scaled-audit-plan.md",
  "date": "2026-11-25",
  "base": "b7991526b45b16ae4133e82700fb462200f98f81",
@@ -199,7 +199,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p1 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "e4bb21cc65a7cfdc24641a3eac6228da528faba241e20d103fea2ee55e706d33"
   },
   {
    "batch": "vai-batch-tr8v6a-p2",
@@ -213,7 +213,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p2 --seeds 9050 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "3dacd3c9149b4f5a19c77c5b6cfec1ede3aa473b901da32bdc5faf0de80bbe11"
   },
   {
    "batch": "vai-batch-tr8v6a-p3",
@@ -227,7 +227,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p3 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "8d0ad61f8bbcffb2567a11ba6296891df646215a5eb92dbdb60a6d4db0bdc8e1"
   },
   {
    "batch": "vai-batch-tr8v6a-p4",
@@ -241,7 +241,7 @@
    "budget_seconds": 300,
    "evidence_max_mb": 512,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p4 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "9ad3f53cd82eedece016f15de4a1688a0a2cc9d70ad89d7a5cdd7d56090599a3"
   },
   {
    "batch": "vai-batch-tr8v6a-b1c1",
@@ -260,7 +260,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c1 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "d71a1d231efda0d72547642d3fb0ed446bcde229c35d692ca9a5971e812e8078"
   },
   {
    "batch": "vai-batch-tr8v6a-b1c2",
@@ -279,7 +279,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c2 --seeds 9051 9052 9053 9054 9055 9056 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "fb4ceecbd9a8c6f59bdbf5192e26f6cd03efd07eca792c068527319f332f8d7e"
   },
   {
    "batch": "vai-batch-tr8v6a-b1c3",
@@ -298,7 +298,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c3 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "d964867d816d0b297c3db1e1149ff8058ef7142fbeb3202f4f81303d78352377"
   },
   {
    "batch": "vai-batch-tr8v6a-b1c4",
@@ -317,7 +317,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c4 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "47b0d602ace3cf6df926aff612b4abe6e5241ba9b6bfdb9ffbde8acc8ce1f93e"
   },
   {
    "batch": "vai-batch-tr8v6a-b2c1",
@@ -336,7 +336,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c1 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "7ce5c7bc4a4c8b772f9eefa9c019a054286df9c03d26caec559188c77b50e4ac"
   },
   {
    "batch": "vai-batch-tr8v6a-b2c2",
@@ -355,7 +355,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c2 --seeds 9057 9058 9059 9060 9061 9062 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "77915a831e347a88bd41136834247b5e6d21317fd7007b225a32512bd0bd349f"
   },
   {
    "batch": "vai-batch-tr8v6a-b2c3",
@@ -374,7 +374,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c3 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "cebb7e4104788a2241422bc55dd1e0afed25f3453f7e3cd3da3ee7567a0d186a"
   },
   {
    "batch": "vai-batch-tr8v6a-b2c4",
@@ -393,7 +393,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c4 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "d9bc9a3f5a40956b0249dfb7b6f674a0e220ac6800f834c5590fd70ed457755a"
   },
   {
    "batch": "vai-batch-tr8v6a-b3c1",
@@ -412,7 +412,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c1 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "05570ffd97d00f73df2111fe6dd055be23f0ff861a7ccf83662430a625b1e9b7"
   },
   {
    "batch": "vai-batch-tr8v6a-b3c2",
@@ -431,7 +431,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c2 --seeds 9063 9064 9065 9066 9067 9068 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "c5a67d2273944d5abcd9dc519f69b01c4e5bfffffb7e8c0721ea337e165c2874"
   },
   {
    "batch": "vai-batch-tr8v6a-b3c3",
@@ -450,7 +450,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c3 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "f2ffc3f2bd60d1d806addd7b292237c7321a305eb24ed561aac22ee72aaf591c"
   },
   {
    "batch": "vai-batch-tr8v6a-b3c4",
@@ -469,7 +469,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c4 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "182656612bf10025d20e34e125fe04a95010869d0bab725a07f9f8b6acaf9945"
   },
   {
    "batch": "vai-batch-tr8v6a-b4c1",
@@ -488,7 +488,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c1 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "8d148d16bbf8e061e7168a39c6da6bd600a23c8ae85cf6c151d23f2e16f7c571"
   },
   {
    "batch": "vai-batch-tr8v6a-b4c2",
@@ -507,7 +507,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c2 --seeds 9069 9070 9071 9072 9073 9074 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "e3052bb50c5a2fa5ac1cc45a86b0d2effc248645e42c894f81fec66a69193c98"
   },
   {
    "batch": "vai-batch-tr8v6a-b4c3",
@@ -526,7 +526,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c3 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "7fe8f8266a7654ede47918ab88df5c585bc8119ecf495c7dcc141a27c5724aa3"
   },
   {
    "batch": "vai-batch-tr8v6a-b4c4",
@@ -545,7 +545,7 @@
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
    "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c4 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
-   "plan_sha256": null
+   "plan_sha256": "85942a35422e675690404301880d4d3bca24fcc9fd4ee5a7a200c718ed833a4c"
   }
  ],
  "order": [
@@ -1893,5 +1893,1625 @@
  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v6-audit-plan-run/",
  "failures": [
   "F1: budget estimate output games_before_block_floor (17) counts games inside the floor; games that can start is 18; doc / JSON use 18, output kept"
- ]
+ ],
+ "fixed": {
+  "date": "2026-11-25",
+  "branch": "claude/tr8-rules-v6-audit-pilot-b1",
+  "doc_base": "a7567fe927a8f27a4614e5c5c0c97a6955f9f20f",
+  "execution": {
+   "tool_commit": "e75a87316a3b821ff70cff1c48fba76e6b657f04",
+   "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+   "worktree": "C:\\dev\\kyuura-engine-lt117r",
+   "cache_dir": "C:\\dev\\kyuura-engine-pyc-cache\\cpython-314-e75a873-tr8v6a"
+  },
+  "identity_check": {
+   "ok": true,
+   "diff_keys": [
+    "engine_file"
+   ],
+   "keys": 90
+  },
+  "seed_rescan": {
+   "files": 614,
+   "errors": [],
+   "used_count": 143,
+   "max_used": 9049,
+   "selected": [
+    9050,
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056,
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062,
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068,
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ],
+   "unchanged": true
+  },
+  "plan_check": {
+   "ok": true,
+   "unexpected_total": 0
+  },
+  "plan_sha256": {
+   "vai-batch-tr8v6a-p1": "e4bb21cc65a7cfdc24641a3eac6228da528faba241e20d103fea2ee55e706d33",
+   "vai-batch-tr8v6a-p2": "3dacd3c9149b4f5a19c77c5b6cfec1ede3aa473b901da32bdc5faf0de80bbe11",
+   "vai-batch-tr8v6a-p3": "8d0ad61f8bbcffb2567a11ba6296891df646215a5eb92dbdb60a6d4db0bdc8e1",
+   "vai-batch-tr8v6a-p4": "9ad3f53cd82eedece016f15de4a1688a0a2cc9d70ad89d7a5cdd7d56090599a3",
+   "vai-batch-tr8v6a-b1c1": "d71a1d231efda0d72547642d3fb0ed446bcde229c35d692ca9a5971e812e8078",
+   "vai-batch-tr8v6a-b1c2": "fb4ceecbd9a8c6f59bdbf5192e26f6cd03efd07eca792c068527319f332f8d7e",
+   "vai-batch-tr8v6a-b1c3": "d964867d816d0b297c3db1e1149ff8058ef7142fbeb3202f4f81303d78352377",
+   "vai-batch-tr8v6a-b1c4": "47b0d602ace3cf6df926aff612b4abe6e5241ba9b6bfdb9ffbde8acc8ce1f93e",
+   "vai-batch-tr8v6a-b2c1": "7ce5c7bc4a4c8b772f9eefa9c019a054286df9c03d26caec559188c77b50e4ac",
+   "vai-batch-tr8v6a-b2c2": "77915a831e347a88bd41136834247b5e6d21317fd7007b225a32512bd0bd349f",
+   "vai-batch-tr8v6a-b2c3": "cebb7e4104788a2241422bc55dd1e0afed25f3453f7e3cd3da3ee7567a0d186a",
+   "vai-batch-tr8v6a-b2c4": "d9bc9a3f5a40956b0249dfb7b6f674a0e220ac6800f834c5590fd70ed457755a",
+   "vai-batch-tr8v6a-b3c1": "05570ffd97d00f73df2111fe6dd055be23f0ff861a7ccf83662430a625b1e9b7",
+   "vai-batch-tr8v6a-b3c2": "c5a67d2273944d5abcd9dc519f69b01c4e5bfffffb7e8c0721ea337e165c2874",
+   "vai-batch-tr8v6a-b3c3": "f2ffc3f2bd60d1d806addd7b292237c7321a305eb24ed561aac22ee72aaf591c",
+   "vai-batch-tr8v6a-b3c4": "182656612bf10025d20e34e125fe04a95010869d0bab725a07f9f8b6acaf9945",
+   "vai-batch-tr8v6a-b4c1": "8d148d16bbf8e061e7168a39c6da6bd600a23c8ae85cf6c151d23f2e16f7c571",
+   "vai-batch-tr8v6a-b4c2": "e3052bb50c5a2fa5ac1cc45a86b0d2effc248645e42c894f81fec66a69193c98",
+   "vai-batch-tr8v6a-b4c3": "7fe8f8266a7654ede47918ab88df5c585bc8119ecf495c7dcc141a27c5724aa3",
+   "vai-batch-tr8v6a-b4c4": "85942a35422e675690404301880d4d3bca24fcc9fd4ee5a7a200c718ed833a4c"
+  },
+  "cache": {
+   "pyc_files": 185,
+   "bytes": 13969117,
+   "all_checked_hash": true
+  },
+  "dry_run": {
+   "plans": 20,
+   "use_cache_true": 20,
+   "plan_dirs_plan_files_only": 20
+  },
+  "readcheck_9045": {
+   "v5": {
+    "accepted_et": 159,
+    "revert_points": 104,
+    "moves_in_revert_segments": 145,
+    "repeated_pre_placement_move_pairs": 19,
+    "repeated_obs_sha_move_pairs": 16,
+    "v6_detections": 0,
+    "v6_newly_deferred": 0,
+    "v6_restricted": 0
+   },
+   "v6": {
+    "accepted_et": 139,
+    "revert_points": 84,
+    "moves_in_revert_segments": 125,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6_detections": 81,
+    "v6_newly_deferred": 118,
+    "v6_restricted": 87
+   }
+  }
+ },
+ "pilot_execution": {
+  "counts": {
+   "C1": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 1
+    },
+    "game_over": 1,
+    "completion": "1/1",
+    "completion_rate": 1.0
+   },
+   "C2": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 1
+    },
+    "game_over": 1,
+    "completion": "1/1",
+    "completion_rate": 1.0
+   },
+   "C3": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 1
+    },
+    "game_over": 1,
+    "completion": "1/1",
+    "completion_rate": 1.0
+   },
+   "C4": {
+    "planned": 1,
+    "started": 1,
+    "complete": 1,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 1
+    },
+    "game_over": 1,
+    "completion": "1/1",
+    "completion_rate": 1.0
+   },
+   "all": {
+    "planned": 4,
+    "started": 4,
+    "complete": 4,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 4
+    },
+    "game_over": 4,
+    "completion": "4/4",
+    "completion_rate": 1.0
+   }
+  },
+  "table_a": [],
+  "et_turns_20_or_more": [],
+  "et_totals": {},
+  "ds_turns_6_or_more": [],
+  "ds_total": {
+   "games": 4,
+   "swaps_accepted": 0,
+   "max_per_turn": 0,
+   "turns_at_6_or_more": 0,
+   "turns_over_6": 0,
+   "rank_change_choices": 0,
+   "games_with_rank_change": 0,
+   "consistency_ok": true,
+   "readable": true,
+   "v5_identity_ok": true
+  },
+  "table_c": {
+   "rejected_by_code": {},
+   "rejected_games": {},
+   "rejected_in_2plus_games": {},
+   "candidate_level_R4": {},
+   "option_level_R5": {
+    "answer_decision|": {
+     "total": 2,
+     "first_attempt_only": 2,
+     "rows": 1,
+     "positions": 1,
+     "games": 1
+    }
+   },
+   "R4_in_2plus_games": {},
+   "R5_in_2plus_games": {}
+  },
+  "submit_side": {
+   "reanswer_R2": {},
+   "follow_up": {},
+   "refusals_R1": {},
+   "tool_counters_R3": {
+    "policy_suppressed": 2,
+    "withheld": 0,
+    "refused": 0,
+    "check_invalid": 0,
+    "retry_same_input": 0,
+    "failed": 0
+   },
+   "prestop_status": {
+    "complete": 4
+   },
+   "prestop_unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "unbuildable": 81
+  },
+  "conventions": {
+   "M5_convention_applied": {},
+   "M5_er9": {
+    "zero_answers": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_h4": {
+    "zero_answers": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_t19b": {
+    "declarations": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0,
+    "not_submitted_targets": 0
+   },
+   "M5_rs1": {
+    "scene_rows": 0,
+    "scene_positions": 0,
+    "presented_positions": 0,
+    "excluded_positions": 0,
+    "not_offered_rows": 0,
+    "chosen": 0,
+    "chosen_unbuildable": 0,
+    "chosen_positions": 0,
+    "checked_valid": 0,
+    "submitted": 0,
+    "accepted": 0,
+    "accepted_with_convention": 0,
+    "accepted_judge_expected": 0,
+    "draw_after_heads": 0,
+    "replacement_seen_positions": 0
+   }
+  },
+  "static_et": {
+   "source": "et_pilot.json",
+   "card_data": "kyuura_engine/data/kyuura_cards.json @ execution worktree",
+   "totals": {}
+  },
+  "revert_check": {
+   "reverts": {},
+   "candidate_lists_at_sha_equal": {},
+   "turns_with_after_et": {},
+   "examples_candidate_mismatch": 0
+  },
+  "sums": {
+   "tool_seconds": 25.348,
+   "outer_seconds": 117.769,
+   "attempt_bytes": 29655759,
+   "plan_dir_bytes": 29800134
+  },
+  "measured_per_condition": {
+   "C1": {
+    "tool_seconds": {
+     "n": 1,
+     "mean": 2.746,
+     "max": 2.746
+    },
+    "outer_seconds": {
+     "n": 1,
+     "mean": 25.72,
+     "max": 25.72
+    },
+    "bytes": {
+     "n": 1,
+     "mean": 2892100,
+     "max": 2892100
+    }
+   },
+   "C2": {
+    "tool_seconds": {
+     "n": 1,
+     "mean": 2.274,
+     "max": 2.274
+    },
+    "outer_seconds": {
+     "n": 1,
+     "mean": 24.621,
+     "max": 24.621
+    },
+    "bytes": {
+     "n": 1,
+     "mean": 1566051,
+     "max": 1566051
+    }
+   },
+   "C3": {
+    "tool_seconds": {
+     "n": 1,
+     "mean": 8.325,
+     "max": 8.325
+    },
+    "outer_seconds": {
+     "n": 1,
+     "mean": 31.288,
+     "max": 31.288
+    },
+    "bytes": {
+     "n": 1,
+     "mean": 7711262,
+     "max": 7711262
+    }
+   },
+   "C4": {
+    "tool_seconds": {
+     "n": 1,
+     "mean": 12.003,
+     "max": 12.003
+    },
+    "outer_seconds": {
+     "n": 1,
+     "mean": 36.14,
+     "max": 36.14
+    },
+    "bytes": {
+     "n": 1,
+     "mean": 17486346,
+     "max": 17486346
+    }
+   }
+  },
+  "outlook_next_block": {
+   "normal": {
+    "tool_seconds": 152.088,
+    "outer_seconds": 706.614,
+    "bytes": 177934554
+   },
+   "x1_5": {
+    "tool_seconds": 228.132,
+    "outer_seconds": 1059.921,
+    "bytes": 266901831.0
+   },
+   "observed_max_x24": {
+    "tool_seconds": 152.088,
+    "outer_seconds": 706.614,
+    "bytes": 177934554
+   }
+  },
+  "gates": {
+   "verdict": "proceed",
+   "started": 4,
+   "all_games_P1_P8": true,
+   "stage_checks": {
+    "all_planned_started": true,
+    "stage_P6": true,
+    "stage_P7": true,
+    "stage_P5": true,
+    "stage_sets": true,
+    "et_skipped_0": true,
+    "cache_all_same": true
+   }
+  },
+  "budget_next": {
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "ok": true,
+   "failed": [],
+   "values": {
+    "plan_remaining_tool_seconds": 900.0,
+    "block_remaining_tool_seconds": 3574.652,
+    "total_remaining_tool_seconds": 14374.652,
+    "block_remaining_outer_seconds": 7082.231,
+    "total_remaining_outer_seconds": 28682.231,
+    "plan_remaining_evidence_bytes": 1073660399,
+    "block_remaining_evidence_bytes": 2117392063,
+    "total_remaining_evidence_bytes": 8558968654,
+    "drive_free_bytes": 248622600192
+   },
+   "used": {
+    "block": {
+     "tool_seconds": 25.348,
+     "outer_seconds": 117.769,
+     "evidence_bytes": 30091585
+    },
+    "total": {
+     "tool_seconds": 25.348,
+     "outer_seconds": 117.769,
+     "evidence_bytes": 30965938
+    }
+   }
+  },
+  "later_not_started_and_fixed": true,
+  "later_games_not_started": 96
+ },
+ "b1_execution": {
+  "counts": {
+   "C1": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C2": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C3": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C4": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "all": {
+    "planned": 24,
+    "started": 24,
+    "complete": 24,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 24
+    },
+    "game_over": 24,
+    "completion": "24/24",
+    "completion_rate": 1.0
+   }
+  },
+  "table_a": [],
+  "et_turns_20_or_more": [
+   {
+    "game": "g001-rules-v6-s9051",
+    "actor": 1,
+    "turn": [
+     0,
+     12
+    ],
+    "accepted_et": 34,
+    "revert_points": 20,
+    "immediate_inverse": 5,
+    "cycle_3plus": 15,
+    "moves_in_revert_segments": 34,
+    "novel_result_moves": 14,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 19,
+     "newly_deferred": 34,
+     "restriction_results": {
+      "restricted": 23
+     },
+     "restriction_excluded_moves": 37,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 56,
+      "selected": {
+       "use_power(ET)": 38,
+       "retreat": 17,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 17
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 6
+      },
+      "sent": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "et_accepted_after": 32,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 18,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn"
+    },
+    "max_run": 34
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "actor": 1,
+    "turn": [
+     0,
+     29
+    ],
+    "accepted_et": 30,
+    "revert_points": 25,
+    "immediate_inverse": 4,
+    "cycle_3plus": 21,
+    "moves_in_revert_segments": 30,
+    "novel_result_moves": 5,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 25,
+     "newly_deferred": 30,
+     "restriction_results": {
+      "restricted": 24
+     },
+     "restriction_excluded_moves": 60,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 38,
+      "selected": {
+       "use_power(ET)": 27,
+       "retreat": 10,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 10
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "et_accepted_after": 27,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 13,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 30
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "actor": 1,
+    "turn": [
+     0,
+     31
+    ],
+    "accepted_et": 30,
+    "revert_points": 23,
+    "immediate_inverse": 3,
+    "cycle_3plus": 20,
+    "moves_in_revert_segments": 28,
+    "novel_result_moves": 7,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 23,
+     "newly_deferred": 28,
+     "restriction_results": {
+      "restricted": 22
+     },
+     "restriction_excluded_moves": 52,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 42,
+      "selected": {
+       "use_power(ET)": 24,
+       "retreat": 17,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 24,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 17
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 24,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 24,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 24,
+       "end_turn": 1
+      },
+      "et_accepted_after": 24,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 21,
+    "retreat_built": 1,
+    "retreat_accepted": 1,
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 28
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "actor": 1,
+    "turn": [
+     0,
+     33
+    ],
+    "accepted_et": 34,
+    "revert_points": 11,
+    "immediate_inverse": 3,
+    "cycle_3plus": 8,
+    "moves_in_revert_segments": 27,
+    "novel_result_moves": 23,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 10,
+     "newly_deferred": 27,
+     "restriction_results": {
+      "restricted": 11
+     },
+     "restriction_excluded_moves": 18,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 39,
+      "selected": {
+       "use_power(ET)": 25,
+       "retreat": 13,
+       "use_attack": 1
+      },
+      "built": {
+       "use_power(ET)": 24,
+       "use_attack": 1
+      },
+      "unbuildable": {
+       "retreat": 13
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 1
+      },
+      "sent": {
+       "use_power(ET)": 24,
+       "use_attack": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 24,
+       "use_attack": 1
+      },
+      "accepted": {
+       "use_power(ET)": 24,
+       "use_attack": 1
+      },
+      "et_accepted_after": 24,
+      "first_accepted_non_et": "use_attack"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 12,
+     "attacker_card_id": "PMCG1-007",
+     "same_active_as_turn_start": true,
+     "energy_turn_start": [],
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 2,
+     "attach_energy_before_attack": 1,
+     "et_before_attack": 34,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 18,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "turn_last_accepted": {
+     "kind": "use_attack",
+     "actor": 1,
+     "reason": "rule6:priority4:use_attack"
+    },
+    "max_run": 34
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "actor": 1,
+    "turn": [
+     0,
+     23
+    ],
+    "accepted_et": 26,
+    "revert_points": 1,
+    "immediate_inverse": 1,
+    "cycle_3plus": 0,
+    "moves_in_revert_segments": 2,
+    "novel_result_moves": 25,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 1,
+     "newly_deferred": 2,
+     "restriction_results": {
+      "restricted": 1
+     },
+     "restriction_excluded_moves": 1,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 32,
+      "selected": {
+       "use_power(ET)": 20,
+       "retreat": 11,
+       "use_attack": 1
+      },
+      "built": {
+       "use_power(ET)": 20,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "unbuildable": {
+       "retreat": 10
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 20,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 20,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "accepted": {
+       "use_power(ET)": 20,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "et_accepted_after": 20,
+      "first_accepted_non_et": "retreat"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 3,
+     "attacker_card_id": "PMCG1-001",
+     "same_active_as_turn_start": false,
+     "energy_turn_start": null,
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 2,
+     "attach_energy_before_attack": 0,
+     "et_before_attack": 26,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 16,
+    "retreat_built": 1,
+    "retreat_accepted": 1,
+    "turn_last_accepted": {
+     "kind": "use_attack",
+     "actor": 1,
+     "reason": "rule6:priority4:use_attack"
+    },
+    "max_run": 26
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "actor": 1,
+    "turn": [
+     0,
+     27
+    ],
+    "accepted_et": 23,
+    "revert_points": 3,
+    "immediate_inverse": 2,
+    "cycle_3plus": 1,
+    "moves_in_revert_segments": 9,
+    "novel_result_moves": 20,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 2,
+     "newly_deferred": 7,
+     "restriction_results": {
+      "restricted": 2
+     },
+     "restriction_excluded_moves": 2,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 18,
+      "selected": {
+       "use_power(ET)": 12,
+       "retreat": 5,
+       "use_attack": 1
+      },
+      "built": {
+       "use_power(ET)": 12,
+       "use_attack": 1
+      },
+      "unbuildable": {
+       "retreat": 5
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 12,
+       "use_attack": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 12,
+       "use_attack": 1
+      },
+      "accepted": {
+       "use_power(ET)": 12,
+       "use_attack": 1
+      },
+      "et_accepted_after": 12,
+      "first_accepted_non_et": "use_attack"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 11,
+     "attacker_card_id": "PMCG1-007",
+     "same_active_as_turn_start": true,
+     "energy_turn_start": [],
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 2,
+     "attach_energy_before_attack": 1,
+     "et_before_attack": 23,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 15,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "turn_last_accepted": {
+     "kind": "use_attack",
+     "actor": 1,
+     "reason": "rule6:priority4:use_attack"
+    },
+    "max_run": 23
+   }
+  ],
+  "et_totals": {
+   "accepted_et": 251,
+   "revert_points": 98,
+   "revert_immediate_inverse": 30,
+   "revert_cycle_3plus": 68,
+   "moves_in_revert_segments": 157,
+   "type_only_revert_points": 22,
+   "observation_sha_equal_at_revert": 94,
+   "revert_points_et_only_segment": 98,
+   "revert_points_with_other_ops": 0,
+   "revert_obs_diff_energy_order_only": 4,
+   "repeated_pre_placement_move_pairs": 0,
+   "repeated_obs_sha_move_pairs": 0,
+   "et_turns": 17,
+   "et_turns_20_or_more": 6,
+   "et_max_per_turn": 34,
+   "v6_detections": 94,
+   "v6_newly_deferred": 153,
+   "v6_restriction_excluded_moves": 181,
+   "v6_choices_et_deferred_all": 10,
+   "v6_choices_et_no_alternative": 0,
+   "v6_restricted": 93
+  },
+  "ds_turns_6_or_more": [
+   {
+    "game": "g002-rules-v6-s9052",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g005-rules-v6-s9055",
+    "batch": "vai-batch-tr8v6a-b1c3",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 0,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   },
+   {
+    "game": "g006-rules-v6-s9056",
+    "batch": "vai-batch-tr8v6a-b1c1",
+    "actor": 1,
+    "accepted": 6
+   }
+  ],
+  "ds_total": {
+   "games": 24,
+   "swaps_accepted": 313,
+   "max_per_turn": 6,
+   "turns_at_6_or_more": 51,
+   "turns_over_6": 0,
+   "rank_change_choices": 112,
+   "games_with_rank_change": 4,
+   "consistency_ok": true,
+   "readable": true,
+   "v5_identity_ok": true
+  },
+  "table_c": {
+   "rejected_by_code": {},
+   "rejected_games": {},
+   "rejected_in_2plus_games": {},
+   "candidate_level_R4": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 68,
+     "first_attempt_only": 57,
+     "rows": 68,
+     "positions": 57,
+     "games": 6
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 11,
+     "first_attempt_only": 7,
+     "rows": 11,
+     "positions": 7,
+     "games": 3
+    }
+   },
+   "option_level_R5": {
+    "answer_decision|": {
+     "total": 54,
+     "first_attempt_only": 54,
+     "rows": 22,
+     "positions": 22,
+     "games": 8
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 18,
+     "first_attempt_only": 12,
+     "rows": 18,
+     "positions": 18,
+     "games": 5
+    }
+   },
+   "R4_in_2plus_games": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 68,
+     "first_attempt_only": 57,
+     "rows": 68,
+     "positions": 57,
+     "games": 6
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 11,
+     "first_attempt_only": 7,
+     "rows": 11,
+     "positions": 7,
+     "games": 3
+    }
+   },
+   "R5_in_2plus_games": {
+    "answer_decision|": {
+     "total": 54,
+     "first_attempt_only": 54,
+     "rows": 22,
+     "positions": 22,
+     "games": 8
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 18,
+     "first_attempt_only": 12,
+     "rows": 18,
+     "positions": 18,
+     "games": 5
+    }
+   }
+  },
+  "submit_side": {
+   "reanswer_R2": {},
+   "follow_up": {},
+   "refusals_R1": {},
+   "tool_counters_R3": {
+    "policy_suppressed": 8,
+    "withheld": 0,
+    "refused": 0,
+    "check_invalid": 0,
+    "retry_same_input": 0,
+    "failed": 0
+   },
+   "prestop_status": {
+    "complete": 24
+   },
+   "prestop_unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "unbuildable": 838
+  },
+  "conventions": {
+   "M5_convention_applied": {
+    "PC-SETUP-MULLIGAN-COUNT@1": 1,
+    "PC-LUCKY-STADIUM-REPLACEMENT@1": 9,
+    "PC-ENERGY-RETRIEVAL-ZERO@1": 3
+   },
+   "M5_er9": {
+    "zero_answers": 3,
+    "accepted_applied": 3,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_h4": {
+    "zero_answers": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_t19b": {
+    "declarations": 2,
+    "accepted_applied": 0,
+    "accepted_not_applied": 2,
+    "rejected": 0,
+    "not_submitted_targets": 0
+   },
+   "M5_rs1": {
+    "scene_rows": 12,
+    "scene_positions": 9,
+    "presented_positions": 9,
+    "excluded_positions": 0,
+    "not_offered_rows": 0,
+    "chosen": 9,
+    "chosen_unbuildable": 0,
+    "chosen_positions": 9,
+    "checked_valid": 9,
+    "submitted": 9,
+    "accepted": 9,
+    "accepted_with_convention": 9,
+    "accepted_judge_expected": 9,
+    "draw_after_heads": 5,
+    "replacement_seen_positions": 9
+   }
+  },
+  "static_et": {
+   "source": "et_B1.json",
+   "card_data": "kyuura_engine/data/kyuura_cards.json @ execution worktree",
+   "totals": {
+    "attack_reachable_not_reached": 4,
+    "attack_reachable_not_reached_accepted_et": 80,
+    "et_moves_from_attack_unreachable_state": 80,
+    "et_moves_from_reachable_not_met_state": 171,
+    "et_moves_from_cost_met_state": 0,
+    "record_vs_static_attack_mismatch": 0,
+    "attack_used": 8,
+    "attack_used_accepted_et": 130,
+    "attack_unreachable_all_states": 5,
+    "attack_unreachable_all_states_accepted_et": 41
+   }
+  },
+  "revert_check": {
+   "reverts": {
+    "sha_equal|et_only": 94,
+    "energy_order_only|et_only": 4
+   },
+   "candidate_lists_at_sha_equal": {
+    "same": 94
+   },
+   "turns_with_after_et": {
+    "play_trainer": 6,
+    "retreat": 8,
+    "use_attack": 8,
+    "end_turn": 9
+   },
+   "examples_candidate_mismatch": 0
+  },
+  "sums": {
+   "tool_seconds": 208.421,
+   "outer_seconds": 779.871,
+   "attempt_bytes": 281416398,
+   "plan_dir_bytes": 281840872
+  },
+  "measured_per_condition": {
+   "C1": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 8.182,
+     "max": 21.803
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 31.758,
+     "max": 47.495
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 10196386.333,
+     "max": 29274196
+    }
+   },
+   "C2": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 9.406,
+     "max": 15.086
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 33.925,
+     "max": 41.114
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 13752418.5,
+     "max": 22302748
+    }
+   },
+   "C3": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 7.492,
+     "max": 20.777
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 30.781,
+     "max": 46.127
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 8721863.833,
+     "max": 25494439
+    }
+   },
+   "C4": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 9.657,
+     "max": 12.791
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 33.514,
+     "max": 37.245
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 14232064.333,
+     "max": 18884625
+    }
+   }
+  },
+  "outlook_next_block": {
+   "normal": {
+    "tool_seconds": 208.422,
+    "outer_seconds": 779.868,
+    "bytes": 281416397.994
+   },
+   "x1_5": {
+    "tool_seconds": 312.633,
+    "outer_seconds": 1169.802,
+    "bytes": 422124596.991
+   },
+   "observed_max_x24": {
+    "tool_seconds": 422.742,
+    "outer_seconds": 1031.886,
+    "bytes": 575736048
+   }
+  },
+  "gates": {
+   "verdict": "proceed",
+   "started": 24,
+   "all_games_P1_P8": true,
+   "stage_checks": {
+    "all_planned_started": true,
+    "stage_P6": true,
+    "stage_P7": true,
+    "stage_P5": true,
+    "stage_sets": true,
+    "et_skipped_0": true,
+    "cache_all_same": true
+   }
+  },
+  "budget_next": {
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "ok": true,
+   "failed": [],
+   "values": {
+    "plan_remaining_tool_seconds": 900.0,
+    "block_remaining_tool_seconds": 3600.0,
+    "total_remaining_tool_seconds": 14166.231,
+    "block_remaining_outer_seconds": 7200.0,
+    "total_remaining_outer_seconds": 27902.36,
+    "plan_remaining_evidence_bytes": 1073660399,
+    "block_remaining_evidence_bytes": 2147192197,
+    "total_remaining_evidence_bytes": 8277419233,
+    "drive_free_bytes": 248101638144
+   },
+   "used": {
+    "block": {
+     "tool_seconds": 0.0,
+     "outer_seconds": 0.0,
+     "evidence_bytes": 291451
+    },
+    "total": {
+     "tool_seconds": 233.769,
+     "outer_seconds": 897.64,
+     "evidence_bytes": 312515359
+    }
+   }
+  },
+  "later_not_started_and_fixed": true,
+  "later_games_not_started": 72
+ },
+ "progress_decision": {
+  "to_b1": "proceed",
+  "to_b2": "proceed",
+  "b2_b4_not_started_games": 72,
+  "b2_b4_plan_sha256_fixed": true,
+  "next_unit": "B2（9057〜9062）を新しい作業単位で、固定した計画・キャッシュの照合から始める"
+ }
 }
