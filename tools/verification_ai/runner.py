@@ -23,7 +23,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, STAGE, TUPLE, BoundaryPolicy, LoopRulePolicy, MixedPolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -424,7 +424,7 @@ class Runner:
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_dependency_problems", "problems": problems, "attempt": entry["n"]})
                 entry["stages"] = stages
                 restriction = None
-                if hasattr(policy, "input_restriction"):  # rules-v4（TOOL_VERSION 15）: 組の写しを保存し、後回しの組を外す（ほかの方策は持たない）
+                if hasattr(policy, "input_restriction"):  # rules-v4（TOOL_VERSION 15）・rules-v6（17。3 段の移動）: 組の写しを保存し、後回しの組を外す（ほかの方策は持たない）
                     policy.observe_inputs(candidate, stages, allowed)
                     restriction = policy.input_restriction(candidate, stages, allowed)
                     if policy.last_restriction is not None:
@@ -731,6 +731,9 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES6_VERSION:  # rules-v6（試験。明示的に選んだときだけ。rules-v5 + ［エナジートランス］の往復の後回し）
+        players = {p: EnergyTransRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES5_VERSION:  # rules-v5（試験。明示的に選んだときだけ。rules-v4 + 1 番の受理の回数）
         players = {p: SwapCapRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}

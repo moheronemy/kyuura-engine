@@ -614,6 +614,214 @@ class SwapCapRulePolicy(TransitionRulePolicy):
         return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "counts": dict(sorted(self.loop_counts.items()))}
 
 
+# ---------------------------------------------------------------- rules-v6（試験の方策）: rules-v5 に、確認した［エナジートランス］の往復の移動だけを後回しにする規則を加える
+# （docs/tr8-energy-trans-loop-analysis.md 6 章の案 B・docs/tr8-energy-trans-loop-experiment.md）。rules-v5 の［ダメージスワップ］の周期の検出・後回し・6 回の
+# 上限、rules-v2 の順位・同順位の選び方・入力単位の再送抑止はそのまま。［エナジートランス］には回数による順位の変更を入れない。候補を消さず、合法性を判定しない
+
+RULES6_VERSION = 6
+RULES6_DISTRIBUTION = "rules-v6-candidate+uniform-stage"
+ENERGY_TRANS_NAMES = ("エナジートランス",)  # 後回しの対象の特殊能力（候補の power.name_ja。公開の値）
+ENERGY_TRANS_DEFERRAL = {"version": 1, "kind": LOOP_KIND, "powers": list(ENERGY_TRANS_NAMES),
+                         "key": "(pre-move own view, source pokemon, energy card, target pokemon), directed; holder excluded",
+                         "detection": "same actor, same turn, run of accepted Energy Trans (any holder), own view returns; latest match",
+                         "inputs": "3 stages source -> energy -> target (actions.transfer_moves); references are pokemon numbers and the energy card number",
+                         "effect": "deferred moves removed from the input choices at that view; candidate rank 7 (after end_turn) only when every buildable move "
+                                   "of the holder at the view is deferred; restriction lifted when only rank-7 candidates remain",
+                         "count_demotion": None, "unknown_moves": "no restriction", "run_cut": "any other accepted operation (either actor)",
+                         "keep": "deferred moves kept until the turn changes", "reset": "turn change"}
+
+
+def et_target(candidate: dict[str, Any]) -> bool:
+    """後回しの対象（［エナジートランス］の宣言の候補）か。"""
+    return (isinstance(candidate, dict) and candidate.get("kind") == LOOP_KIND
+            and (candidate.get("power") or {}).get("name_ja") in ENERGY_TRANS_NAMES)
+
+
+def et_holder_of(candidate: dict[str, Any]) -> str | None:
+    """持ち主の候補の見分け（順位・エピソードの記録だけに使う。後回しの鍵には入れない）。場のポケモンの番号がなければ None。"""
+    holder = holder_of(candidate)
+    return None if holder is None else "et:" + holder
+
+
+def transfer_of(meaning: list[dict[str, Any]]) -> tuple[int, int, int] | None:
+    """受理した入力の意味の（移動元の場のポケモンの番号, エネルギーのカードの番号, 移動先の番号）。3 段で参照が整数でなければ None（記録しない）。"""
+    if not isinstance(meaning, list) or len(meaning) != 3 or [m.get("stage") for m in meaning] != [1, 2, 3]:
+        return None
+    o = [m.get("option") or {} for m in meaning]
+    refs = (o[0].get("pokemon"), o[1].get("card"), o[2].get("pokemon"))
+    return refs if all(type(r) is int for r in refs) else None
+
+
+class EnergyTransRulePolicy(SwapCapRulePolicy):
+    """rules-v6: rules-v5 に、同じ番の本人の［エナジートランス］の受理だけが続いた区間で本人の観測が以前の観測に戻ったとき、直近の一致から今回の受理までの
+    各移動を（操作前の本人の観測, 移動元, エネルギーのカード, 移動先）で記録し、その観測でだけ入力から外す規則を加える（持ち主は鍵に入れない）。
+
+    - 区間: 本人の受理が［エナジートランス］（持ち主を問わない）で、次の本人の観測までにほかの受理がない（通し番号が続く）あいだ。ほかの操作・ほかの主体の受理で切る
+    - 拒否・入力を作れない・送信の抑止・後回しで組み立てなかった試みでは観測を取らず、履歴を進めない
+    - 記録した移動は番の終わりまで保つ。番が変われば区間と記録の両方を消す
+    - 入力の応答の組（``actions.transfer_moves``）が取れないとき・照合できないときは外さない（推測で除外しない）
+    - 今の観測で持ち主の組み立てられる移動がすべて外れたら、その候補を順位 7 にする。順位 7 の候補しか残らなければ、その試みは制限を外す（rules-v2 の再送抑止のまま）
+    - ［ダメージスワップ］の規則（rules-v4 の 2 段の鍵・rules-v5 の 6 回）はそのまま。［エナジートランス］には回数による順位の変更を入れない"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP):
+        super().__init__(seed, STAGE, threshold=threshold, cap=cap)
+        self.version = RULES6_VERSION
+        self.distribution = RULES6_DISTRIBUTION
+        self.energy_trans_deferral = ENERGY_TRANS_DEFERRAL
+        self._et_turn = None
+        self._et_run: dict[str, Any] | None = None
+        self._et_pending: dict[str, Any] | None = None
+        self._et_deferred: set[tuple] = set()  # (観測, 移動元, エネルギー, 移動先)
+        self._et_moves: dict[tuple, frozenset] = {}  # (観測, 持ち主) → 組み立てられる移動
+        self._et_episode_deferred: set[str] = set()
+        self._et_demoted_now: set[str] = set()
+        self._et_lifted: str | None = None
+        self._et_detection: dict[str, Any] | None = None
+
+    # -- 観測と検出（rules-v4 と同じ形。区間は［エナジートランス］の受理）
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        super().observe_view(view, position)  # rules-v4 の self._sig・self._turn を更新する
+        sig = self._sig
+        if self._turn != self._et_turn:
+            if self._et_deferred:
+                self.loop_counts["et_turn_resets_with_deferral"] += 1
+            self._et_turn, self._et_run, self._et_pending, self._et_deferred, self._et_moves = self._turn, None, None, set(), {}
+        pending, self._et_pending, self._et_detection = self._et_pending, None, None
+        if pending is not None and pending["target"] and pending["position"] == position and self._et_run is not None:
+            run = self._et_run
+            run["moves"].append(pending["move"])
+            if sig is None:
+                run["valid"] = False
+                self.loop_counts["et_runs_without_view"] += 1
+            if run["valid"]:
+                matched = [i for i, v in enumerate(run["views"]) if v == sig]
+                if matched:
+                    j = matched[-1]
+                    new = []
+                    for k in range(j, len(run["moves"])):
+                        move = run["moves"][k]
+                        if move is None:
+                            self.loop_counts["et_keys_missing_ref"] += 1
+                            continue
+                        key = (run["views"][k], *move)
+                        if key not in self._et_deferred:
+                            self._et_deferred.add(key)
+                            new.append(key)
+                    self.loop_counts["et_detections"] += 1
+                    self.loop_counts["et_deferred_keys"] += len(new)
+                    self._et_detection = {"position": position, "turn": list(self._turn) if self._turn is not None else None, "returned_to": j,
+                                          "run_accepts": len(run["moves"]), "cycle_length": len(run["moves"]) - j, "view": short_key(sig),
+                                          "newly_deferred": [{"view": short_key(k[0]), "move": [k[1], k[2], k[3]]} for k in new],
+                                          "deferred_this_turn": len(self._et_deferred)}
+            run["views"].append(sig)
+        else:  # 区間の始め（番の始め・ほかの操作の受理・ほかの主体の受理・最初の観測）
+            self._et_run = {"views": [sig], "moves": [], "valid": sig is not None}
+
+    def accepted_input(self, candidate: dict[str, Any], meaning: list[dict[str, Any]], position: int) -> None:
+        super().accepted_input(candidate, meaning, position)
+        target = et_target(candidate)
+        self._et_pending = {"position": position, "target": target, "move": transfer_of(meaning) if target else None}
+
+    # -- 組の写しと入力の制限
+    def _et_deferred_moves(self) -> frozenset:
+        return frozenset((s, e, t) for v, s, e, t in self._et_deferred if v == self._sig)
+
+    def observe_inputs(self, candidate: dict[str, Any], stages: list[dict[str, Any]], allowed) -> None:
+        if not et_target(candidate):
+            return super().observe_inputs(candidate, stages, allowed)
+        from .actions import DEEP_PROCESSABILITY, transfer_moves
+        holder = et_holder_of(candidate)
+        if holder is None or self._sig is None or frozenset(allowed) != DEEP_PROCESSABILITY:
+            return None
+        moves = transfer_moves(stages, allowed)
+        if moves is None:
+            return None
+        old = self._et_moves.get((self._sig, holder))
+        if old is not None and old != moves:
+            self.loop_counts["et_moves_cache_mismatch"] += 1
+        self._et_moves[(self._sig, holder)] = moves
+        return None
+
+    def input_restriction(self, candidate: dict[str, Any], stages: list[dict[str, Any]], allowed):
+        if not et_target(candidate):
+            return super().input_restriction(candidate, stages, allowed)
+        from .actions import DEEP_PROCESSABILITY, transfer_moves
+        self.last_restriction = None
+        holder = et_holder_of(candidate)
+        if holder is None or self._sig is None:
+            return None
+        deferred = self._et_deferred_moves()
+        if not deferred:
+            return None
+        record = {"rule": "energy_trans", "view": short_key(self._sig), "holder": short_key(holder), "deferred_at_view": sorted([list(m) for m in deferred])}
+        self.last_restriction = record
+        if self._et_lifted == holder:
+            record["result"] = "lifted_no_alternative"
+            self.loop_counts["et_restrictions_lifted"] += 1
+            return None
+        moves = transfer_moves(stages, allowed) if frozenset(allowed) == DEEP_PROCESSABILITY else None
+        if moves is None:
+            record["result"] = "restriction_unavailable"
+            self.loop_counts["et_restriction_unavailable"] += 1
+            return None
+        excluded = deferred & moves
+        record.update({"moves": len(moves), "excluded": sorted([list(m) for m in excluded])})
+        if not moves - deferred:
+            record["result"] = DEFER_ALL
+            self._et_episode_deferred.add(holder)
+            self.loop_counts["et_deferred_all_after_inputs"] += 1
+            return DEFER_ALL
+        if not excluded:
+            record["result"] = "no_deferred_move_buildable"
+            return None
+        record["result"] = "restricted"
+        self.loop_counts["et_restricted_builds"] += 1
+        return frozenset(excluded)
+
+    # -- 候補の順位
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        self._et_episode_deferred, self._et_lifted, self._et_demoted_now = set(), None, set()
+        if self._et_detection is not None:
+            info["et_detection"] = dict(self._et_detection)
+        if self._et_deferred:
+            info["et_deferred"] = len(self._et_deferred)
+        return info
+
+    def _et_all_deferred(self, holder: str) -> bool:
+        if holder in self._et_episode_deferred:
+            return True
+        deferred = self._et_deferred_moves()
+        moves = self._et_moves.get((self._sig, holder))
+        return bool(deferred) and moves is not None and moves <= deferred
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        ranks, _, note = super()._adjust_ranks(items, ranks, prefix)
+        holders = [et_holder_of(c) if r is not None and et_target(c) else None for r, c in zip(ranks, items)]
+        hit = [h is not None and self._et_all_deferred(h) for h in holders]
+        self._et_demoted_now = {h for h, x in zip(holders, hit) if x}
+        ranks = [DEMOTED_RANK if x else r for r, x in zip(ranks, hit)]
+        n = sum(hit)
+        if n:
+            self.loop_counts["et_choices_with_deferred_all"] += 1
+        return ranks, "rule6", note + (f":et_deferred_all{n}" if n else "")
+
+    def _rule_candidate(self, items, context) -> tuple[int, str]:
+        self._et_lifted = None
+        index, reason = super()._rule_candidate(items, context)
+        chosen = items[index]
+        holder = et_holder_of(chosen) if isinstance(chosen, dict) and et_target(chosen) else None
+        if holder is not None and holder in self._et_demoted_now and ":demoted:" in reason:
+            self._et_lifted = holder
+            self.loop_counts["et_no_alternative"] += 1
+            reason += ":et_no_alternative"
+        return index, reason
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "energy_trans_deferral": self.energy_trans_deferral,
+                "counts": dict(sorted(self.loop_counts.items()))}
+
+
 def mix_seed(policy_seed: int, player: int) -> str:
     """混合の判定の乱数の種（候補・入力の選択の乱数と別。ゲームの乱数とも別）。"""
     return f"kyuura-vai-v2:mix:{policy_seed}:{player}"
