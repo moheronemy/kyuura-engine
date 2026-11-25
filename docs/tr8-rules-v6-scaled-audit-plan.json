@@ -1,5 +1,5 @@
 {
- "status": "fixed_pilot_and_b1_executed",
+ "status": "fixed_pilot_b1_b2_executed",
  "doc": "docs/tr8-rules-v6-scaled-audit-plan.md",
  "date": "2026-11-25",
  "base": "b7991526b45b16ae4133e82700fb462200f98f81",
@@ -3513,5 +3513,3155 @@
   "b2_b4_not_started_games": 72,
   "b2_b4_plan_sha256_fixed": true,
   "next_unit": "B2（9057〜9062）を新しい作業単位で、固定した計画・キャッシュの照合から始める"
+ },
+ "b2_start_checks": {
+  "date": "2026-11-26",
+  "branch": "claude/tr8-rules-v6-audit-b2",
+  "doc_base": "d24443481d07ac718b62dbbf0f6c5592f9541ece",
+  "execution": {
+   "tool_commit": "e75a87316a3b821ff70cff1c48fba76e6b657f04",
+   "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+   "worktree": "C:\\dev\\kyuura-engine-lt117r",
+   "cache_dir": "C:\\dev\\kyuura-engine-pyc-cache\\cpython-314-e75a873-tr8v6a"
+  },
+  "identity_check": {
+   "ok": true,
+   "diff_keys": [
+    "engine_file"
+   ],
+   "equal_to_pilot_b1_measurement": true
+  },
+  "plan_sha256_all_fixed": true,
+  "b2_b4_plan_files_only": true,
+  "plan_check": {
+   "unexpected_total": 0,
+   "only_pilot_b1_dir_has_games": true
+  },
+  "dry_run_b2": {
+   "vai-batch-tr8v6a-b2c1": {
+    "use_cache": true,
+    "capacity_ok": true
+   },
+   "vai-batch-tr8v6a-b2c2": {
+    "use_cache": true,
+    "capacity_ok": true
+   },
+   "vai-batch-tr8v6a-b2c3": {
+    "use_cache": true,
+    "capacity_ok": true
+   },
+   "vai-batch-tr8v6a-b2c4": {
+    "use_cache": true,
+    "capacity_ok": true
+   }
+  },
+  "budget_carried_over": {
+   "tool_seconds": 233.769,
+   "outer_seconds": 897.64,
+   "evidence_bytes": 312515359
+  },
+  "budget_initial_ok": true
+ },
+ "b2_execution": {
+  "counts": {
+   "C1": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C2": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C3": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "C4": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 6
+    },
+    "game_over": 6,
+    "completion": "6/6",
+    "completion_rate": 1.0
+   },
+   "all": {
+    "planned": 24,
+    "started": 24,
+    "complete": 24,
+    "incomplete": 0,
+    "not_started": 0,
+    "terminations": {
+     "game_over": 24
+    },
+    "game_over": 24,
+    "completion": "24/24",
+    "completion_rate": 1.0
+   }
+  },
+  "table_a": [],
+  "et_turns_20_or_more": [
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     8
+    ],
+    "accepted_et": 30,
+    "revert_points": 25,
+    "immediate_inverse": 6,
+    "cycle_3plus": 19,
+    "moves_in_revert_segments": 30,
+    "novel_result_moves": 5,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 25,
+     "newly_deferred": 30,
+     "restriction_results": {
+      "restricted": 24
+     },
+     "restriction_excluded_moves": 60,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 40,
+      "selected": {
+       "use_power(ET)": 27,
+       "retreat": 12,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 12
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 27,
+       "end_turn": 1
+      },
+      "et_accepted_after": 27,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 15,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 15
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 30
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     10
+    ],
+    "accepted_et": 27,
+    "revert_points": 22,
+    "immediate_inverse": 3,
+    "cycle_3plus": 19,
+    "moves_in_revert_segments": 27,
+    "novel_result_moves": 5,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 22,
+     "newly_deferred": 27,
+     "restriction_results": {
+      "restricted": 21
+     },
+     "restriction_excluded_moves": 48,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 38,
+      "selected": {
+       "use_power(ET)": 23,
+       "retreat": 14,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 23,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 14
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 23,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 23,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 23,
+       "end_turn": 1
+      },
+      "et_accepted_after": 23,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 16,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 16
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 27
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     12
+    ],
+    "accepted_et": 27,
+    "revert_points": 18,
+    "immediate_inverse": 5,
+    "cycle_3plus": 13,
+    "moves_in_revert_segments": 27,
+    "novel_result_moves": 9,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 17,
+     "newly_deferred": 22,
+     "restriction_results": {
+      "restricted": 16
+     },
+     "restriction_excluded_moves": 32,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 29,
+      "selected": {
+       "use_power(ET)": 20,
+       "retreat": 8,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 20,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 8
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 20,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 20,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 20,
+       "end_turn": 1
+      },
+      "et_accepted_after": 20,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 12,
+    "retreat_built": 1,
+    "retreat_accepted": 1,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 11,
+     "ok": 1
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 22
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     14
+    ],
+    "accepted_et": 44,
+    "revert_points": 19,
+    "immediate_inverse": 5,
+    "cycle_3plus": 14,
+    "moves_in_revert_segments": 43,
+    "novel_result_moves": 25,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 18,
+     "newly_deferred": 43,
+     "restriction_results": {
+      "restricted": 19
+     },
+     "restriction_excluded_moves": 29,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 50,
+      "selected": {
+       "use_power(ET)": 35,
+       "retreat": 14,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 14
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 3
+      },
+      "sent": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 32,
+       "end_turn": 1
+      },
+      "et_accepted_after": 32,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 20,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 20
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn"
+    },
+    "max_run": 44
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     16
+    ],
+    "accepted_et": 23,
+    "revert_points": 5,
+    "immediate_inverse": 1,
+    "cycle_3plus": 4,
+    "moves_in_revert_segments": 15,
+    "novel_result_moves": 18,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 4,
+     "newly_deferred": 14,
+     "restriction_results": {
+      "restricted": 4
+     },
+     "restriction_excluded_moves": 4,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 26,
+      "selected": {
+       "use_power(ET)": 16,
+       "retreat": 9,
+       "use_attack": 1
+      },
+      "built": {
+       "use_power(ET)": 16,
+       "use_attack": 1
+      },
+      "unbuildable": {
+       "retreat": 9
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 16,
+       "use_attack": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 16,
+       "use_attack": 1
+      },
+      "accepted": {
+       "use_power(ET)": 16,
+       "use_attack": 1
+      },
+      "et_accepted_after": 16,
+      "first_accepted_non_et": "use_attack"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 7,
+     "attacker_card_id": "PMCG1-007",
+     "same_active_as_turn_start": true,
+     "energy_turn_start": [],
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 2,
+     "attach_energy_before_attack": 1,
+     "et_before_attack": 23,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 15,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 15
+    },
+    "turn_last_accepted": {
+     "kind": "use_attack",
+     "actor": 1,
+     "reason": "rule6:priority4:use_attack"
+    },
+    "max_run": 22
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     26
+    ],
+    "accepted_et": 62,
+    "revert_points": 19,
+    "immediate_inverse": 4,
+    "cycle_3plus": 15,
+    "moves_in_revert_segments": 42,
+    "novel_result_moves": 43,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 17,
+     "newly_deferred": 40,
+     "restriction_results": {
+      "restricted": 18
+     },
+     "restriction_excluded_moves": 21,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 56,
+      "selected": {
+       "use_power(ET)": 40,
+       "retreat": 15,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 37,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 15
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 3
+      },
+      "sent": {
+       "use_power(ET)": 37,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 37,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 37,
+       "end_turn": 1
+      },
+      "et_accepted_after": 37,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 31,
+    "retreat_built": 2,
+    "retreat_accepted": 2,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 29,
+     "ok": 2
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn"
+    },
+    "max_run": 45
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     28
+    ],
+    "accepted_et": 79,
+    "revert_points": 45,
+    "immediate_inverse": 7,
+    "cycle_3plus": 38,
+    "moves_in_revert_segments": 79,
+    "novel_result_moves": 34,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 43,
+     "newly_deferred": 78,
+     "restriction_results": {
+      "restricted": 49
+     },
+     "restriction_excluded_moves": 89,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 109,
+      "selected": {
+       "use_power(ET)": 74,
+       "retreat": 34,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 66,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 34
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 8
+      },
+      "sent": {
+       "use_power(ET)": 66,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 66,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 66,
+       "end_turn": 1
+      },
+      "et_accepted_after": 66,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 39,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 39
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn"
+    },
+    "max_run": 78
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     30
+    ],
+    "accepted_et": 60,
+    "revert_points": 28,
+    "immediate_inverse": 9,
+    "cycle_3plus": 19,
+    "moves_in_revert_segments": 60,
+    "novel_result_moves": 32,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 28,
+     "newly_deferred": 60,
+     "restriction_results": {
+      "restricted": 29
+     },
+     "restriction_excluded_moves": 42,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 96,
+      "selected": {
+       "use_power(ET)": 60,
+       "retreat": 35,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 54,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 35
+      },
+      "suppressed_by_policy": {
+       "use_power(ET)": 6
+      },
+      "sent": {
+       "use_power(ET)": 54,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 54,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 54,
+       "end_turn": 1
+      },
+      "et_accepted_after": 54,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 39,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 39
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn"
+    },
+    "max_run": 60
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     32
+    ],
+    "accepted_et": 29,
+    "revert_points": 14,
+    "immediate_inverse": 4,
+    "cycle_3plus": 10,
+    "moves_in_revert_segments": 19,
+    "novel_result_moves": 15,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 14,
+     "newly_deferred": 19,
+     "restriction_results": {
+      "restricted": 13
+     },
+     "restriction_excluded_moves": 24,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 30,
+      "selected": {
+       "use_power(ET)": 17,
+       "retreat": 12,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 17,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 12
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 17,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 17,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 17,
+       "end_turn": 1
+      },
+      "et_accepted_after": 17,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 20,
+    "retreat_built": 1,
+    "retreat_accepted": 1,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 19,
+     "ok": 1
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 19
+   },
+   {
+    "game": "g001-rules-v6-s9057",
+    "actor": 1,
+    "turn": [
+     0,
+     34
+    ],
+    "accepted_et": 24,
+    "revert_points": 19,
+    "immediate_inverse": 6,
+    "cycle_3plus": 13,
+    "moves_in_revert_segments": 24,
+    "novel_result_moves": 5,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 19,
+     "newly_deferred": 24,
+     "restriction_results": {
+      "restricted": 18
+     },
+     "restriction_excluded_moves": 38,
+     "choices_et_deferred_all": 2,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 33,
+      "selected": {
+       "use_power(ET)": 21,
+       "retreat": 11,
+       "end_turn": 1
+      },
+      "built": {
+       "use_power(ET)": 21,
+       "end_turn": 1
+      },
+      "unbuildable": {
+       "retreat": 11
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 21,
+       "end_turn": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 21,
+       "end_turn": 1
+      },
+      "accepted": {
+       "use_power(ET)": 21,
+       "end_turn": 1
+      },
+      "et_accepted_after": 21,
+      "first_accepted_non_et": "end_turn"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": false,
+    "attack_detail": null,
+    "retreat_selected": 12,
+    "retreat_built": 0,
+    "retreat_accepted": 0,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 12
+    },
+    "turn_last_accepted": {
+     "kind": "end_turn",
+     "actor": 1,
+     "reason": "rule6:priority6:end_turn:et_deferred_all1"
+    },
+    "max_run": 24
+   },
+   {
+    "game": "g003-rules-v6-s9059",
+    "actor": 1,
+    "turn": [
+     0,
+     23
+    ],
+    "accepted_et": 22,
+    "revert_points": 0,
+    "immediate_inverse": 0,
+    "cycle_3plus": 0,
+    "moves_in_revert_segments": 0,
+    "novel_result_moves": 22,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 0,
+     "newly_deferred": 0,
+     "restriction_results": {},
+     "restriction_excluded_moves": 0,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 0,
+      "selected": {},
+      "built": {},
+      "unbuildable": {},
+      "suppressed_by_policy": {},
+      "sent": {},
+      "check_valid": {},
+      "accepted": {},
+      "et_accepted_after": 0,
+      "first_accepted_non_et": null
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 13,
+     "attacker_card_id": "PMCG1-001",
+     "same_active_as_turn_start": false,
+     "energy_turn_start": null,
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 3,
+     "attach_energy_before_attack": 1,
+     "et_before_attack": 22,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 10,
+    "retreat_built": 3,
+    "retreat_accepted": 3,
+    "retreat_build_values": {
+     "ok": 3,
+     "unbuildable:total_units_unreachable@2": 7
+    },
+    "turn_last_accepted": {
+     "kind": "promote_active",
+     "actor": 0,
+     "reason": "rule6:fallback:no_priority"
+    },
+    "max_run": 20
+   },
+   {
+    "game": "g003-rules-v6-s9059",
+    "actor": 1,
+    "turn": [
+     0,
+     29
+    ],
+    "accepted_et": 64,
+    "revert_points": 10,
+    "immediate_inverse": 4,
+    "cycle_3plus": 6,
+    "moves_in_revert_segments": 31,
+    "novel_result_moves": 54,
+    "repeated_pre_placement_move_pairs": 0,
+    "repeated_obs_sha_move_pairs": 0,
+    "v6": {
+     "detections": 8,
+     "newly_deferred": 26,
+     "restriction_results": {
+      "restricted": 8
+     },
+     "restriction_excluded_moves": 9,
+     "choices_et_deferred_all": 0,
+     "choices_et_no_alternative": 0,
+     "after_first_deferral": {
+      "attempts": 43,
+      "selected": {
+       "use_power(ET)": 29,
+       "retreat": 13,
+       "use_attack": 1
+      },
+      "built": {
+       "use_power(ET)": 29,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "unbuildable": {
+       "retreat": 12
+      },
+      "suppressed_by_policy": {},
+      "sent": {
+       "use_power(ET)": 29,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "check_valid": {
+       "use_power(ET)": 29,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "accepted": {
+       "use_power(ET)": 29,
+       "retreat": 1,
+       "use_attack": 1
+      },
+      "et_accepted_after": 29,
+      "first_accepted_non_et": "retreat"
+     }
+    },
+    "attack_presented_before_first_et": false,
+    "attack_used": true,
+    "attack_detail": {
+     "attacker_pokemon_id": 8,
+     "attacker_card_id": "PMCG2-003",
+     "same_active_as_turn_start": false,
+     "energy_turn_start": null,
+     "energy_at_attack": [
+      "PMCG1-097",
+      "PMCG1-097"
+     ],
+     "net_incoming_et_to_attacker": 0,
+     "attach_energy_before_attack": 1,
+     "et_before_attack": 64,
+     "attack_reason": "rule6:priority4:use_attack"
+    },
+    "retreat_selected": 28,
+    "retreat_built": 1,
+    "retreat_accepted": 1,
+    "retreat_build_values": {
+     "unbuildable:total_units_unreachable@2": 27,
+     "ok": 1
+    },
+    "turn_last_accepted": {
+     "kind": "use_attack",
+     "actor": 1,
+     "reason": "rule6:priority4:use_attack"
+    },
+    "max_run": 30
+   }
+  ],
+  "et_totals": {
+   "accepted_et": 528,
+   "revert_points": 230,
+   "revert_immediate_inverse": 57,
+   "revert_cycle_3plus": 173,
+   "moves_in_revert_segments": 409,
+   "type_only_revert_points": 62,
+   "observation_sha_equal_at_revert": 221,
+   "revert_points_et_only_segment": 228,
+   "revert_points_with_other_ops": 2,
+   "revert_obs_diff_energy_order_only": 7,
+   "repeated_pre_placement_move_pairs": 0,
+   "repeated_obs_sha_move_pairs": 0,
+   "et_turns": 18,
+   "et_turns_20_or_more": 12,
+   "et_max_per_turn": 79,
+   "v6_detections": 221,
+   "v6_newly_deferred": 395,
+   "v6_restriction_excluded_moves": 401,
+   "v6_choices_et_deferred_all": 10,
+   "v6_choices_et_no_alternative": 0,
+   "v6_restricted": 223
+  },
+  "ds_turns_6_or_more": [],
+  "ds_total": {
+   "games": 24,
+   "swaps_accepted": 11,
+   "max_per_turn": 4,
+   "turns_at_6_or_more": 0,
+   "turns_over_6": 0,
+   "rank_change_choices": 0,
+   "games_with_rank_change": 0,
+   "consistency_ok": true,
+   "readable": true,
+   "v5_identity_ok": true
+  },
+  "table_c": {
+   "rejected_by_code": {},
+   "rejected_games": {},
+   "rejected_in_2plus_games": {},
+   "candidate_level_R4": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 17,
+     "first_attempt_only": 16,
+     "rows": 17,
+     "positions": 16,
+     "games": 3
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 7,
+     "first_attempt_only": 6,
+     "rows": 7,
+     "positions": 6,
+     "games": 2
+    }
+   },
+   "option_level_R5": {
+    "answer_decision|": {
+     "total": 48,
+     "first_attempt_only": 48,
+     "rows": 16,
+     "positions": 16,
+     "games": 9
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 8,
+     "first_attempt_only": 4,
+     "rows": 8,
+     "positions": 8,
+     "games": 3
+    }
+   },
+   "R4_in_2plus_games": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 17,
+     "first_attempt_only": 16,
+     "rows": 17,
+     "positions": 16,
+     "games": 3
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 7,
+     "first_attempt_only": 6,
+     "rows": 7,
+     "positions": 6,
+     "games": 2
+    }
+   },
+   "R5_in_2plus_games": {
+    "answer_decision|": {
+     "total": 48,
+     "first_attempt_only": 48,
+     "rows": 16,
+     "positions": 16,
+     "games": 9
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 8,
+     "first_attempt_only": 4,
+     "rows": 8,
+     "positions": 8,
+     "games": 3
+    }
+   }
+  },
+  "submit_side": {
+   "reanswer_R2": {},
+   "follow_up": {},
+   "refusals_R1": {},
+   "tool_counters_R3": {
+    "policy_suppressed": 52,
+    "withheld": 0,
+    "refused": 0,
+    "check_invalid": 0,
+    "retry_same_input": 0,
+    "failed": 0
+   },
+   "prestop_status": {
+    "complete": 24
+   },
+   "prestop_unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "unbuildable": 748
+  },
+  "conventions": {
+   "M5_convention_applied": {
+    "PC-ENERGY-RETRIEVAL-ZERO@1": 1,
+    "PC-LUCKY-STADIUM-REPLACEMENT@1": 7
+   },
+   "M5_er9": {
+    "zero_answers": 1,
+    "accepted_applied": 1,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_h4": {
+    "zero_answers": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "M5_t19b": {
+    "declarations": 0,
+    "accepted_applied": 0,
+    "accepted_not_applied": 0,
+    "rejected": 0,
+    "not_submitted_targets": 0
+   },
+   "M5_rs1": {
+    "scene_rows": 14,
+    "scene_positions": 9,
+    "presented_positions": 9,
+    "excluded_positions": 0,
+    "not_offered_rows": 0,
+    "chosen": 7,
+    "chosen_unbuildable": 0,
+    "chosen_positions": 7,
+    "checked_valid": 7,
+    "submitted": 7,
+    "accepted": 7,
+    "accepted_with_convention": 7,
+    "accepted_judge_expected": 7,
+    "draw_after_heads": 5,
+    "replacement_seen_positions": 9
+   }
+  },
+  "static_et": {
+   "source": "et_B2.json",
+   "card_data": "kyuura_engine/data/kyuura_cards.json @ execution worktree",
+   "totals": {
+    "attack_unreachable_all_states": 8,
+    "attack_unreachable_all_states_accepted_et": 260,
+    "et_moves_from_attack_unreachable_state": 329,
+    "et_moves_from_reachable_not_met_state": 199,
+    "et_moves_from_cost_met_state": 0,
+    "record_vs_static_attack_mismatch": 0,
+    "attack_reachable_not_reached": 4,
+    "attack_reachable_not_reached_accepted_et": 137,
+    "attack_used": 6,
+    "attack_used_accepted_et": 131
+   }
+  },
+  "revert_check": {
+   "reverts": {
+    "sha_equal|et_only": 221,
+    "other|with_other_ops": 2,
+    "energy_order_only|et_only": 7
+   },
+   "candidate_lists_at_sha_equal": {
+    "same": 221
+   },
+   "turns_with_after_et": {
+    "play_trainer": 6,
+    "retreat": 10,
+    "use_attack": 6,
+    "end_turn": 12
+   },
+   "examples_candidate_mismatch": 0
+  },
+  "sums": {
+   "tool_seconds": 179.569,
+   "outer_seconds": 734.878,
+   "attempt_bytes": 250692489,
+   "plan_dir_bytes": 251115158
+  },
+  "measured_per_condition": {
+   "C1": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 3.694,
+     "max": 6.359
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 25.802,
+     "max": 29.913
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 4264382.833,
+     "max": 9678243
+    }
+   },
+   "C2": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 11.948,
+     "max": 35.369
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 37.121,
+     "max": 65.48
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 17456226.333,
+     "max": 53308970
+    }
+   },
+   "C3": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 4.694,
+     "max": 12.44
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 26.819,
+     "max": 35.648
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 5379755.167,
+     "max": 15712023
+    }
+   },
+   "C4": {
+    "tool_seconds": {
+     "n": 6,
+     "mean": 9.592,
+     "max": 12.596
+    },
+    "outer_seconds": {
+     "n": 6,
+     "mean": 32.738,
+     "max": 36.143
+    },
+    "bytes": {
+     "n": 6,
+     "mean": 14681717.167,
+     "max": 19726296
+    }
+   }
+  },
+  "outlook_next_block": {
+   "normal": {
+    "tool_seconds": 179.568,
+    "outer_seconds": 734.88,
+    "bytes": 250692489.0
+   },
+   "x1_5": {
+    "tool_seconds": 269.352,
+    "outer_seconds": 1102.32,
+    "bytes": 376038733.5
+   },
+   "observed_max_x24": {
+    "tool_seconds": 400.584,
+    "outer_seconds": 1003.104,
+    "bytes": 590553192
+   }
+  },
+  "gates": {
+   "verdict": "proceed",
+   "started": 24,
+   "all_games_P1_P8": true,
+   "stage_checks": {
+    "all_planned_started": true,
+    "stage_P6": true,
+    "stage_P7": true,
+    "stage_P5": true,
+    "stage_sets": true,
+    "et_skipped_0": true,
+    "cache_all_same": true
+   }
+  },
+  "budget_next": {
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "ok": true,
+   "failed": [],
+   "values": {
+    "plan_remaining_tool_seconds": 900.0,
+    "block_remaining_tool_seconds": 3600.0,
+    "total_remaining_tool_seconds": 13986.662,
+    "block_remaining_outer_seconds": 7200.0,
+    "total_remaining_outer_seconds": 27167.482,
+    "plan_remaining_evidence_bytes": 1073660399,
+    "block_remaining_evidence_bytes": 2147192197,
+    "total_remaining_evidence_bytes": 8026595526,
+    "drive_free_bytes": 248418140160
+   },
+   "used": {
+    "block": {
+     "tool_seconds": 0.0,
+     "outer_seconds": 0.0,
+     "evidence_bytes": 291451
+    },
+    "total": {
+     "tool_seconds": 413.338,
+     "outer_seconds": 1632.518,
+     "evidence_bytes": 563339066
+    }
+   }
+  }
+ },
+ "main_cumulative_b1_b2": {
+  "counts": {
+   "B1": {
+    "C1": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C2": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C3": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C4": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "all": {
+     "planned": 24,
+     "started": 24,
+     "complete": 24,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 24
+     },
+     "game_over": 24,
+     "completion": "24/24",
+     "completion_rate": 1.0
+    }
+   },
+   "B2": {
+    "C1": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C2": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C3": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "C4": {
+     "planned": 6,
+     "started": 6,
+     "complete": 6,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 6
+     },
+     "game_over": 6,
+     "completion": "6/6",
+     "completion_rate": 1.0
+    },
+    "all": {
+     "planned": 24,
+     "started": 24,
+     "complete": 24,
+     "incomplete": 0,
+     "not_started": 0,
+     "terminations": {
+      "game_over": 24
+     },
+     "game_over": 24,
+     "completion": "24/24",
+     "completion_rate": 1.0
+    }
+   },
+   "B1+B2": {
+    "C1": {
+     "planned": 12,
+     "started": 12,
+     "complete": 12,
+     "incomplete": 0,
+     "not_started": 0,
+     "game_over": 12,
+     "terminations": {
+      "game_over": 12
+     },
+     "completion": "12/12",
+     "completion_rate": 1.0
+    },
+    "C2": {
+     "planned": 12,
+     "started": 12,
+     "complete": 12,
+     "incomplete": 0,
+     "not_started": 0,
+     "game_over": 12,
+     "terminations": {
+      "game_over": 12
+     },
+     "completion": "12/12",
+     "completion_rate": 1.0
+    },
+    "C3": {
+     "planned": 12,
+     "started": 12,
+     "complete": 12,
+     "incomplete": 0,
+     "not_started": 0,
+     "game_over": 12,
+     "terminations": {
+      "game_over": 12
+     },
+     "completion": "12/12",
+     "completion_rate": 1.0
+    },
+    "C4": {
+     "planned": 12,
+     "started": 12,
+     "complete": 12,
+     "incomplete": 0,
+     "not_started": 0,
+     "game_over": 12,
+     "terminations": {
+      "game_over": 12
+     },
+     "completion": "12/12",
+     "completion_rate": 1.0
+    },
+    "all": {
+     "planned": 48,
+     "started": 48,
+     "complete": 48,
+     "incomplete": 0,
+     "not_started": 0,
+     "game_over": 48,
+     "terminations": {
+      "game_over": 48
+     },
+     "completion": "48/48",
+     "completion_rate": 1.0
+    }
+   }
+  },
+  "termination_other_than_game_over": {
+   "B1": [],
+   "B2": []
+  },
+  "sums": {
+   "B1": {
+    "tool_seconds": 208.421,
+    "outer_seconds": 779.871,
+    "attempt_bytes": 281416398,
+    "plan_dir_bytes": 281840872
+   },
+   "B2": {
+    "tool_seconds": 179.569,
+    "outer_seconds": 734.878,
+    "attempt_bytes": 250692489,
+    "plan_dir_bytes": 251115158
+   },
+   "B1+B2": {
+    "attempt_bytes": 532108887,
+    "outer_seconds": 1514.749,
+    "plan_dir_bytes": 532956030,
+    "tool_seconds": 387.99
+   }
+  },
+  "energy_trans": {
+   "totals": {
+    "B1": {
+     "accepted_et": 251,
+     "revert_points": 98,
+     "revert_immediate_inverse": 30,
+     "revert_cycle_3plus": 68,
+     "moves_in_revert_segments": 157,
+     "type_only_revert_points": 22,
+     "observation_sha_equal_at_revert": 94,
+     "revert_points_et_only_segment": 98,
+     "revert_points_with_other_ops": 0,
+     "revert_obs_diff_energy_order_only": 4,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "et_turns": 17,
+     "et_turns_20_or_more": 6,
+     "et_max_per_turn": 34,
+     "v6_detections": 94,
+     "v6_newly_deferred": 153,
+     "v6_restriction_excluded_moves": 181,
+     "v6_choices_et_deferred_all": 10,
+     "v6_choices_et_no_alternative": 0,
+     "v6_restricted": 93
+    },
+    "B2": {
+     "accepted_et": 528,
+     "revert_points": 230,
+     "revert_immediate_inverse": 57,
+     "revert_cycle_3plus": 173,
+     "moves_in_revert_segments": 409,
+     "type_only_revert_points": 62,
+     "observation_sha_equal_at_revert": 221,
+     "revert_points_et_only_segment": 228,
+     "revert_points_with_other_ops": 2,
+     "revert_obs_diff_energy_order_only": 7,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "et_turns": 18,
+     "et_turns_20_or_more": 12,
+     "et_max_per_turn": 79,
+     "v6_detections": 221,
+     "v6_newly_deferred": 395,
+     "v6_restriction_excluded_moves": 401,
+     "v6_choices_et_deferred_all": 10,
+     "v6_choices_et_no_alternative": 0,
+     "v6_restricted": 223
+    },
+    "B1+B2": {
+     "accepted_et": 779,
+     "et_max_per_turn": 79,
+     "et_turns": 35,
+     "et_turns_20_or_more": 18,
+     "moves_in_revert_segments": 566,
+     "observation_sha_equal_at_revert": 315,
+     "repeated_obs_sha_move_pairs": 0,
+     "repeated_pre_placement_move_pairs": 0,
+     "revert_cycle_3plus": 241,
+     "revert_immediate_inverse": 87,
+     "revert_obs_diff_energy_order_only": 11,
+     "revert_points": 328,
+     "revert_points_et_only_segment": 326,
+     "revert_points_with_other_ops": 2,
+     "type_only_revert_points": 84,
+     "v6_choices_et_deferred_all": 20,
+     "v6_choices_et_no_alternative": 0,
+     "v6_detections": 315,
+     "v6_newly_deferred": 548,
+     "v6_restricted": 316,
+     "v6_restriction_excluded_moves": 582
+    }
+   },
+   "et_turns": {
+    "B1": 17,
+    "B2": 18,
+    "B1+B2": 35
+   },
+   "turns_20_or_more": [
+    {
+     "stage": "B1",
+     "game": "g001-rules-v6-s9051",
+     "actor": 1,
+     "turn": [
+      0,
+      12
+     ],
+     "accepted_et": 34,
+     "revert_points": 20,
+     "immediate_inverse": 5,
+     "cycle_3plus": 15,
+     "moves_in_revert_segments": 34,
+     "novel_result_moves": 14,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 19,
+      "newly_deferred": 34,
+      "restriction_results": {
+       "restricted": 23
+      },
+      "restriction_excluded_moves": 37,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 56,
+       "selected": {
+        "use_power(ET)": 38,
+        "retreat": 17,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 17
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 6
+       },
+       "sent": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "et_accepted_after": 32,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 18,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn"
+     },
+     "max_run": 34
+    },
+    {
+     "stage": "B1",
+     "game": "g005-rules-v6-s9055",
+     "actor": 1,
+     "turn": [
+      0,
+      29
+     ],
+     "accepted_et": 30,
+     "revert_points": 25,
+     "immediate_inverse": 4,
+     "cycle_3plus": 21,
+     "moves_in_revert_segments": 30,
+     "novel_result_moves": 5,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 25,
+      "newly_deferred": 30,
+      "restriction_results": {
+       "restricted": 24
+      },
+      "restriction_excluded_moves": 60,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 38,
+       "selected": {
+        "use_power(ET)": 27,
+        "retreat": 10,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 10
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "et_accepted_after": 27,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 13,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 30
+    },
+    {
+     "stage": "B1",
+     "game": "g005-rules-v6-s9055",
+     "actor": 1,
+     "turn": [
+      0,
+      31
+     ],
+     "accepted_et": 30,
+     "revert_points": 23,
+     "immediate_inverse": 3,
+     "cycle_3plus": 20,
+     "moves_in_revert_segments": 28,
+     "novel_result_moves": 7,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 23,
+      "newly_deferred": 28,
+      "restriction_results": {
+       "restricted": 22
+      },
+      "restriction_excluded_moves": 52,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 42,
+       "selected": {
+        "use_power(ET)": 24,
+        "retreat": 17,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 24,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 17
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 24,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 24,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 24,
+        "end_turn": 1
+       },
+       "et_accepted_after": 24,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 21,
+     "retreat_built": 1,
+     "retreat_accepted": 1,
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 28
+    },
+    {
+     "stage": "B1",
+     "game": "g005-rules-v6-s9055",
+     "actor": 1,
+     "turn": [
+      0,
+      33
+     ],
+     "accepted_et": 34,
+     "revert_points": 11,
+     "immediate_inverse": 3,
+     "cycle_3plus": 8,
+     "moves_in_revert_segments": 27,
+     "novel_result_moves": 23,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 10,
+      "newly_deferred": 27,
+      "restriction_results": {
+       "restricted": 11
+      },
+      "restriction_excluded_moves": 18,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 39,
+       "selected": {
+        "use_power(ET)": 25,
+        "retreat": 13,
+        "use_attack": 1
+       },
+       "built": {
+        "use_power(ET)": 24,
+        "use_attack": 1
+       },
+       "unbuildable": {
+        "retreat": 13
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 1
+       },
+       "sent": {
+        "use_power(ET)": 24,
+        "use_attack": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 24,
+        "use_attack": 1
+       },
+       "accepted": {
+        "use_power(ET)": 24,
+        "use_attack": 1
+       },
+       "et_accepted_after": 24,
+       "first_accepted_non_et": "use_attack"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 12,
+      "attacker_card_id": "PMCG1-007",
+      "same_active_as_turn_start": true,
+      "energy_turn_start": [],
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 2,
+      "attach_energy_before_attack": 1,
+      "et_before_attack": 34,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 18,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "turn_last_accepted": {
+      "kind": "use_attack",
+      "actor": 1,
+      "reason": "rule6:priority4:use_attack"
+     },
+     "max_run": 34
+    },
+    {
+     "stage": "B1",
+     "game": "g006-rules-v6-s9056",
+     "actor": 1,
+     "turn": [
+      0,
+      23
+     ],
+     "accepted_et": 26,
+     "revert_points": 1,
+     "immediate_inverse": 1,
+     "cycle_3plus": 0,
+     "moves_in_revert_segments": 2,
+     "novel_result_moves": 25,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 1,
+      "newly_deferred": 2,
+      "restriction_results": {
+       "restricted": 1
+      },
+      "restriction_excluded_moves": 1,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 32,
+       "selected": {
+        "use_power(ET)": 20,
+        "retreat": 11,
+        "use_attack": 1
+       },
+       "built": {
+        "use_power(ET)": 20,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "unbuildable": {
+        "retreat": 10
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 20,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 20,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "accepted": {
+        "use_power(ET)": 20,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "et_accepted_after": 20,
+       "first_accepted_non_et": "retreat"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 3,
+      "attacker_card_id": "PMCG1-001",
+      "same_active_as_turn_start": false,
+      "energy_turn_start": null,
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 2,
+      "attach_energy_before_attack": 0,
+      "et_before_attack": 26,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 16,
+     "retreat_built": 1,
+     "retreat_accepted": 1,
+     "turn_last_accepted": {
+      "kind": "use_attack",
+      "actor": 1,
+      "reason": "rule6:priority4:use_attack"
+     },
+     "max_run": 26
+    },
+    {
+     "stage": "B1",
+     "game": "g006-rules-v6-s9056",
+     "actor": 1,
+     "turn": [
+      0,
+      27
+     ],
+     "accepted_et": 23,
+     "revert_points": 3,
+     "immediate_inverse": 2,
+     "cycle_3plus": 1,
+     "moves_in_revert_segments": 9,
+     "novel_result_moves": 20,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 2,
+      "newly_deferred": 7,
+      "restriction_results": {
+       "restricted": 2
+      },
+      "restriction_excluded_moves": 2,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 18,
+       "selected": {
+        "use_power(ET)": 12,
+        "retreat": 5,
+        "use_attack": 1
+       },
+       "built": {
+        "use_power(ET)": 12,
+        "use_attack": 1
+       },
+       "unbuildable": {
+        "retreat": 5
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 12,
+        "use_attack": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 12,
+        "use_attack": 1
+       },
+       "accepted": {
+        "use_power(ET)": 12,
+        "use_attack": 1
+       },
+       "et_accepted_after": 12,
+       "first_accepted_non_et": "use_attack"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 11,
+      "attacker_card_id": "PMCG1-007",
+      "same_active_as_turn_start": true,
+      "energy_turn_start": [],
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 2,
+      "attach_energy_before_attack": 1,
+      "et_before_attack": 23,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 15,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "turn_last_accepted": {
+      "kind": "use_attack",
+      "actor": 1,
+      "reason": "rule6:priority4:use_attack"
+     },
+     "max_run": 23
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      8
+     ],
+     "accepted_et": 30,
+     "revert_points": 25,
+     "immediate_inverse": 6,
+     "cycle_3plus": 19,
+     "moves_in_revert_segments": 30,
+     "novel_result_moves": 5,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 25,
+      "newly_deferred": 30,
+      "restriction_results": {
+       "restricted": 24
+      },
+      "restriction_excluded_moves": 60,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 40,
+       "selected": {
+        "use_power(ET)": 27,
+        "retreat": 12,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 12
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 27,
+        "end_turn": 1
+       },
+       "et_accepted_after": 27,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 15,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 15
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 30
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      10
+     ],
+     "accepted_et": 27,
+     "revert_points": 22,
+     "immediate_inverse": 3,
+     "cycle_3plus": 19,
+     "moves_in_revert_segments": 27,
+     "novel_result_moves": 5,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 22,
+      "newly_deferred": 27,
+      "restriction_results": {
+       "restricted": 21
+      },
+      "restriction_excluded_moves": 48,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 38,
+       "selected": {
+        "use_power(ET)": 23,
+        "retreat": 14,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 23,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 14
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 23,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 23,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 23,
+        "end_turn": 1
+       },
+       "et_accepted_after": 23,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 16,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 16
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 27
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      12
+     ],
+     "accepted_et": 27,
+     "revert_points": 18,
+     "immediate_inverse": 5,
+     "cycle_3plus": 13,
+     "moves_in_revert_segments": 27,
+     "novel_result_moves": 9,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 17,
+      "newly_deferred": 22,
+      "restriction_results": {
+       "restricted": 16
+      },
+      "restriction_excluded_moves": 32,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 29,
+       "selected": {
+        "use_power(ET)": 20,
+        "retreat": 8,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 20,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 8
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 20,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 20,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 20,
+        "end_turn": 1
+       },
+       "et_accepted_after": 20,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 12,
+     "retreat_built": 1,
+     "retreat_accepted": 1,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 11,
+      "ok": 1
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 22
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      14
+     ],
+     "accepted_et": 44,
+     "revert_points": 19,
+     "immediate_inverse": 5,
+     "cycle_3plus": 14,
+     "moves_in_revert_segments": 43,
+     "novel_result_moves": 25,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 18,
+      "newly_deferred": 43,
+      "restriction_results": {
+       "restricted": 19
+      },
+      "restriction_excluded_moves": 29,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 50,
+       "selected": {
+        "use_power(ET)": 35,
+        "retreat": 14,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 14
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 3
+       },
+       "sent": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 32,
+        "end_turn": 1
+       },
+       "et_accepted_after": 32,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 20,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 20
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn"
+     },
+     "max_run": 44
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      16
+     ],
+     "accepted_et": 23,
+     "revert_points": 5,
+     "immediate_inverse": 1,
+     "cycle_3plus": 4,
+     "moves_in_revert_segments": 15,
+     "novel_result_moves": 18,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 4,
+      "newly_deferred": 14,
+      "restriction_results": {
+       "restricted": 4
+      },
+      "restriction_excluded_moves": 4,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 26,
+       "selected": {
+        "use_power(ET)": 16,
+        "retreat": 9,
+        "use_attack": 1
+       },
+       "built": {
+        "use_power(ET)": 16,
+        "use_attack": 1
+       },
+       "unbuildable": {
+        "retreat": 9
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 16,
+        "use_attack": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 16,
+        "use_attack": 1
+       },
+       "accepted": {
+        "use_power(ET)": 16,
+        "use_attack": 1
+       },
+       "et_accepted_after": 16,
+       "first_accepted_non_et": "use_attack"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 7,
+      "attacker_card_id": "PMCG1-007",
+      "same_active_as_turn_start": true,
+      "energy_turn_start": [],
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 2,
+      "attach_energy_before_attack": 1,
+      "et_before_attack": 23,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 15,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 15
+     },
+     "turn_last_accepted": {
+      "kind": "use_attack",
+      "actor": 1,
+      "reason": "rule6:priority4:use_attack"
+     },
+     "max_run": 22
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      26
+     ],
+     "accepted_et": 62,
+     "revert_points": 19,
+     "immediate_inverse": 4,
+     "cycle_3plus": 15,
+     "moves_in_revert_segments": 42,
+     "novel_result_moves": 43,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 17,
+      "newly_deferred": 40,
+      "restriction_results": {
+       "restricted": 18
+      },
+      "restriction_excluded_moves": 21,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 56,
+       "selected": {
+        "use_power(ET)": 40,
+        "retreat": 15,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 37,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 15
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 3
+       },
+       "sent": {
+        "use_power(ET)": 37,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 37,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 37,
+        "end_turn": 1
+       },
+       "et_accepted_after": 37,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 31,
+     "retreat_built": 2,
+     "retreat_accepted": 2,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 29,
+      "ok": 2
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn"
+     },
+     "max_run": 45
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      28
+     ],
+     "accepted_et": 79,
+     "revert_points": 45,
+     "immediate_inverse": 7,
+     "cycle_3plus": 38,
+     "moves_in_revert_segments": 79,
+     "novel_result_moves": 34,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 43,
+      "newly_deferred": 78,
+      "restriction_results": {
+       "restricted": 49
+      },
+      "restriction_excluded_moves": 89,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 109,
+       "selected": {
+        "use_power(ET)": 74,
+        "retreat": 34,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 66,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 34
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 8
+       },
+       "sent": {
+        "use_power(ET)": 66,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 66,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 66,
+        "end_turn": 1
+       },
+       "et_accepted_after": 66,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 39,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 39
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn"
+     },
+     "max_run": 78
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      30
+     ],
+     "accepted_et": 60,
+     "revert_points": 28,
+     "immediate_inverse": 9,
+     "cycle_3plus": 19,
+     "moves_in_revert_segments": 60,
+     "novel_result_moves": 32,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 28,
+      "newly_deferred": 60,
+      "restriction_results": {
+       "restricted": 29
+      },
+      "restriction_excluded_moves": 42,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 96,
+       "selected": {
+        "use_power(ET)": 60,
+        "retreat": 35,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 54,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 35
+       },
+       "suppressed_by_policy": {
+        "use_power(ET)": 6
+       },
+       "sent": {
+        "use_power(ET)": 54,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 54,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 54,
+        "end_turn": 1
+       },
+       "et_accepted_after": 54,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 39,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 39
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn"
+     },
+     "max_run": 60
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      32
+     ],
+     "accepted_et": 29,
+     "revert_points": 14,
+     "immediate_inverse": 4,
+     "cycle_3plus": 10,
+     "moves_in_revert_segments": 19,
+     "novel_result_moves": 15,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 14,
+      "newly_deferred": 19,
+      "restriction_results": {
+       "restricted": 13
+      },
+      "restriction_excluded_moves": 24,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 30,
+       "selected": {
+        "use_power(ET)": 17,
+        "retreat": 12,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 17,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 12
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 17,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 17,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 17,
+        "end_turn": 1
+       },
+       "et_accepted_after": 17,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 20,
+     "retreat_built": 1,
+     "retreat_accepted": 1,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 19,
+      "ok": 1
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 19
+    },
+    {
+     "stage": "B2",
+     "game": "g001-rules-v6-s9057",
+     "actor": 1,
+     "turn": [
+      0,
+      34
+     ],
+     "accepted_et": 24,
+     "revert_points": 19,
+     "immediate_inverse": 6,
+     "cycle_3plus": 13,
+     "moves_in_revert_segments": 24,
+     "novel_result_moves": 5,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 19,
+      "newly_deferred": 24,
+      "restriction_results": {
+       "restricted": 18
+      },
+      "restriction_excluded_moves": 38,
+      "choices_et_deferred_all": 2,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 33,
+       "selected": {
+        "use_power(ET)": 21,
+        "retreat": 11,
+        "end_turn": 1
+       },
+       "built": {
+        "use_power(ET)": 21,
+        "end_turn": 1
+       },
+       "unbuildable": {
+        "retreat": 11
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 21,
+        "end_turn": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 21,
+        "end_turn": 1
+       },
+       "accepted": {
+        "use_power(ET)": 21,
+        "end_turn": 1
+       },
+       "et_accepted_after": 21,
+       "first_accepted_non_et": "end_turn"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": false,
+     "attack_detail": null,
+     "retreat_selected": 12,
+     "retreat_built": 0,
+     "retreat_accepted": 0,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 12
+     },
+     "turn_last_accepted": {
+      "kind": "end_turn",
+      "actor": 1,
+      "reason": "rule6:priority6:end_turn:et_deferred_all1"
+     },
+     "max_run": 24
+    },
+    {
+     "stage": "B2",
+     "game": "g003-rules-v6-s9059",
+     "actor": 1,
+     "turn": [
+      0,
+      23
+     ],
+     "accepted_et": 22,
+     "revert_points": 0,
+     "immediate_inverse": 0,
+     "cycle_3plus": 0,
+     "moves_in_revert_segments": 0,
+     "novel_result_moves": 22,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 0,
+      "newly_deferred": 0,
+      "restriction_results": {},
+      "restriction_excluded_moves": 0,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 0,
+       "selected": {},
+       "built": {},
+       "unbuildable": {},
+       "suppressed_by_policy": {},
+       "sent": {},
+       "check_valid": {},
+       "accepted": {},
+       "et_accepted_after": 0,
+       "first_accepted_non_et": null
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 13,
+      "attacker_card_id": "PMCG1-001",
+      "same_active_as_turn_start": false,
+      "energy_turn_start": null,
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 3,
+      "attach_energy_before_attack": 1,
+      "et_before_attack": 22,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 10,
+     "retreat_built": 3,
+     "retreat_accepted": 3,
+     "retreat_build_values": {
+      "ok": 3,
+      "unbuildable:total_units_unreachable@2": 7
+     },
+     "turn_last_accepted": {
+      "kind": "promote_active",
+      "actor": 0,
+      "reason": "rule6:fallback:no_priority"
+     },
+     "max_run": 20
+    },
+    {
+     "stage": "B2",
+     "game": "g003-rules-v6-s9059",
+     "actor": 1,
+     "turn": [
+      0,
+      29
+     ],
+     "accepted_et": 64,
+     "revert_points": 10,
+     "immediate_inverse": 4,
+     "cycle_3plus": 6,
+     "moves_in_revert_segments": 31,
+     "novel_result_moves": 54,
+     "repeated_pre_placement_move_pairs": 0,
+     "repeated_obs_sha_move_pairs": 0,
+     "v6": {
+      "detections": 8,
+      "newly_deferred": 26,
+      "restriction_results": {
+       "restricted": 8
+      },
+      "restriction_excluded_moves": 9,
+      "choices_et_deferred_all": 0,
+      "choices_et_no_alternative": 0,
+      "after_first_deferral": {
+       "attempts": 43,
+       "selected": {
+        "use_power(ET)": 29,
+        "retreat": 13,
+        "use_attack": 1
+       },
+       "built": {
+        "use_power(ET)": 29,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "unbuildable": {
+        "retreat": 12
+       },
+       "suppressed_by_policy": {},
+       "sent": {
+        "use_power(ET)": 29,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "check_valid": {
+        "use_power(ET)": 29,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "accepted": {
+        "use_power(ET)": 29,
+        "retreat": 1,
+        "use_attack": 1
+       },
+       "et_accepted_after": 29,
+       "first_accepted_non_et": "retreat"
+      }
+     },
+     "attack_presented_before_first_et": false,
+     "attack_used": true,
+     "attack_detail": {
+      "attacker_pokemon_id": 8,
+      "attacker_card_id": "PMCG2-003",
+      "same_active_as_turn_start": false,
+      "energy_turn_start": null,
+      "energy_at_attack": [
+       "PMCG1-097",
+       "PMCG1-097"
+      ],
+      "net_incoming_et_to_attacker": 0,
+      "attach_energy_before_attack": 1,
+      "et_before_attack": 64,
+      "attack_reason": "rule6:priority4:use_attack"
+     },
+     "retreat_selected": 28,
+     "retreat_built": 1,
+     "retreat_accepted": 1,
+     "retreat_build_values": {
+      "unbuildable:total_units_unreachable@2": 27,
+      "ok": 1
+     },
+     "turn_last_accepted": {
+      "kind": "use_attack",
+      "actor": 1,
+      "reason": "rule6:priority4:use_attack"
+     },
+     "max_run": 30
+    }
+   ],
+   "turns_20_or_more_count": {
+    "B1": 6,
+    "B2": 12,
+    "B1+B2": 18
+   },
+   "max_per_turn": {
+    "B1": 34,
+    "B2": 79,
+    "B1+B2": 79
+   },
+   "retreat_in_turns_20_or_more": {
+    "B1": {
+     "turns": 6,
+     "selected": 101,
+     "built": 2,
+     "accepted": 2,
+     "build_values": {
+      "unbuildable:total_units_unreachable@2": 99,
+      "ok": 2
+     },
+     "build_values_known": true
+    },
+    "B2": {
+     "turns": 12,
+     "selected": 257,
+     "built": 8,
+     "accepted": 8,
+     "build_values": {
+      "unbuildable:total_units_unreachable@2": 249,
+      "ok": 8
+     },
+     "build_values_known": true
+    },
+    "B1+B2": {
+     "turns": 18,
+     "selected": 358,
+     "built": 10,
+     "accepted": 10,
+     "build_values": {
+      "unbuildable:total_units_unreachable@2": 348,
+      "ok": 10
+     },
+     "build_values_known": true
+    }
+   },
+   "retreat_in_all_et_turns": {
+    "B1": {
+     "turns": 17,
+     "selected": 159,
+     "built": 12,
+     "accepted": 12,
+     "build_values": {
+      "ok": 12,
+      "unbuildable:total_units_unreachable@2": 147
+     },
+     "build_values_known": true
+    },
+    "B2": {
+     "turns": 18,
+     "selected": 282,
+     "built": 14,
+     "accepted": 14,
+     "build_values": {
+      "unbuildable:total_units_unreachable@2": 268,
+      "ok": 14
+     },
+     "build_values_known": true
+    },
+    "B1+B2": {
+     "turns": 35,
+     "selected": 441,
+     "built": 26,
+     "accepted": 26,
+     "build_values": {
+      "ok": 26,
+      "unbuildable:total_units_unreachable@2": 415
+     },
+     "build_values_known": true
+    }
+   }
+  },
+  "damage_swap": {
+   "total": {
+    "B1": {
+     "games": 24,
+     "swaps_accepted": 313,
+     "max_per_turn": 6,
+     "turns_at_6_or_more": 51,
+     "turns_over_6": 0,
+     "rank_change_choices": 112,
+     "games_with_rank_change": 4,
+     "consistency_ok": true,
+     "readable": true,
+     "v5_identity_ok": true
+    },
+    "B2": {
+     "games": 24,
+     "swaps_accepted": 11,
+     "max_per_turn": 4,
+     "turns_at_6_or_more": 0,
+     "turns_over_6": 0,
+     "rank_change_choices": 0,
+     "games_with_rank_change": 0,
+     "consistency_ok": true,
+     "readable": true,
+     "v5_identity_ok": true
+    }
+   },
+   "turns_6_or_more": {
+    "B1": 51,
+    "B2": 0,
+    "B1+B2": 51
+   },
+   "turns_over_6": {
+    "B1": 0,
+    "B2": 0
+   }
+  }
+ },
+ "progress_decision_b3": {
+  "to_b3": "proceed",
+  "b3_b4_not_started_games": 48,
+  "b3_b4_plan_sha256_fixed": true,
+  "next_unit": "B3（9063〜9068）を新しい作業単位で、固定した計画・キャッシュの照合から始める"
  }
 }
