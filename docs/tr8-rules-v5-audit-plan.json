@@ -1,5 +1,5 @@
 {
- "status": "plans_fixed_pilot_done",
+ "status": "main_done",
  "doc": "docs/tr8-rules-v5-audit-plan.md",
  "date": "2026-11-25",
  "base": "3b449b2c4e8e6c7ad5ff853792899cf04535b2f5",
@@ -1128,6 +1128,674 @@
   "failures": [
    "F1: plan check script misread game conventions (key + digest) and C2-C4 deck differences from the C1 comparison; fixed the reading, plans unchanged",
    "F2: driver derivation wrote control characters (\\a, \\t in non-raw strings after the shell heredoc collapsed backslashes); moved aside before any game, regenerated"
+  ]
+ },
+ "main_execution": {
+  "date": "2026-11-25",
+  "branch": "claude/tr8-rules-v5-audit-main",
+  "base": "6b0998f0321b86463364970e80008f681cfb6c3a",
+  "execution_commit": "2a76d577212b76240dee28ae3506ce586730397c",
+  "worktree": "C:\\dev\\kyuura-engine-lt112r",
+  "cache": "cpython-314-2a76d57-tr8v5a (pilot's)",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v5a-main-run/",
+  "counts": {
+   "planned": 24,
+   "started": 24,
+   "complete": 24,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 24,
+   "completion_rate": "24/24",
+   "terminations": {
+    "game_over": 24
+   },
+   "policy_stop_complete": 0,
+   "not_started_by_plan_abort": 0
+  },
+  "by_condition": {
+   "C1": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    },
+    "policy_stop_complete": 0,
+    "not_started_by_plan_abort": 0
+   },
+   "C2": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    },
+    "policy_stop_complete": 0,
+    "not_started_by_plan_abort": 0
+   },
+   "C3": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    },
+    "policy_stop_complete": 0,
+    "not_started_by_plan_abort": 0
+   },
+   "C4": {
+    "planned": 6,
+    "started": 6,
+    "complete": 6,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "terminations": {
+     "game_over": 6
+    },
+    "policy_stop_complete": 0,
+    "not_started_by_plan_abort": 0
+   }
+  },
+  "abort": {
+   "run_all_exit": 0,
+   "aborted": false,
+   "at_call": null,
+   "code": null,
+   "step": null,
+   "policy_stop": false,
+   "reason": null
+  },
+  "not_started": [],
+  "not_complete": [],
+  "pilot_reference": {
+   "counts": {
+    "planned": 4,
+    "started": 4,
+    "complete": 4,
+    "incomplete": 0,
+    "not_started": 0,
+    "game_over": 4,
+    "completion_rate": "4/4",
+    "terminations": {
+     "game_over": 4
+    },
+    "by_condition": {
+     "C1": {
+      "termination": "game_over",
+      "turns": 86,
+      "accepted": 363,
+      "rejected": 0
+     },
+     "C2": {
+      "termination": "game_over",
+      "turns": 53,
+      "accepted": 322,
+      "rejected": 0
+     },
+     "C3": {
+      "termination": "game_over",
+      "turns": 31,
+      "accepted": 147,
+      "rejected": 0
+     },
+     "C4": {
+      "termination": "game_over",
+      "turns": 72,
+      "accepted": 232,
+      "rejected": 0
+     }
+    }
+   },
+   "note": "先行 4 局（seed 9043）は別欄。主集計に入れない"
+  },
+  "old_tr8_reference": {
+   "completion_rate": "23/24",
+   "note": "参考値。seed が違うので完走率の差から方策の効果を推定しない"
+  },
+  "gates_all_complete_games_all_P": true,
+  "final_all_ok": true,
+  "cache_all_same": true,
+  "unresolved": {
+   "R1_rejected_by_code": {},
+   "R2_reanswer": {},
+   "R3_tool_counters": {
+    "policy_suppressed": 120,
+    "withheld": 0,
+    "refused": 0,
+    "check_invalid": 0,
+    "retry_same_input": 0,
+    "failed": 0
+   },
+   "R4_candidate_level": {
+    "discard_from_play|stops_before_acceptance": {
+     "total": 13,
+     "first_attempt_only": 11,
+     "rows": 13,
+     "positions": 11,
+     "games": 7
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 18,
+     "first_attempt_only": 13,
+     "rows": 18,
+     "positions": 13,
+     "games": 3
+    }
+   },
+   "R5_option_level": {
+    "answer_decision|": {
+     "total": 82,
+     "first_attempt_only": 82,
+     "rows": 36,
+     "positions": 36,
+     "games": 13
+    },
+    "play_trainer|stops_before_acceptance": {
+     "total": 11,
+     "first_attempt_only": 7,
+     "rows": 11,
+     "positions": 11,
+     "games": 3
+    }
+   },
+   "unrecorded": {
+    "capped": 0,
+    "skipped_fetch_cap": 0,
+    "skipped_bytes_cap": 0,
+    "unsaved_bytes_cap": 0,
+    "unsaved_failure": 0,
+    "failure": 0,
+    "withheld": 0,
+    "refused": 0,
+    "contract_unknown": 0,
+    "oversize": 0,
+    "error": 0,
+    "skipped_after_failure": 0
+   },
+   "prestop_status": {
+    "complete": 24
+   },
+   "measured_halt_codes": {},
+   "classification_table_code_classes": {
+    "unknown": 26
+   },
+   "static_matching": {
+    "summary": {
+     "R4_candidate|discard_from_play|UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY": {
+      "rows": 11,
+      "games": 7,
+      "conditions": [
+       "C1",
+       "C3"
+      ],
+      "board_consistent_rows": 11
+     },
+     "R4_candidate|play_trainer|UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "rows": 13,
+      "games": 3,
+      "conditions": [
+       "C2"
+      ],
+      "board_consistent_rows": 9
+     },
+     "R5_option|answer_decision|UNRESOLVED_DISCARD_ANY_NUMBER_ZERO": {
+      "rows": 8,
+      "games": 3,
+      "conditions": [
+       "C3"
+      ],
+      "board_consistent_rows": 8
+     },
+     "R5_option|answer_decision|UNRESOLVED_POTION_UNDAMAGED_TARGET": {
+      "rows": 28,
+      "games": 12,
+      "conditions": [
+       "C1",
+       "C2",
+       "C3"
+      ],
+      "board_consistent_rows": 28
+     },
+     "R5_option|play_trainer|UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET": {
+      "rows": 11,
+      "games": 3,
+      "conditions": [
+       "C2"
+      ],
+      "board_consistent_rows": 11
+     }
+    },
+    "unknown_rows": 0,
+    "board_inconsistent_rows_rechecked": 4,
+    "rechecked_unresolved_part_consistent": true
+   }
+  },
+  "conventions": {
+   "convention_applied": {
+    "PC-ENERGY-RETRIEVAL-ZERO@1": 2,
+    "PC-T19B-NULLIFIED-STATUS-COIN@1": 3,
+    "PC-LUCKY-STADIUM-REPLACEMENT@1": 6,
+    "PC-ENERGY-CONVERSION-ZERO@1": 3,
+    "PC-SETUP-MULLIGAN-COUNT@1": 1
+   },
+   "er9": {
+    "zero_answers": 2,
+    "accepted_applied": 2,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "h4": {
+    "zero_answers": 3,
+    "accepted_applied": 3,
+    "accepted_not_applied": 0,
+    "rejected": 0
+   },
+   "t19b_declaration_path": {
+    "declarations": 5,
+    "accepted_applied": 0,
+    "accepted_not_applied": 5,
+    "rejected": 0,
+    "not_submitted_targets": 0
+   },
+   "t19b_public_log": {
+    "C3|PC-T19B-NULLIFIED-STATUS-COIN|ねんりき": 3
+   },
+   "rs1": {
+    "scene_rows": 8,
+    "scene_positions": 6,
+    "presented_positions": 6,
+    "excluded_positions": 0,
+    "not_offered_rows": 0,
+    "chosen": 6,
+    "chosen_unbuildable": 0,
+    "chosen_positions": 6,
+    "checked_valid": 6,
+    "submitted": 6,
+    "accepted": 6,
+    "accepted_with_convention": 6,
+    "accepted_judge_expected": 6,
+    "draw_after_heads": 2,
+    "replacement_seen_positions": 6
+   },
+   "by_condition": {
+    "C1": {},
+    "C2": {
+     "PC-ENERGY-RETRIEVAL-ZERO@1": 2,
+     "PC-SETUP-MULLIGAN-COUNT@1": 1
+    },
+    "C3": {
+     "PC-T19B-NULLIFIED-STATUS-COIN@1": 3,
+     "PC-ENERGY-CONVERSION-ZERO@1": 3
+    },
+    "C4": {
+     "PC-LUCKY-STADIUM-REPLACEMENT@1": 6
+    }
+   }
+  },
+  "damage_swap": {
+   "by_condition": {
+    "C1": {
+     "games": 6,
+     "games_with_swap": 2,
+     "accepted": 219,
+     "turns_with_swap": 37,
+     "turns_at_6": 35,
+     "turns_over_6": 0,
+     "capped_episodes": 40,
+     "rank_change_choices": 74,
+     "rank_change_positions": 39,
+     "games_with_rank_change": 2,
+     "max_per_turn": 6
+    },
+    "C2": {
+     "games": 6,
+     "games_with_swap": 0,
+     "accepted": 0,
+     "turns_with_swap": 0,
+     "turns_at_6": 0,
+     "turns_over_6": 0,
+     "capped_episodes": 0,
+     "rank_change_choices": 0,
+     "rank_change_positions": 0,
+     "games_with_rank_change": 0,
+     "max_per_turn": 0
+    },
+    "C3": {
+     "games": 6,
+     "games_with_swap": 3,
+     "accepted": 257,
+     "turns_with_swap": 44,
+     "turns_at_6": 42,
+     "turns_over_6": 0,
+     "capped_episodes": 47,
+     "rank_change_choices": 76,
+     "rank_change_positions": 45,
+     "games_with_rank_change": 3,
+     "max_per_turn": 6
+    },
+    "C4": {
+     "games": 6,
+     "games_with_swap": 0,
+     "accepted": 0,
+     "turns_with_swap": 0,
+     "turns_at_6": 0,
+     "turns_over_6": 0,
+     "capped_episodes": 0,
+     "rank_change_choices": 0,
+     "rank_change_positions": 0,
+     "games_with_rank_change": 0,
+     "max_per_turn": 0
+    }
+   },
+   "total": {
+    "games": 24,
+    "swaps_accepted": 476,
+    "max_per_turn": 6,
+    "turns_at_6_or_more": 77,
+    "turns_over_6": 0,
+    "rank_change_choices": 150,
+    "games_with_rank_change": 5,
+    "consistency_ok": true,
+    "readable": true,
+    "v5_identity_ok": true
+   },
+   "per_turn_histogram": {
+    "1": 1,
+    "4": 2,
+    "5": 1,
+    "6": 77
+   },
+   "after_change": {
+    "choices": 150,
+    "presented_read": 150,
+    "presented_kinds_choices": {
+     "discard_from_play": 1,
+     "end_turn": 150,
+     "play_trainer": 10,
+     "retreat": 134,
+     "reveal_face_down": 1,
+     "use_power:swap": 150
+    },
+    "selected": {
+     "retreat": 66,
+     "end_turn": 77,
+     "play_trainer": 6,
+     "reveal_face_down": 1
+    },
+    "selected_swap": 0,
+    "build": {
+     "unbuildable:total_units_unreachable": 66,
+     "ok": 84
+    },
+    "sent": 84,
+    "check_valid_true": 84,
+    "outcomes": {
+     "unbuildable": 66,
+     "accepted": 84
+    },
+    "accepted": {
+     "end_turn": 77,
+     "play_trainer": 6,
+     "reveal_face_down": 1
+    },
+    "accepted_executable": {
+     "end_turn": 77,
+     "play_trainer": 6,
+     "reveal_face_down": 1
+    },
+    "also_deferred_all": 0
+   },
+   "positions": {
+    "count": 84,
+    "accepted_kind": {
+     "end_turn": 77,
+     "play_trainer": 6,
+     "reveal_face_down": 1
+    },
+    "flows": {
+     "retreat:unbuildable -> end_turn:accepted": 64,
+     "end_turn:accepted": 13,
+     "play_trainer:accepted": 4,
+     "retreat:unbuildable -> play_trainer:accepted": 2,
+     "reveal_face_down:accepted": 1
+    }
+   },
+   "v4_separate": {
+    "C1": {
+     "restricted": 27,
+     "deferred_all_choices": 0,
+     "loop_detection_episodes": 41,
+     "both_marks": 0
+    },
+    "C2": {
+     "restricted": 0,
+     "deferred_all_choices": 0,
+     "loop_detection_episodes": 0,
+     "both_marks": 0
+    },
+    "C3": {
+     "restricted": 31,
+     "deferred_all_choices": 0,
+     "loop_detection_episodes": 44,
+     "both_marks": 0
+    },
+    "C4": {
+     "restricted": 0,
+     "deferred_all_choices": 0,
+     "loop_detection_episodes": 0,
+     "both_marks": 0
+    }
+   },
+   "v2_policy_review_send_false": {
+    "C1": 8,
+    "C2": 104,
+    "C3": 8,
+    "C4": 0
+   },
+   "static": "static_rank of presented candidates from PRIORITY (not recorded in the game)",
+   "unconfirmed": "what the policy would have chosen without the cap (needs a same-seed comparison)",
+   "presented_only_not_counted": "presented kinds are not counted as executable unless selected, built, sent and accepted",
+   "cap_reconcile": {
+    "capped_turns": 77,
+    "capped_episodes": 87,
+    "capped+marked": 84,
+    "capped_no_mark_no_swap": 3
+   },
+   "cap_reconcile_ok": true
+  },
+  "tables": {
+   "A_ended_not_game_over": {},
+   "B_reduced_in_multiple_games": {
+    "R4_candidate|discard_from_play|stops_before_acceptance": {
+     "games": 7,
+     "conditions": [
+      "C1",
+      "C3"
+     ],
+     "units": 13,
+     "level": "R4_candidate"
+    },
+    "R4_candidate|play_trainer|stops_before_acceptance": {
+     "games": 3,
+     "conditions": [
+      "C2"
+     ],
+     "units": 18,
+     "level": "R4_candidate"
+    },
+    "R5_option|answer_decision|": {
+     "games": 13,
+     "conditions": [
+      "C1",
+      "C2",
+      "C3"
+     ],
+     "units": 82,
+     "level": "R5_option"
+    },
+    "R5_option|play_trainer|stops_before_acceptance": {
+     "games": 3,
+     "conditions": [
+      "C2"
+     ],
+     "units": 11,
+     "level": "R5_option"
+    },
+    "v5_swap_cap|use_power:damage_swap": {
+     "games": 5,
+     "conditions": [
+      "C1",
+      "C3"
+     ],
+     "units": 150,
+     "level": "rank_change"
+    }
+   },
+   "policy_list": {
+    "damage_swap_rank_change": {
+     "choices": 150,
+     "positions": 84,
+     "games": 5
+    },
+    "energy_trans_repeat": {
+     "C2|エナジートランス": {
+      "games": 3,
+      "accepted": 545,
+      "turns_20_or_more": 6,
+      "games_with_20_or_more": 2,
+      "suppressed": 104,
+      "max_per_turn": 159
+     }
+    },
+    "loop_power_names_line": [
+     "LOOP_POWER_NAMES = (\"ダメージスワップ\",)  # 検出の対象の特殊能力（候補の power.name_ja。公開の値）"
+    ]
+   }
+  },
+  "next_candidates": [
+   {
+    "rank": 1,
+    "type": "policy_prolongation",
+    "item": "Energy Trans (PMCG1-011) repeats within one turn in C2 (3 games; 6 turns >= 20; max 159); outside LOOP_POWER_NAMES",
+    "missing": "whether it cycles to the same state; same-seed policy comparison"
+   },
+   {
+    "rank": 2,
+    "type": "unresolved",
+    "item": "UNRESOLVED_POTION_UNDAMAGED_TARGET (12 games, C1-C3); convention designed, adoption pending",
+    "missing": "adoption decision; codes are static matching"
+   },
+   {
+    "rank": 3,
+    "type": "display_diagnostic_only",
+    "item": "record stop codes on excluded candidates / options (classification table: 26 keys unknown; static: 71 rows known)",
+    "missing": "a unit that widens the records"
+   }
+  ],
+  "not_selected_unresolved": [
+   "UNRESOLVED_SECRET_PLAN_HIDDEN_PROPERTY (FD1, 7 games)",
+   "UNRESOLVED_ENERGY_RETRIEVAL_WITHOUT_TARGET (ER10, 3 games)",
+   "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO (3 games)"
+  ],
+  "totals": {
+   "tool_accounted_seconds_main": 185.469,
+   "outer_seconds_main": 584.626,
+   "attempt_seconds": 114.269,
+   "attempt_bytes": 381035273,
+   "accepted": 4826,
+   "rejected": 0,
+   "attempts": 5969,
+   "main_plan_dir_bytes": 381551191,
+   "policy_suppressed": 120,
+   "turns": 1184
+  },
+  "budget_after_main": {
+   "program_tool_used_seconds": 226.506,
+   "program_remaining_tool_seconds": 3373.494,
+   "program_outer_used_seconds": 694.978,
+   "program_remaining_outer_seconds": 6505.022,
+   "program_evidence_bytes": 470376693,
+   "program_remaining_evidence_bytes": 1677106955,
+   "drive_free_bytes": 246796066816
+  },
+  "plans_budget": {
+   "vai-batch-tr8v5a-m1": {
+    "accounted_seconds": 30.115,
+    "budget_seconds": 900.0,
+    "dir_bytes": 55766206,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8v5a-m2": {
+    "accounted_seconds": 50.845,
+    "budget_seconds": 900.0,
+    "dir_bytes": 110231371,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8v5a-m3": {
+    "accounted_seconds": 60.261,
+    "budget_seconds": 900.0,
+    "dir_bytes": 117238190,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   },
+   "vai-batch-tr8v5a-m4": {
+    "accounted_seconds": 44.248,
+    "budget_seconds": 900.0,
+    "dir_bytes": 98315424,
+    "evidence_max_bytes": 1073741824,
+    "games_complete": 6
+   }
+  },
+  "main_plans": {
+   "vai-batch-tr8v5a-m1": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "attempt_dirs": 6,
+    "incomplete_notes": 0,
+    "lock": false
+   },
+   "vai-batch-tr8v5a-m2": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "attempt_dirs": 6,
+    "incomplete_notes": 0,
+    "lock": false
+   },
+   "vai-batch-tr8v5a-m3": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "attempt_dirs": 6,
+    "incomplete_notes": 0,
+    "lock": false
+   },
+   "vai-batch-tr8v5a-m4": {
+    "plan_sha256_unchanged": true,
+    "games_complete": 6,
+    "attempt_dirs": 6,
+    "incomplete_notes": 0,
+    "lock": false
+   }
+  },
+  "default_policy_decided": false,
+  "failures": [
+   "F1: main summary first version counted table units as 0 (dict units) and dropped zero v4 entries (Counter sum); fixed, other fields equal; raw/F1_*",
+   "F2: cap reconcile script stopped twice before writing output (CR in arguments; host actor rows); fixed"
   ]
  }
 }
