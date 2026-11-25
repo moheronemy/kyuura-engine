@@ -1,0 +1,1897 @@
+{
+ "status": "draft",
+ "doc": "docs/tr8-rules-v6-scaled-audit-plan.md",
+ "date": "2026-11-25",
+ "base": "b7991526b45b16ae4133e82700fb462200f98f81",
+ "branch": "claude/tr8-rules-v6-scaled-audit-plan",
+ "execution": {
+  "tool_commit": "e75a87316a3b821ff70cff1c48fba76e6b657f04",
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "code_diff_e75a873_b799152": "docs only (2 names)",
+  "engine_diff_a358378_e75a873": 0,
+  "worktree_measured": "C:\\dev\\kyuura-engine-lt115r",
+  "same_as_v6_comparison": true
+ },
+ "duplicates": {
+  "remote_heads_v6": [
+   "claude/tr8-rules-v6-energy-trans"
+  ],
+  "run_dirs_v6": [
+   "vai-tr8v6-run",
+   "vai-batch-tr8v6-v5",
+   "vai-batch-tr8v6-v6"
+  ],
+  "same_audit": false
+ },
+ "identity_measured": {
+  "engine_version": "0.198.0",
+  "behavior_digest": "c9912dd81eca81f572030c32b8de0993820b53eb1e07f11b43186cd2361b8b06",
+  "behavior_files": 58,
+  "instrumentation_digest": "61f09812b1a330ad14c0080c41612c5c405a7fec3ae0a42609981bc39270ff67",
+  "tool_version": 17,
+  "tool_digest": "c27c9d3f5148670af070a66ce06e6836b0c267ea13797317099364f2ed4b78ae",
+  "judge_rules_version": 10,
+  "formats": [
+   "kyuura-vai-batch-plan/7",
+   "kyuura-vai-batch-complete/7"
+  ],
+  "basis": {
+   "lost_target_p1": "e27dfe1d24535cfa61af17d066e3848a1577c21fe20d838f75fd666d6157392f",
+   "lost_target_p3": "69d05615c7cc1d3c17b813a09a74201ea3c1e5d85be44f47972f6719c1f5ed66",
+   "lost_target_p2": "e1ab9ac0f118d4da15925d2fa562510e3ffd95a10eac19854ab3bf8b21aced81",
+   "recover_zero": "2e912bee5d65b7bdd83f6386abf49e7a94be45e901ff09ec3689118158a24720"
+  },
+  "tr8": {
+   "members": 27,
+   "pinned": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "computed": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "validate_problems": []
+  },
+  "diff_vs_v5_plan": [
+   "tool_version 16 -> 17",
+   "tool digest",
+   "engine_file path"
+  ]
+ },
+ "policy": {
+  "mode": "rules-v6",
+  "policy": "rules",
+  "rules_version": 6,
+  "repeat_threshold": 2,
+  "distribution": "rules-v6-candidate+uniform-stage",
+  "profile": "deep",
+  "swap_cap": 6,
+  "transition_deferral_version": 1,
+  "energy_trans_deferral_version": 1,
+  "energy_trans_count_demotion": null,
+  "default_changed": false
+ },
+ "conditions": {
+  "C1": {
+   "seat0": "decklist L67-U",
+   "seat1": "decklist L67-U"
+  },
+  "C2": {
+   "seat0": "hitmonchan-dewgong-v2",
+   "seat1": "venusaur-parasect-v2"
+  },
+  "C3": {
+   "seat0": "decklist P42",
+   "seat1": "decklist L67-U"
+  },
+  "C4": {
+   "seat0": "decklist LUCKY_DECK",
+   "seat1": "decklist CONNECT_DECK"
+  }
+ },
+ "decks": {
+  "decklist_check_equal_to_v5_plan": true,
+  "deck_profile_equal_to_v5_plan": true,
+  "files": {
+   "L67-U": "C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json",
+   "P42": "C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json",
+   "LUCKY_DECK": "C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json",
+   "CONNECT_DECK": "C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json"
+  },
+  "damage_swap_holder": "L67-U (C1 both, C3 seat 1)",
+  "energy_trans_holder": "venusaur-parasect-v2 (C2 seat 1)",
+  "kept": [
+   "deep",
+   "default single-game limits",
+   "observation",
+   "prestop",
+   "no mutation",
+   "sequential"
+  ]
+ },
+ "seeds": {
+  "rule": "9050 から上へ、連続 25 値がすべて未使用の最初の組（先頭 1 値が先行・残り 24 値を 6 値ずつ 4 ブロックの本実行）",
+  "roots": 31,
+  "files": 614,
+  "errors": 0,
+  "used_count": 143,
+  "max_used": 9049,
+  "selected": [
+   9050,
+   9051,
+   9052,
+   9053,
+   9054,
+   9055,
+   9056,
+   9057,
+   9058,
+   9059,
+   9060,
+   9061,
+   9062,
+   9063,
+   9064,
+   9065,
+   9066,
+   9067,
+   9068,
+   9069,
+   9070,
+   9071,
+   9072,
+   9073,
+   9074
+  ],
+  "pilot": [
+   9050
+  ],
+  "blocks": {
+   "B1": [
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056
+   ],
+   "B2": [
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062
+   ],
+   "B3": [
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068
+   ],
+   "B4": [
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ]
+  },
+  "rescan_at_run": "same rule; stop if the selection changes (no substitution)"
+ },
+ "games": {
+  "pilot": 4,
+  "per_block": 24,
+  "blocks": 4,
+  "main_max": 96,
+  "total_max": 100,
+  "per_condition_per_block": 6,
+  "order_rule": "pilot p1 -> p4; each block: seed ascending, C1 -> C4 within a seed; one game per call (--sessions 1)"
+ },
+ "plans": [
+  {
+   "batch": "vai-batch-tr8v6a-p1",
+   "stage": "pilot",
+   "block": "B1",
+   "condition": "C1",
+   "seeds": [
+    9050
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p1 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-p2",
+   "stage": "pilot",
+   "block": "B1",
+   "condition": "C2",
+   "seeds": [
+    9050
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p2 --seeds 9050 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-p3",
+   "stage": "pilot",
+   "block": "B1",
+   "condition": "C3",
+   "seeds": [
+    9050
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p3 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-p4",
+   "stage": "pilot",
+   "block": "B1",
+   "condition": "C4",
+   "seeds": [
+    9050
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-p4 --seeds 9050 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 1 --budget-seconds 300 --evidence-max-mb 512 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "stage": "main",
+   "block": "B1",
+   "condition": "C1",
+   "seeds": [
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c1 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "stage": "main",
+   "block": "B1",
+   "condition": "C2",
+   "seeds": [
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c2 --seeds 9051 9052 9053 9054 9055 9056 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "stage": "main",
+   "block": "B1",
+   "condition": "C3",
+   "seeds": [
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c3 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "stage": "main",
+   "block": "B1",
+   "condition": "C4",
+   "seeds": [
+    9051,
+    9052,
+    9053,
+    9054,
+    9055,
+    9056
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b1c4 --seeds 9051 9052 9053 9054 9055 9056 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "stage": "main",
+   "block": "B2",
+   "condition": "C1",
+   "seeds": [
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c1 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "stage": "main",
+   "block": "B2",
+   "condition": "C2",
+   "seeds": [
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c2 --seeds 9057 9058 9059 9060 9061 9062 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "stage": "main",
+   "block": "B2",
+   "condition": "C3",
+   "seeds": [
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c3 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "stage": "main",
+   "block": "B2",
+   "condition": "C4",
+   "seeds": [
+    9057,
+    9058,
+    9059,
+    9060,
+    9061,
+    9062
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b2c4 --seeds 9057 9058 9059 9060 9061 9062 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "stage": "main",
+   "block": "B3",
+   "condition": "C1",
+   "seeds": [
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c1 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "stage": "main",
+   "block": "B3",
+   "condition": "C2",
+   "seeds": [
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c2 --seeds 9063 9064 9065 9066 9067 9068 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "stage": "main",
+   "block": "B3",
+   "condition": "C3",
+   "seeds": [
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c3 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "stage": "main",
+   "block": "B3",
+   "condition": "C4",
+   "seeds": [
+    9063,
+    9064,
+    9065,
+    9066,
+    9067,
+    9068
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b3c4 --seeds 9063 9064 9065 9066 9067 9068 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "stage": "main",
+   "block": "B4",
+   "condition": "C1",
+   "seeds": [
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c1 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "stage": "main",
+   "block": "B4",
+   "condition": "C2",
+   "seeds": [
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c2 --seeds 9069 9070 9071 9072 9073 9074 --deck0 hitmonchan-dewgong-v2 --deck1 venusaur-parasect-v2 --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "stage": "main",
+   "block": "B4",
+   "condition": "C3",
+   "seeds": [
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c3 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\p2-min-batch-plan\\decklists\\decklist-P42.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-L67-U.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  },
+  {
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "stage": "main",
+   "block": "B4",
+   "condition": "C4",
+   "seeds": [
+    9069,
+    9070,
+    9071,
+    9072,
+    9073,
+    9074
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "cli": "python -X utf8 -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr8v6a-b4c4 --seeds 9069 9070 9071 9072 9073 9074 --decklist0 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-LUCKY_DECK.json --decklist1 C:\\dev\\kyuura-engine-verification-vai\\verifier\\runs\\vai-batch-d\\decklists\\decklist-CONNECT_DECK.json --max-games 6 --budget-seconds 900 --evidence-max-mb 1024 --engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit e75a87316a3b821ff70cff1c48fba76e6b657f04 --modes rules-v6 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+   "plan_sha256": null
+  }
+ ],
+ "order": [
+  {
+   "call": 1,
+   "stage": "pilot",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-p1",
+   "condition": "C1",
+   "seed": 9050,
+   "game_in_plan": 1
+  },
+  {
+   "call": 2,
+   "stage": "pilot",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-p2",
+   "condition": "C2",
+   "seed": 9050,
+   "game_in_plan": 1
+  },
+  {
+   "call": 3,
+   "stage": "pilot",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-p3",
+   "condition": "C3",
+   "seed": 9050,
+   "game_in_plan": 1
+  },
+  {
+   "call": 4,
+   "stage": "pilot",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-p4",
+   "condition": "C4",
+   "seed": 9050,
+   "game_in_plan": 1
+  },
+  {
+   "call": 5,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9051,
+   "game_in_plan": 1
+  },
+  {
+   "call": 6,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9051,
+   "game_in_plan": 1
+  },
+  {
+   "call": 7,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9051,
+   "game_in_plan": 1
+  },
+  {
+   "call": 8,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9051,
+   "game_in_plan": 1
+  },
+  {
+   "call": 9,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9052,
+   "game_in_plan": 2
+  },
+  {
+   "call": 10,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9052,
+   "game_in_plan": 2
+  },
+  {
+   "call": 11,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9052,
+   "game_in_plan": 2
+  },
+  {
+   "call": 12,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9052,
+   "game_in_plan": 2
+  },
+  {
+   "call": 13,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9053,
+   "game_in_plan": 3
+  },
+  {
+   "call": 14,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9053,
+   "game_in_plan": 3
+  },
+  {
+   "call": 15,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9053,
+   "game_in_plan": 3
+  },
+  {
+   "call": 16,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9053,
+   "game_in_plan": 3
+  },
+  {
+   "call": 17,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9054,
+   "game_in_plan": 4
+  },
+  {
+   "call": 18,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9054,
+   "game_in_plan": 4
+  },
+  {
+   "call": 19,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9054,
+   "game_in_plan": 4
+  },
+  {
+   "call": 20,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9054,
+   "game_in_plan": 4
+  },
+  {
+   "call": 21,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9055,
+   "game_in_plan": 5
+  },
+  {
+   "call": 22,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9055,
+   "game_in_plan": 5
+  },
+  {
+   "call": 23,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9055,
+   "game_in_plan": 5
+  },
+  {
+   "call": 24,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9055,
+   "game_in_plan": 5
+  },
+  {
+   "call": 25,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c1",
+   "condition": "C1",
+   "seed": 9056,
+   "game_in_plan": 6
+  },
+  {
+   "call": 26,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c2",
+   "condition": "C2",
+   "seed": 9056,
+   "game_in_plan": 6
+  },
+  {
+   "call": 27,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c3",
+   "condition": "C3",
+   "seed": 9056,
+   "game_in_plan": 6
+  },
+  {
+   "call": 28,
+   "stage": "main",
+   "block": "B1",
+   "batch": "vai-batch-tr8v6a-b1c4",
+   "condition": "C4",
+   "seed": 9056,
+   "game_in_plan": 6
+  },
+  {
+   "call": 29,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9057,
+   "game_in_plan": 1
+  },
+  {
+   "call": 30,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9057,
+   "game_in_plan": 1
+  },
+  {
+   "call": 31,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9057,
+   "game_in_plan": 1
+  },
+  {
+   "call": 32,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9057,
+   "game_in_plan": 1
+  },
+  {
+   "call": 33,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9058,
+   "game_in_plan": 2
+  },
+  {
+   "call": 34,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9058,
+   "game_in_plan": 2
+  },
+  {
+   "call": 35,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9058,
+   "game_in_plan": 2
+  },
+  {
+   "call": 36,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9058,
+   "game_in_plan": 2
+  },
+  {
+   "call": 37,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9059,
+   "game_in_plan": 3
+  },
+  {
+   "call": 38,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9059,
+   "game_in_plan": 3
+  },
+  {
+   "call": 39,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9059,
+   "game_in_plan": 3
+  },
+  {
+   "call": 40,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9059,
+   "game_in_plan": 3
+  },
+  {
+   "call": 41,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9060,
+   "game_in_plan": 4
+  },
+  {
+   "call": 42,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9060,
+   "game_in_plan": 4
+  },
+  {
+   "call": 43,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9060,
+   "game_in_plan": 4
+  },
+  {
+   "call": 44,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9060,
+   "game_in_plan": 4
+  },
+  {
+   "call": 45,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9061,
+   "game_in_plan": 5
+  },
+  {
+   "call": 46,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9061,
+   "game_in_plan": 5
+  },
+  {
+   "call": 47,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9061,
+   "game_in_plan": 5
+  },
+  {
+   "call": 48,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9061,
+   "game_in_plan": 5
+  },
+  {
+   "call": 49,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c1",
+   "condition": "C1",
+   "seed": 9062,
+   "game_in_plan": 6
+  },
+  {
+   "call": 50,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c2",
+   "condition": "C2",
+   "seed": 9062,
+   "game_in_plan": 6
+  },
+  {
+   "call": 51,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c3",
+   "condition": "C3",
+   "seed": 9062,
+   "game_in_plan": 6
+  },
+  {
+   "call": 52,
+   "stage": "main",
+   "block": "B2",
+   "batch": "vai-batch-tr8v6a-b2c4",
+   "condition": "C4",
+   "seed": 9062,
+   "game_in_plan": 6
+  },
+  {
+   "call": 53,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9063,
+   "game_in_plan": 1
+  },
+  {
+   "call": 54,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9063,
+   "game_in_plan": 1
+  },
+  {
+   "call": 55,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9063,
+   "game_in_plan": 1
+  },
+  {
+   "call": 56,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9063,
+   "game_in_plan": 1
+  },
+  {
+   "call": 57,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9064,
+   "game_in_plan": 2
+  },
+  {
+   "call": 58,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9064,
+   "game_in_plan": 2
+  },
+  {
+   "call": 59,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9064,
+   "game_in_plan": 2
+  },
+  {
+   "call": 60,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9064,
+   "game_in_plan": 2
+  },
+  {
+   "call": 61,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9065,
+   "game_in_plan": 3
+  },
+  {
+   "call": 62,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9065,
+   "game_in_plan": 3
+  },
+  {
+   "call": 63,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9065,
+   "game_in_plan": 3
+  },
+  {
+   "call": 64,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9065,
+   "game_in_plan": 3
+  },
+  {
+   "call": 65,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9066,
+   "game_in_plan": 4
+  },
+  {
+   "call": 66,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9066,
+   "game_in_plan": 4
+  },
+  {
+   "call": 67,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9066,
+   "game_in_plan": 4
+  },
+  {
+   "call": 68,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9066,
+   "game_in_plan": 4
+  },
+  {
+   "call": 69,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9067,
+   "game_in_plan": 5
+  },
+  {
+   "call": 70,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9067,
+   "game_in_plan": 5
+  },
+  {
+   "call": 71,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9067,
+   "game_in_plan": 5
+  },
+  {
+   "call": 72,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9067,
+   "game_in_plan": 5
+  },
+  {
+   "call": 73,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c1",
+   "condition": "C1",
+   "seed": 9068,
+   "game_in_plan": 6
+  },
+  {
+   "call": 74,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c2",
+   "condition": "C2",
+   "seed": 9068,
+   "game_in_plan": 6
+  },
+  {
+   "call": 75,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c3",
+   "condition": "C3",
+   "seed": 9068,
+   "game_in_plan": 6
+  },
+  {
+   "call": 76,
+   "stage": "main",
+   "block": "B3",
+   "batch": "vai-batch-tr8v6a-b3c4",
+   "condition": "C4",
+   "seed": 9068,
+   "game_in_plan": 6
+  },
+  {
+   "call": 77,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9069,
+   "game_in_plan": 1
+  },
+  {
+   "call": 78,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9069,
+   "game_in_plan": 1
+  },
+  {
+   "call": 79,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9069,
+   "game_in_plan": 1
+  },
+  {
+   "call": 80,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9069,
+   "game_in_plan": 1
+  },
+  {
+   "call": 81,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9070,
+   "game_in_plan": 2
+  },
+  {
+   "call": 82,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9070,
+   "game_in_plan": 2
+  },
+  {
+   "call": 83,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9070,
+   "game_in_plan": 2
+  },
+  {
+   "call": 84,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9070,
+   "game_in_plan": 2
+  },
+  {
+   "call": 85,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9071,
+   "game_in_plan": 3
+  },
+  {
+   "call": 86,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9071,
+   "game_in_plan": 3
+  },
+  {
+   "call": 87,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9071,
+   "game_in_plan": 3
+  },
+  {
+   "call": 88,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9071,
+   "game_in_plan": 3
+  },
+  {
+   "call": 89,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9072,
+   "game_in_plan": 4
+  },
+  {
+   "call": 90,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9072,
+   "game_in_plan": 4
+  },
+  {
+   "call": 91,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9072,
+   "game_in_plan": 4
+  },
+  {
+   "call": 92,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9072,
+   "game_in_plan": 4
+  },
+  {
+   "call": 93,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9073,
+   "game_in_plan": 5
+  },
+  {
+   "call": 94,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9073,
+   "game_in_plan": 5
+  },
+  {
+   "call": 95,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9073,
+   "game_in_plan": 5
+  },
+  {
+   "call": 96,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9073,
+   "game_in_plan": 5
+  },
+  {
+   "call": 97,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c1",
+   "condition": "C1",
+   "seed": 9074,
+   "game_in_plan": 6
+  },
+  {
+   "call": 98,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c2",
+   "condition": "C2",
+   "seed": 9074,
+   "game_in_plan": 6
+  },
+  {
+   "call": 99,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c3",
+   "condition": "C3",
+   "seed": 9074,
+   "game_in_plan": 6
+  },
+  {
+   "call": 100,
+   "stage": "main",
+   "block": "B4",
+   "batch": "vai-batch-tr8v6a-b4c4",
+   "condition": "C4",
+   "seed": 9074,
+   "game_in_plan": 6
+  }
+ ],
+ "budget": {
+  "plan": {
+   "pilot": {
+    "seconds": 300,
+    "evidence_mib": 512
+   },
+   "main": {
+    "seconds": 900,
+    "evidence_mib": 1024
+   }
+  },
+  "block": {
+   "tool_seconds": 3600,
+   "outer_seconds": 7200,
+   "evidence_mib": 2048,
+   "b1_includes_pilot": true
+  },
+  "total": {
+   "tool_seconds": 14400,
+   "outer_seconds": 28800,
+   "evidence_mib": 8192,
+   "includes_pilot": true
+  },
+  "start_conditions": {
+   "tool_remaining_seconds_each": {
+    "plan": 150,
+    "block": 150,
+    "total": 150
+   },
+   "outer_remaining_seconds_each": {
+    "block": 600,
+    "total": 600
+   },
+   "evidence_remaining_each": {
+    "plan": "max(384 MiB, largest saved game x 1.5)",
+    "block": "same",
+    "total": "same"
+   },
+   "drive_free_mib": 4096
+  },
+  "estimate": {
+   "measured": {
+    "v5_pilot": {
+     "games": 4,
+     "tool_seconds": 41.037,
+     "outer_seconds": 110.352,
+     "plan_dir_bytes": 88825502,
+     "terminations": [
+      "game_over"
+     ]
+    },
+    "v5_main": {
+     "games": 24,
+     "tool_seconds": 185.469,
+     "outer_seconds": 584.626,
+     "plan_dir_bytes": 381551191,
+     "terminations": [
+      "game_over"
+     ]
+    },
+    "v6_comparison": {
+     "games": 2,
+     "tool_seconds": 24.527,
+     "outer_seconds": 61.013,
+     "plan_dir_bytes": 57373008,
+     "terminations": [
+      "game_over"
+     ]
+    }
+   },
+   "per_condition_v5": {
+    "C1": {
+     "tool_seconds": {
+      "n": 7,
+      "mean": 6.445,
+      "median": 3.599,
+      "max": 14.997
+     },
+     "outer_seconds": {
+      "n": 7,
+      "mean": 22.976,
+      "median": 19.96,
+      "max": 33.816
+     },
+     "bytes": {
+      "n": 7,
+      "mean": 12520826,
+      "median": 5442123,
+      "max": 31983319
+     },
+     "check_wall_seconds": {
+      "n": 7,
+      "mean": 14.67,
+      "median": 14.533,
+      "max": 16.714
+     }
+    },
+    "C2": {
+     "tool_seconds": {
+      "n": 7,
+      "mean": 8.927,
+      "median": 6.837,
+      "max": 20.547
+     },
+     "outer_seconds": {
+      "n": 7,
+      "mean": 25.848,
+      "median": 23.446,
+      "max": 39.903
+     },
+     "bytes": {
+      "n": 7,
+      "mean": 19581344.857,
+      "median": 14691908,
+      "max": 49337605
+     },
+     "check_wall_seconds": {
+      "n": 7,
+      "mean": 15.132,
+      "median": 14.764,
+      "max": 17.683
+     }
+    },
+    "C3": {
+     "tool_seconds": {
+      "n": 7,
+      "mean": 9.375,
+      "median": 7.787,
+      "max": 14.524
+     },
+     "outer_seconds": {
+      "n": 7,
+      "mean": 26.224,
+      "median": 24.451,
+      "max": 32.632
+     },
+     "bytes": {
+      "n": 7,
+      "mean": 18142597.143,
+      "median": 15075984,
+      "max": 28014258
+     },
+     "check_wall_seconds": {
+      "n": 7,
+      "mean": 14.933,
+      "median": 14.842,
+      "max": 15.878
+     }
+    },
+    "C4": {
+     "tool_seconds": {
+      "n": 7,
+      "mean": 7.611,
+      "median": 8.076,
+      "max": 9.032
+     },
+     "outer_seconds": {
+      "n": 7,
+      "mean": 24.235,
+      "median": 24.898,
+      "max": 25.871
+     },
+     "bytes": {
+      "n": 7,
+      "mean": 16877260.143,
+      "median": 18352010,
+      "max": 19923780
+     },
+     "check_wall_seconds": {
+      "n": 7,
+      "mean": 14.754,
+      "median": 14.833,
+      "max": 15.128
+     }
+    }
+   },
+   "normal": {
+    "pilot": {
+     "tool_seconds": 32.358,
+     "outer_seconds": 99.283,
+     "bytes": 67540140
+    },
+    "block": {
+     "tool_seconds": 194.148,
+     "outer_seconds": 595.698,
+     "bytes": 403150280
+    },
+    "total": {
+     "tool_seconds": 808.95,
+     "outer_seconds": 2482.075,
+     "bytes": 1680141260
+    },
+    "block_x1_5": {
+     "tool_seconds": 291.222,
+     "outer_seconds": 893.547,
+     "bytes": 604725420.0
+    }
+   },
+   "long": {
+    "observed_max_game": {
+     "tool_seconds": 20.547,
+     "outer_seconds": 39.903,
+     "bytes": 49337605,
+     "block_24": {
+      "tool_seconds": 493.128,
+      "outer_seconds": 957.672,
+      "bytes": 1184102520
+     }
+    },
+    "single_game_limit_120s": {
+     "tool_seconds_per_game": 122.0,
+     "outer_seconds_per_game": 139.683,
+     "block_24": {
+      "tool_seconds": 2928.0,
+      "outer_seconds": 3352.402
+     },
+     "games_before_block_tool_floor": 28,
+     "games_before_plan_tool_floor": 6
+    },
+    "old_tr8_limit_accepted_game_bytes": 97559788,
+    "evidence_if_every_game_is_that_size": {
+     "plan_6": 585358728,
+     "block_24": 2341434912,
+     "games_before_block_floor": 17,
+     "games_before_plan_floor": 6,
+     "games_startable_in_block": 18,
+     "remaining_before_19th_mib": 373,
+     "note": "games_before_block_floor in the estimate output counts games inside the floor (17); games that can start is 18 (F1)"
+    }
+   }
+  },
+  "outside_budget": [
+   "startup",
+   "plan generation",
+   "cache preparation",
+   "final aggregation",
+   "documents"
+  ],
+  "on_shortage": "do not start the next game; leave not-started; no extension / extra games / acknowledge-stop / unlock"
+ },
+ "gates": {
+  "P-1": "plan and identity (e75a873 / a358378, 0 changes, identity as ch. 1, plan.sha256 fixed, plan check 0 problems)",
+  "P-2": "TR8@1 + digest everywhere; mode rules-v6, rules_version 6, policy version 6, distribution rules-v6-candidate+uniform-stage, swap_cap 6, energy_trans_deferral 1",
+  "P-3": "verify_complete 0 problems; one attempt; complete marker",
+  "P-4": "observation complete, prestop 0 problems, judge = record, replay as expected, no anomalies",
+  "P-5": "contract_unknown 0; ineligible convention options never chosen / checked / sent",
+  "P-6": "ch. 5 items readable",
+  "P-7": "aggregate = game sums; convention_applied equal across 3 viewers; loop.counts (Damage Swap and Energy Trans items) = attempt-row marks",
+  "P-8": "cache unchanged before and after each game"
+ },
+ "progress": {
+  "to_B1": [
+   "P-1..P-8 true for the 4 pilot games",
+   "first B1 game startable under the start conditions"
+  ],
+  "to_next_block": [
+   "same checks as P-1..P-8 for every started game of the block",
+   "no abort",
+   "first game of the next block startable"
+  ],
+  "not_conditions": [
+   "completion rate",
+   "specific stops",
+   "specific conventions",
+   "long Energy Trans / Damage Swap turns"
+  ],
+  "procedure": "after each block: record checks, aggregate, cache, remaining budget and updated outlook; report go / hold; hand over to the next work unit",
+  "work_units": [
+   "pilot + B1",
+   "B2",
+   "B3",
+   "B4"
+  ]
+ },
+ "stop": {
+  "continue_and_record": [
+   "single-game limits",
+   "halted_known",
+   "input_unavailable",
+   "prestop capped",
+   "known_stop rejections answered"
+  ],
+  "abort": [
+   "policy stop (judge undetermined)",
+   "identity / plan sha256 / cache / record mismatch",
+   "check mismatch / missing file / suspect / state integrity / replay mismatch / api_contract_unknown / save failure / policy identity mismatch",
+   "critical exception (incomplete attempt)",
+   "budget or free-space shortage (leave not-started)"
+  ],
+  "separate_decisions": [
+   "retry",
+   "acknowledge-stop / unlock",
+   "extra games",
+   "seed substitution",
+   "budget extension"
+  ],
+  "report": "not-started and incomplete separately"
+ },
+ "measures": {
+  "completion": {
+   "rate": "game_over / started (with counts)",
+   "scopes": [
+    "pilot",
+    "B1",
+    "B2",
+    "B3",
+    "B4",
+    "main cumulative"
+   ],
+   "per_condition": [
+    "planned",
+    "started",
+    "complete",
+    "incomplete",
+    "not_started",
+    "game_over",
+    "unresolved_halt",
+    "no_progress",
+    "single_game_limit",
+    "anomaly",
+    "batch_stop"
+   ],
+   "reference_only": "rules-v5 audit 24/24 (different seeds)"
+  },
+  "energy_trans": {
+   "scope": "C2",
+   "items": {
+    "accepted": "trace accepted rows by (actor, turn)",
+    "max_per_turn": "same",
+    "turns_20_or_more": "same",
+    "revert_points": "own placement equals an earlier state of the turn (inverse / cycles separately)",
+    "moves_in_revert_segments": "deduplicated",
+    "same_observation_same_move": "(pre-move own observation sha256, move) repeated in the turn",
+    "v6_deferred": "et_detection.newly_deferred, input_restriction rule energy_trans, :et_deferred_all, :et_no_alternative",
+    "after_deferral": "selected / built / sent / accepted (kinds)",
+    "cost_ready": "static (card data) vs presented (recorded)",
+    "follow_up_accepted": "use_attack / retreat accepted (separate from cost_ready)",
+    "loop_counts_check": [
+     "et_detections",
+     "et_deferred_keys",
+     "et_restricted_builds",
+     "et_choices_with_deferred_all",
+     "et_no_alternative"
+    ]
+   },
+   "read_check_before_pilot": {
+    "games": [
+     "vai-batch-tr8v6-v5",
+     "vai-batch-tr8v6-v6"
+    ],
+    "v5": {
+     "accepted": 159,
+     "revert_points": 104,
+     "moves_in_revert_segments": 145,
+     "same_placement_move": 19
+    },
+    "v6": {
+     "accepted": 139,
+     "revert_points": 84,
+     "moves_in_revert_segments": 125,
+     "same_placement_move": 0,
+     "et_detections": 81,
+     "et_deferred_keys": 118,
+     "et_restricted_builds": 87
+    }
+   }
+  },
+  "damage_swap": {
+   "scope": "C1, C3",
+   "items": [
+    "accepted / max per turn / swap_count.capped",
+    ":swap_capN and after (presented / selected / built / sent / accepted)",
+    ":deferred_allN / loop_detection",
+    "loop.counts check"
+   ]
+  },
+  "unresolved": {
+   "R1": "submit rejected",
+   "R2": "answered again",
+   "R3": "suppressed (policy: Energy Trans / Damage Swap / other separately)",
+   "R4": "candidate-level unresolved_ruling",
+   "R5": "option-level unresolved_ruling in fetched inputs",
+   "conventions": [
+    "ER9",
+    "H4",
+    "T19b",
+    "RS1"
+   ],
+   "code_classes": [
+    "measured",
+    "static",
+    "unknown",
+    "not_fetched"
+   ]
+  },
+  "block_tables": {
+   "A": "conditions that ended games (not game_over)",
+   "B": "conditions that prolonged operations (policy, separate from unresolved)",
+   "C": "conditions that reduced executable moves in 2+ games"
+  },
+  "next_candidates": {
+   "max": 3,
+   "types": [
+    "unresolved",
+    "policy_prolongation",
+    "display_diagnostic_only"
+   ],
+   "fields": [
+    "evidence",
+    "missing_evidence"
+   ]
+  }
+ },
+ "runtime_values_null": {
+  "exec_worktree": null,
+  "identity_remeasured": null,
+  "seed_rescan": null,
+  "deck_checks": null,
+  "plan_sha256": null,
+  "cache_dir": null,
+  "prepare_record": null,
+  "dry_run_use_cache": null,
+  "drive_free_bytes": null,
+  "script_copies_sha256": null,
+  "read_check_9045": null,
+  "pilot_measured": null,
+  "blocks_measured": null
+ },
+ "not_done": [
+  "plan generation",
+  "cache",
+  "dry-run",
+  "games",
+  "judge",
+  "replay",
+  "policy / engine / convention / judge / default changes",
+  "kyuura",
+  "PR",
+  "main"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v6-audit-plan-run/",
+ "failures": [
+  "F1: budget estimate output games_before_block_floor (17) counts games inside the floor; games that can start is 18; doc / JSON use 18, output kept"
+ ]
+}
