@@ -1,0 +1,1203 @@
+{
+ "status": "comparison_done",
+ "doc": "docs/tr8-rules-v8-fresh-seed-comparison.md",
+ "date": "2026-11-27",
+ "base": "1775a010e6237829264d19411423e1023b605195",
+ "branch": "claude/tr8-rules-v8-fresh-seed-comparison",
+ "execution_commit": "280660be69630d5a9007e11e1022db3f221630b1",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 19,
+  "conventions": "CS-KYUURA-PLAY-TR8@1"
+ },
+ "setup": {
+  "decks": [
+   "hitmonchan-dewgong-v2",
+   "venusaur-parasect-v2"
+  ],
+  "profile": "deep",
+  "observation": true,
+  "prestop": true,
+  "negative": false,
+  "plans": {
+   "v7": {
+    "batch": "vai-batch-tr8v8-fresh-v7",
+    "plan_sha256": "35f186142097c695604ebc34591c71b02221e601124f4ac7bbf64d855dd4d787",
+    "checks": {
+     "seeds_9075_9082": true,
+     "seeds_same_per_game": true,
+     "sha_file": true,
+     "dir_only_plan_files": true,
+     "limits": true,
+     "mode": true,
+     "unexpected_vs_saved_c2": true,
+     "comparison_group_only_seed_differs": true
+    }
+   },
+   "v8": {
+    "batch": "vai-batch-tr8v8-fresh-v8",
+    "plan_sha256": "078cd506d29768cd0c0a61019a3be2167714b873f63fca9c5773c35f56a4c6cc",
+    "checks": {
+     "seeds_9075_9082": true,
+     "seeds_same_per_game": true,
+     "sha_file": true,
+     "dir_only_plan_files": true,
+     "limits": true,
+     "mode": true,
+     "unexpected_vs_saved_c2": true,
+     "comparison_group_only_seed_differs": true
+    }
+   }
+  },
+  "pair_differences": "mode, rules_version, policy version / distribution, energy_trans_progress record only"
+ },
+ "seed_selection": {
+  "stores": 30,
+  "plans": 166,
+  "headers": 600,
+  "used_ge_9075": [],
+  "chosen": [
+   9075,
+   9076,
+   9077,
+   9078,
+   9079,
+   9080,
+   9081,
+   9082
+  ]
+ },
+ "execution": {
+  "calls": 16,
+  "codes": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "policy_stops": 0,
+  "incomplete": 0,
+  "not_started": 0,
+  "retries": 0,
+  "tool_seconds_used": 86.474,
+  "outer_seconds_used": 456.322,
+  "evidence_bytes_used": 116379086
+ },
+ "totals": {
+  "pairs_complete": 8,
+  "finish": {
+   "both": 8
+  },
+  "game_over": {
+   "v7": 8,
+   "v8": 8
+  },
+  "pairs_without_energy_trans": 6,
+  "pairs_with_progress_evaluation": 2,
+  "identical_pairs": 7,
+  "operations": {
+   "v7": 915,
+   "v8": 785
+  },
+  "et_accepted": {
+   "v7": 82,
+   "v8": 5
+  },
+  "goal_status": {
+   "v7:met_after_k": 4,
+   "v7:not_applicable_met_at_start": 1,
+   "v7:unreached_active_left": 5,
+   "v8:met_after_k": 4,
+   "v8:not_applicable_met_at_start": 2,
+   "v8:unreached_active_left": 3
+  },
+  "d4_kept": 0,
+  "v7_reconstructed_retreat_breaks": 6,
+  "v7_breaks_at_d4_same_state": 0,
+  "unreachable_states_v8": 0
+ },
+ "seeds": {
+  "9075": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 140,
+     "accepted": 140,
+     "attempts": 159,
+     "turns": 39,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 19,
+     "actor1": {
+      "accepted": 73,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 6,
+      "attack_accepted": 4,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 140,
+     "accepted": 140,
+     "attempts": 159,
+     "turns": 39,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 19,
+     "actor1": {
+      "accepted": 73,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 6,
+      "attack_accepted": 4,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9076": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 94,
+     "accepted": 94,
+     "attempts": 105,
+     "turns": 24,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 11,
+     "actor1": {
+      "accepted": 43,
+      "et_accepted": 2,
+      "et_max_per_turn": 2,
+      "et_turns": 1,
+      "et_returns_detected": 0,
+      "retreat_accepted": 0,
+      "attack_accepted": 11,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "retreat",
+      "status": "met_after_2",
+      "et_before": 2,
+      "after": {
+       "selected": 0,
+       "built_ok": 0,
+       "sent": 0,
+       "accepted": 0
+      }
+     },
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "attack:0",
+      "status": "met_after_2",
+      "et_before": 2,
+      "after": {
+       "selected": 1,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      }
+     },
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "attack:1",
+      "status": "unreached_active_left",
+      "et_before": null
+     }
+    ],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 94,
+     "accepted": 94,
+     "attempts": 105,
+     "turns": 24,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 11,
+     "actor1": {
+      "accepted": 43,
+      "et_accepted": 2,
+      "et_max_per_turn": 2,
+      "et_turns": 1,
+      "et_returns_detected": 0,
+      "retreat_accepted": 0,
+      "attack_accepted": 11,
+      "progress": {
+       "tier2": 1,
+       "tier1": 1
+      },
+      "progress_restricted": 1,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 2,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "retreat",
+      "status": "met_after_2",
+      "et_before": 2,
+      "after": {
+       "selected": 0,
+       "built_ok": 0,
+       "sent": 0,
+       "accepted": 0
+      }
+     },
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "attack:0",
+      "status": "met_after_2",
+      "et_before": 2,
+      "after": {
+       "selected": 1,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      }
+     },
+     {
+      "turn": [
+       0,
+       4
+      ],
+      "goal": "attack:1",
+      "status": "unreached_active_left",
+      "et_before": null
+     }
+    ],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": {
+     "n": 36,
+     "position": 28,
+     "actor": 1,
+     "kind": "use_power",
+     "et": true,
+     "turn": [
+      0,
+      4
+     ],
+     "progress": {
+      "result": "tier1",
+      "state": "reachable",
+      "moves": 2,
+      "choosable": 2,
+      "tier_sizes": [
+       1,
+       0,
+       1
+      ],
+      "chosen_set": 1,
+      "d4": null
+     },
+     "v7_same_view_and_inputs": true
+    },
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9077": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 266,
+     "accepted": 266,
+     "attempts": 310,
+     "turns": 50,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 44,
+     "actor1": {
+      "accepted": 171,
+      "et_accepted": 80,
+      "et_max_per_turn": 53,
+      "et_turns": 3,
+      "et_returns_detected": 16,
+      "retreat_accepted": 5,
+      "attack_accepted": 13,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "retreat",
+      "status": "not_applicable_met_at_start",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "attack:0",
+      "status": "unreached_active_left",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "attack:1",
+      "status": "unreached_active_left",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       42
+      ],
+      "goal": "retreat",
+      "status": "met_after_22",
+      "et_before": 22,
+      "after": {
+       "selected": 6,
+       "built_ok": 3,
+       "sent": 3,
+       "accepted": 3
+      }
+     },
+     {
+      "turn": [
+       0,
+       42
+      ],
+      "goal": "attack:0",
+      "status": "unreached_active_left",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       44
+      ],
+      "goal": "retreat",
+      "status": "met_after_8",
+      "et_before": 8,
+      "after": {
+       "selected": 2,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      }
+     },
+     {
+      "turn": [
+       0,
+       44
+      ],
+      "goal": "attack:0",
+      "status": "unreached_active_left",
+      "et_before": null
+     }
+    ],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 136,
+     "accepted": 136,
+     "attempts": 164,
+     "turns": 38,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 28,
+     "actor1": {
+      "accepted": 59,
+      "et_accepted": 3,
+      "et_max_per_turn": 2,
+      "et_turns": 2,
+      "et_returns_detected": 0,
+      "retreat_accepted": 2,
+      "attack_accepted": 12,
+      "progress": {
+       "tier1": 3
+      },
+      "progress_restricted": 3,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 3,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "retreat",
+      "status": "not_applicable_met_at_start",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "attack:0",
+      "status": "met_after_1",
+      "et_before": 1,
+      "after": {
+       "selected": 1,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      }
+     },
+     {
+      "turn": [
+       0,
+       30
+      ],
+      "goal": "attack:1",
+      "status": "met_after_1",
+      "et_before": 1,
+      "after": {
+       "selected": 1,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      }
+     },
+     {
+      "turn": [
+       0,
+       34
+      ],
+      "goal": "retreat",
+      "status": "not_applicable_met_at_start",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       34
+      ],
+      "goal": "attack:0",
+      "status": "unreached_active_left",
+      "et_before": null
+     },
+     {
+      "turn": [
+       0,
+       34
+      ],
+      "goal": "attack:1",
+      "status": "unreached_active_left",
+      "et_before": null
+     }
+    ],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": {
+     "n": 130,
+     "position": 101,
+     "actor": 1,
+     "kind": "use_power",
+     "et": true,
+     "turn": [
+      0,
+      30
+     ],
+     "progress": {
+      "result": "tier1",
+      "state": "reachable",
+      "moves": 36,
+      "choosable": 36,
+      "tier_sizes": [
+       8,
+       0,
+       28
+      ],
+      "chosen_set": 8,
+      "d4": "all_keep"
+     },
+     "v7_same_view_and_inputs": true
+    },
+    "first_choice_change": {
+     "index": 129,
+     "v7": {
+      "n": 130,
+      "position": 101,
+      "actor": 1,
+      "kind": "use_power",
+      "et": true,
+      "turn": [
+       0,
+       30
+      ]
+     },
+     "v8": {
+      "n": 130,
+      "position": 101,
+      "actor": 1,
+      "kind": "use_power",
+      "et": true,
+      "turn": [
+       0,
+       30
+      ]
+     }
+    },
+    "first_submit_change": {
+     "index": 101,
+     "v7": {
+      "n": 130,
+      "position": 101,
+      "actor": 1,
+      "kind": "use_power",
+      "et": true,
+      "turn": [
+       0,
+       30
+      ]
+     },
+     "v8": {
+      "n": 130,
+      "position": 101,
+      "actor": 1,
+      "kind": "use_power",
+      "et": true,
+      "turn": [
+       0,
+       30
+      ]
+     }
+    },
+    "identical_games": false,
+    "after_divergence": {
+     "v7_views": 111,
+     "v8_views": 15,
+     "v8_views_matching_v7": 0
+    },
+    "v7_reconstructed_retreat_breaks": 6,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9078": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 78,
+     "accepted": 78,
+     "attempts": 91,
+     "turns": 24,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 13,
+     "actor1": {
+      "accepted": 46,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 6,
+      "attack_accepted": 0,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 78,
+     "accepted": 78,
+     "attempts": 91,
+     "turns": 24,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 13,
+     "actor1": {
+      "accepted": 46,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 6,
+      "attack_accepted": 0,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9079": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 89,
+     "accepted": 89,
+     "attempts": 113,
+     "turns": 26,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 24,
+     "actor1": {
+      "accepted": 41,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 3,
+      "attack_accepted": 2,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 89,
+     "accepted": 89,
+     "attempts": 113,
+     "turns": 26,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 24,
+     "actor1": {
+      "accepted": 41,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 3,
+      "attack_accepted": 2,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9080": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 39,
+     "accepted": 39,
+     "attempts": 39,
+     "turns": 7,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 0,
+     "actor1": {
+      "accepted": 15,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 0,
+      "attack_accepted": 2,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 39,
+     "accepted": 39,
+     "attempts": 39,
+     "turns": 7,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 0,
+     "actor1": {
+      "accepted": 15,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 0,
+      "attack_accepted": 2,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9081": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 70,
+     "accepted": 70,
+     "attempts": 75,
+     "turns": 20,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 5,
+     "actor1": {
+      "accepted": 42,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 2,
+      "attack_accepted": 6,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 1,
+     "operations": 70,
+     "accepted": 70,
+     "attempts": 75,
+     "turns": 20,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 5,
+     "actor1": {
+      "accepted": 42,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 2,
+      "attack_accepted": 6,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  },
+  "9082": {
+   "finish": "both",
+   "complete": [
+    "v7",
+    "v8"
+   ],
+   "incomplete": [],
+   "v7": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 139,
+     "accepted": 139,
+     "attempts": 169,
+     "turns": 36,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 30,
+     "actor1": {
+      "accepted": 86,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 7,
+      "attack_accepted": 3,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "v8": {
+    "summary": {
+     "termination": "game_over",
+     "game_over": true,
+     "winner": 0,
+     "operations": 139,
+     "accepted": 139,
+     "attempts": 169,
+     "turns": 36,
+     "rejected": 0,
+     "refused": 0,
+     "check_invalid": 0,
+     "unbuildable": 30,
+     "actor1": {
+      "accepted": 86,
+      "et_accepted": 0,
+      "et_max_per_turn": 0,
+      "et_turns": 0,
+      "et_returns_detected": 0,
+      "retreat_accepted": 7,
+      "attack_accepted": 3,
+      "progress": {},
+      "progress_restricted": 0,
+      "fallback_tier3_unrestricted": 0,
+      "fallback_unevaluable": 0,
+      "fetch": {
+       "fetched": 0,
+       "reused": 0,
+       "unavailable": 0
+      },
+      "d4_kept": 0
+     }
+    },
+    "goal_rows": [],
+    "d4": [],
+    "unreachable_after": []
+   },
+   "divergence": {
+    "first_tier_change": null,
+    "first_choice_change": null,
+    "first_submit_change": null,
+    "identical_games": true,
+    "v7_reconstructed_retreat_breaks": 0,
+    "v7_breaks_at_d4_same_state": 0
+   }
+  }
+ },
+ "conclusions": {
+  "operations": "reduced in 1 pair only (9077), after divergence a separate path (0 old views reached); 6 pairs without the ability, 1 pair same choice",
+  "follow_up": "in the 2 evaluated pairs the attack after the cost was met was accepted; no follow-up lost found",
+  "finish": "8 / 8 for both policies; no difference measurable",
+  "d4": "no kept event; prevention effect unconfirmed",
+  "default": "not decided from 8 C2 pairs"
+ },
+ "not_confirmed": [
+  "general operation reduction where Energy Trans is used often",
+  "D4 prevention",
+  "behaviour after unreachable states",
+  "other decks"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8f-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "first plan check flagged /game/comparison_group (deck / conventions / seed name); allowed with an explicit check that only the seed suffix differs",
+   "kept": "raw/F1/"
+  }
+ ]
+}
