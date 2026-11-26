@@ -23,7 +23,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -448,6 +448,10 @@ class Runner:
                     self.counters["unbuildable"] += 1
                     unbuildable[candidate_key(candidate)] = error.reason
                     self.metrics.build_failed(kind, error.reason)
+                    if hasattr(policy, "retreat_build_failed"):  # rules-v7（TOOL_VERSION 18）: 組み立ての失敗を方策へ（にげるの total_units_unreachable だけを記録する。ほかの方策は持たない）
+                        record = policy.retreat_build_failed(candidate, stages, error.reason, error.stage)
+                        if record is not None:
+                            entry["retreat_deferral"] = dict(record)
                     continue
                 self._cover_stages(stages, meaning)
                 self.metrics.built(kind, stages, method)
@@ -731,6 +735,9 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES7_VERSION:  # rules-v7（試験。明示的に選んだときだけ。rules-v6 + 支払い条件が変わらない「にげる」の後回し）
+        players = {p: RetreatDeferralRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES6_VERSION:  # rules-v6（試験。明示的に選んだときだけ。rules-v5 + ［エナジートランス］の往復の後回し）
         players = {p: EnergyTransRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}

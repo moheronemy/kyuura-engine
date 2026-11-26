@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import random
@@ -819,6 +820,158 @@ class EnergyTransRulePolicy(SwapCapRulePolicy):
 
     def loop_summary(self) -> dict[str, Any]:
         return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "energy_trans_deferral": self.energy_trans_deferral,
+                "counts": dict(sorted(self.loop_counts.items()))}
+
+
+# ---------------------------------------------------------------- rules-v7（試験の方策）: rules-v6 に、支払い条件が変わらない「にげる」を、その番の残りで後回しにする規則を加える
+# （docs/tr8-retreat-input-build-analysis.md 6 章・docs/tr8-retreat-reselection-experiment.md）。rules-v6 の［エナジートランス］・rules-v5 の［ダメージスワップ］の規則、
+# rules-v2 の順位・同順位の選び方・入力単位の再送抑止はそのまま。候補を消さず、合法性・支払いの可否を判定しない（組み立ての失敗を記憶して順位だけを変える）
+
+RULES7_VERSION = 7
+RULES7_DISTRIBUTION = "rules-v7-candidate+uniform-stage"
+RETREAT_KIND = "retreat"
+RETREAT_FAILURE = "total_units_unreachable"  # 記憶するのは、この理由の組み立ての失敗だけ（ほかの理由の失敗では順位を変えない）
+RETREAT_DEFERRAL = {"version": 1, "kind": RETREAT_KIND, "failure": RETREAT_FAILURE,
+                    "record": "own retreat build failed with total_units_unreachable in the own (segment, turn): (payment-condition view key, retreat candidate identity)",
+                    "key": "own view response (outside identifiers removed) with only the energy / energy_units / energy_units_determined of the own bench Pokemon removed; "
+                           "everything else kept: own active (pokemon, form, evolution stack, attached energy cards and units, trainers, markers, special conditions, "
+                           "persistent effects, powers), own bench Pokemon (identity, form, powers, trainers, markers), hand, opponent side, stadium, field effects, turn",
+                    "effect": f"retreat candidates whose (key, identity) was recorded rank {DEMOTED_RANK} (after end_turn); candidate kept; when only rank {DEMOTED_RANK} "
+                              "remains it is chosen as in rules-v2 (:retreat_no_alternative)",
+                    "not_applicable": "view unavailable, own active missing or its energy units not determined, or the failed inputs have no discard stage with "
+                                      "total_units: not recorded (normal rank)",
+                    "reenable": "key differs (active energy / units, active Pokemon, special conditions, markers, effects, stadium, opponent, bench identity, hand, ...)",
+                    "keep": "bench-only energy moves keep the key", "reset": "turn change"}
+BENCH_PAYMENT_OUTSIDE = ("energy", "energy_units", "energy_units_determined")  # 支払いに使えない、本人のベンチのポケモンのエネルギーだけを鍵から除く
+
+
+def retreat_payment_key(view: dict[str, Any]) -> tuple[str | None, str | None]:
+    """「にげる」の支払い条件の鍵（本人の観測の応答から。公開の値と本人に見える値だけ）。取れなければ (None, 理由)。
+
+    除くのは本人のベンチのポケモンのエネルギー（``BENCH_PAYMENT_OUTSIDE``）だけ。バトル場の個体・ついているカードと単位・特殊状態・マーカー・持続効果・
+    ベンチの個体と特殊能力・相手の場・スタジアム・場の効果は残すので、費用・交代先の適格性を変えうる変化はどれも鍵を変える（推測で同じとみなさない）。"""
+    if not isinstance(view, dict) or not view.get("ok") or not isinstance(view.get("observation"), dict):
+        return None, "view_unavailable"
+    obs = view["observation"]
+    me = obs.get("viewer", view.get("viewer"))
+    players = obs.get("players")
+    if me is None or not isinstance(players, list):
+        return None, "own_player_unknown"
+    own = [p for p in players if isinstance(p, dict) and p.get("player") == me]
+    if len(own) != 1:
+        return None, "own_player_unknown"
+    active = own[0].get("active")
+    if not isinstance(active, dict):
+        return None, "own_active_missing"
+    if active.get("energy_units_determined") is not True or not isinstance(active.get("energy_units"), list):
+        return None, "active_energy_units_undetermined"
+    bench = own[0].get("bench")
+    if not isinstance(bench, list) or not all(isinstance(b, dict) for b in bench):
+        return None, "own_bench_unknown"
+    stripped = copy.deepcopy({k: v for k, v in view.items() if k not in VIEW_OUTSIDE_FIELDS})
+    for p in stripped["observation"]["players"]:
+        if isinstance(p, dict) and p.get("player") == me:
+            p["bench"] = [{k: v for k, v in b.items() if k not in BENCH_PAYMENT_OUTSIDE} for b in p["bench"]]
+    return _canon(stripped), None
+
+
+def retreat_failure_inputs(stages: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """組み立てに失敗した「にげる」の inputs の要点（記録だけ。順位の判定には使わない）。トラッシュの段に total_units がなければ None。"""
+    discard = [s for s in stages or [] if isinstance(s, dict) and s.get("role") == "discard" and isinstance(s.get("total_units"), dict)]
+    if len(discard) != 1:
+        return None
+    d = discard[0]
+    targets = [s for s in stages if isinstance(s, dict) and s.get("role") == "new_active"]
+    return {"total_units": [d["total_units"].get("min"), d["total_units"].get("max")], "count": [(d.get("count") or {}).get("min"), (d.get("count") or {}).get("max")],
+            "option_units": sorted(o.get("units") for o in d.get("options") or [] if isinstance(o, dict)),
+            "new_active_options": len((targets[0].get("options") or [])) if len(targets) == 1 else None}
+
+
+class RetreatDeferralRulePolicy(EnergyTransRulePolicy):
+    """rules-v7: rules-v6 に、本人の「にげる」の入力の組み立てが ``total_units_unreachable`` で失敗したとき、その番の (支払い条件の鍵, 候補) を記録し、
+    同じ鍵・同じ候補のあいだは「にげる」の候補を ``DEMOTED_RANK``（end_turn より後ろ）に置く規則を加える。
+
+    - ランナーの差し込み口 ``retreat_build_failed(candidate, stages, reason, stage)``: 組み立ての失敗のあと（この方策だけが持つ）。記録したかどうかの値を返す
+    - 鍵（``retreat_payment_key``）は本人のエピソードの始めの観測から作る。本人のベンチのポケモンのエネルギーだけを除くので、ベンチの間だけの移動では鍵が変わらない
+    - 鍵が取れない・トラッシュの段の形が違う失敗は記録しない（適用外として数える）。ほかの理由の失敗・ほかの種類の候補では記録しない
+    - 番（本人の観測の（区間, 番））が変われば記録を消す。順位 7 の候補しか残らなければ rules-v2 と同じく順位 7 の中から選ぶ（:retreat_no_alternative）"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP):
+        super().__init__(seed, STAGE, threshold=threshold, cap=cap)
+        self.version = RULES7_VERSION
+        self.distribution = RULES7_DISTRIBUTION
+        self.retreat_deferral = RETREAT_DEFERRAL
+        self._rt_turn = None
+        self._rt_key: str | None = None
+        self._rt_key_missing: str | None = None
+        self._rt_deferred: dict[tuple, dict[str, Any]] = {}  # (鍵, 候補) → 記録
+        self._rt_demoted_now = False
+        self.last_retreat: dict[str, Any] | None = None
+
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        super().observe_view(view, position)
+        if self._turn != self._rt_turn:
+            if self._rt_deferred:
+                self.loop_counts["retreat_turn_resets_with_deferral"] += 1
+            self._rt_turn, self._rt_deferred = self._turn, {}
+        self._rt_key, self._rt_key_missing = retreat_payment_key(view)
+
+    def retreat_build_failed(self, candidate: dict[str, Any], stages: list[dict[str, Any]], reason: str, stage) -> dict[str, Any] | None:
+        self.last_retreat = None
+        if not isinstance(candidate, dict) or candidate.get("kind") != RETREAT_KIND:
+            return None
+        if reason != RETREAT_FAILURE:
+            self.loop_counts["retreat_failures_other_reason"] += 1
+            self.last_retreat = {"result": "not_recorded:other_reason", "reason": reason}
+            return self.last_retreat
+        inputs = retreat_failure_inputs(stages)
+        why = self._rt_key_missing if self._rt_key is None else (None if inputs is not None else "inputs_unrecognized")
+        if why is not None:
+            self.loop_counts[f"retreat_not_applicable:{why}"] += 1
+            self.last_retreat = {"result": "not_applicable", "why": why}
+            return self.last_retreat
+        slot = (self._rt_key, candidate_identity(candidate))
+        new = slot not in self._rt_deferred
+        if new:
+            self._rt_deferred[slot] = {"key": short_key(slot[0]), "candidate": short_key(slot[1]), "stage": stage, **inputs}
+            self.loop_counts["retreat_failures_recorded"] += 1
+        else:
+            self.loop_counts["retreat_failures_same_key_again"] += 1  # 順位 7 しか残らず選ばれた・同じ鍵の別の候補の形など
+        self.last_retreat = {"result": "recorded" if new else "already_recorded", **self._rt_deferred[slot], "deferred_this_turn": len(self._rt_deferred)}
+        return self.last_retreat
+
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        self._rt_demoted_now = False
+        if self._rt_deferred:
+            info["retreat_deferred"] = {"recorded_this_turn": len(self._rt_deferred), "key_now": short_key(self._rt_key) if self._rt_key is not None else None,
+                                        "key_now_missing": self._rt_key_missing,
+                                        "same_key_recorded": any(k == self._rt_key for k, _c in self._rt_deferred)}
+        return info
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        ranks, _, note = super()._adjust_ranks(items, ranks, prefix)
+        hit = [r is not None and isinstance(c, dict) and c.get("kind") == RETREAT_KIND and self._rt_key is not None
+               and (self._rt_key, candidate_identity(c)) in self._rt_deferred for r, c in zip(ranks, items)]
+        n = sum(hit)
+        self._rt_demoted_now = bool(n)
+        ranks = [DEMOTED_RANK if x else r for r, x in zip(ranks, hit)]
+        if n:
+            self.loop_counts["retreat_choices_deferred"] += 1
+        elif self._rt_deferred and any(isinstance(c, dict) and c.get("kind") == RETREAT_KIND for c in items):
+            self.loop_counts["retreat_choices_reenabled" if self._rt_key is not None else "retreat_choices_key_unavailable"] += 1
+        return ranks, "rule7", note + (f":retreat_deferred{n}" if n else "")
+
+    def _rule_candidate(self, items, context) -> tuple[int, str]:
+        index, reason = super()._rule_candidate(items, context)
+        chosen = items[index]
+        if self._rt_demoted_now and isinstance(chosen, dict) and chosen.get("kind") == RETREAT_KIND and ":demoted:" in reason:
+            self.loop_counts["retreat_no_alternative"] += 1
+            reason += ":retreat_no_alternative"
+        return index, reason
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "energy_trans_deferral": self.energy_trans_deferral, "retreat_deferral": self.retreat_deferral,
                 "counts": dict(sorted(self.loop_counts.items()))}
 
 
