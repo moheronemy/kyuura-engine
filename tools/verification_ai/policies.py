@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import itertools
 import json
 import random
 from collections import Counter
@@ -973,6 +974,292 @@ class RetreatDeferralRulePolicy(EnergyTransRulePolicy):
     def loop_summary(self) -> dict[str, Any]:
         return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "energy_trans_deferral": self.energy_trans_deferral, "retreat_deferral": self.retreat_deferral,
                 "counts": dict(sorted(self.loop_counts.items()))}
+
+
+# ---------------------------------------------------------------- rules-v8（試験の方策）: rules-v7 に、［エナジートランス］の入力で、バトル場のワザ・「にげる」の費用に近づく移動を優先する規則を加える
+# （docs/tr8-energy-trans-progress-policy-design.md・docs/tr8-energy-trans-progress-policy-experiment.md）。変えるのは、既存の順位で［エナジートランス］を選んだあとの
+# 入力の選び方だけ（候補の順位・rules-v7 の「にげる」の後回し・rules-v6 の往復の後回し・rules-v5 の［ダメージスワップ］の上限・同順位の抽選はそのまま）。
+# 費用は静的に評価するだけで、操作できる・受理されるとは見なさない（次の候補・check・submit で確かめる）。評価できなければ rules-v7 と同じ選び方に戻す
+
+RULES8_VERSION = 8
+RULES8_DISTRIBUTION = "rules-v8-candidate+uniform-stage"
+SLEEP_PARALYSIS = ("sleep", "paralysis")  # 観測の special_conditions の名前（ねむり・マヒ）。バトル場がこの状態なら、ワザ・「にげる」の目標を評価しない
+PROGRESS_SEARCH_LIMIT = 4_096  # 不足の探索で調べる、足すカードの組（色ごとの枚数の組）の数の上限（超えたら評価しない）
+ENERGY_TRANS_PROGRESS = {
+    "version": 1, "kind": LOOP_KIND, "powers": list(ENERGY_TRANS_NAMES),
+    "order": ["rules-v6 deferred moves removed first (existing restriction)",
+              "tier 1: after the move an unmet goal (own active's printed attack or retreat) is met",
+              "tier 2: the move reduces the deficit of a goal confirmed reachable",
+              "tier 3: otherwise, or nothing evaluable: the rules-v7 choice"],
+    "reachability": "from every buildable move of the inputs before the rules-v6 exclusion; the choice is made from the moves after it",
+    "draw": "the existing stage-wise uniform choice restricted to the chosen tier (build_choices restriction = the moves outside it); no tuple draw; "
+            "no new priority between attack and retreat",
+    "d1_retreat": "retreat inputs fetched read-only for each retreat candidate presented in the same response when Energy Trans is chosen "
+                  "(total_units with modifiers, per-card units); reused only for the same actor, position and candidate; not a retreat selection",
+    "d2_attack": "printed cost from the fixed engine card registry, only for attacks of the own active's own printed card (route form, printed form, "
+                 "no provider / payer / problem); copies, transformations and unseen modifiers or prohibitions are not evaluated",
+    "d3_draw": "transfer_moves + build_choices restriction (stage-wise uniform)",
+    "d4_keep_met": "within the chosen tier, moves that keep every currently payable goal payable are preferred; when none, the tier is kept",
+    "d5_special": "attack goals only when every card on the active is a basic energy whose type matches the view's units; retreat goals use the per-card "
+                  "units of the retreat inputs; a moved card that is not basic energy makes the inputs not evaluable",
+    "payment": "attack: colour symbols one unit each (bipartite), colourless by the rest; colourless units never pay colour symbols (cards.can_pay_with_units). "
+               "retreat: a subset of the active's cards whose unit sum is within total_units (cards not split; actions._choose_by_units)",
+    "not_evaluated": "sleep / paralysis, energy units undetermined, view or inputs unavailable, retreat inputs withheld / refused / cost not evaluated, "
+                     "search limit: tier 3 (rules-v7 choice)"}
+
+
+def _own_player(view: dict[str, Any]) -> dict[str, Any] | None:
+    if not isinstance(view, dict) or not view.get("ok") or not isinstance(view.get("observation"), dict):
+        return None
+    obs = view["observation"]
+    me = obs.get("viewer", view.get("viewer"))
+    own = [p for p in obs.get("players") or [] if isinstance(p, dict) and p.get("player") == me]
+    return own[0] if len(own) == 1 else None
+
+
+def can_pay_units(cost: list[str], units: list) -> bool:
+    """``kyuura_engine.cards.can_pay_with_units`` と同じ割り当て（道具はエンジンを import しないので同じ規則を持つ）。色の記号には、その色になれる 1 個を 1 つずつ
+    割り当て、無色の記号は残りのどの 1 個でも払う。無色の 1 個は色の記号を払えない。"""
+    units = [frozenset(u) for u in units]
+    if len(units) < len(cost):
+        return False
+    colored = [c for c in cost if c != "colorless"]
+    owner: dict[int, int] = {}
+
+    def assign(symbol: int, seen: set[int]) -> bool:
+        for j, kinds in enumerate(units):
+            if colored[symbol] in kinds and j not in seen:
+                seen.add(j)
+                if j not in owner or assign(owner[j], seen):
+                    owner[j] = symbol
+                    return True
+        return False
+    return all(assign(i, set()) for i in range(len(colored)))
+
+
+def retreat_payable(total: tuple[int, int], card_units: list[int]) -> bool:
+    """「にげる」の支払いの組があるか: カードの部分集合で、単位の合計が total_units の範囲に入るもの（1 枚で 2 個のカードは分けない）。"""
+    lo, hi = total
+    sums = {0}
+    for u in card_units:
+        sums |= {s + u for s in sums}
+    return any(lo <= s <= hi for s in sums)
+
+
+class _Goal:
+    """評価する目標（バトル場のワザ 1 つか、「にげる」の候補 1 つ）。``met(extra, removed)`` は、カード（番号 → 単位）を足し・外したあとに費用を満たすか。"""
+
+    def __init__(self, kind: str, label: str, source: str, *, cost=None, units=None, card_units=None, total=None):
+        self.kind, self.label, self.source = kind, label, source
+        self.cost, self.units = cost, units  # ワザ: 費用の記号・バトル場のカードごとの単位 {番号: [[色]...]}
+        self.card_units, self.total = card_units, total  # にげる: バトル場のカードごとの単位の数 {番号: 個}・total_units
+
+    def met(self, extra: list[list[list[str]]], removed: frozenset = frozenset()) -> bool:
+        if self.kind == "attack":
+            units = [u for card, us in self.units.items() if card not in removed for u in us] + [u for us in extra for u in us]
+            return can_pay_units(self.cost, units)
+        cards = [n for card, n in self.card_units.items() if card not in removed] + [len(us) for us in extra]
+        return retreat_payable(self.total, cards)
+
+
+def _deficit(goal: _Goal, base_extra: list, movable: list[list[list[str]]]) -> int | None:
+    """足りない最小のカード枚数（``movable`` はバトル場へ移せるカードの単位の並び）。足しても満たせなければ None。同じ単位のカードはまとめて数える。
+    探索の組が上限を超えたら ``OverflowError``（評価しない）。"""
+    groups = Counter(json.dumps(us, sort_keys=True) for us in movable)
+    kinds = sorted(groups)
+    total = 1
+    for k in kinds:
+        total *= groups[k] + 1
+    if total > PROGRESS_SEARCH_LIMIT:
+        raise OverflowError("progress_search_limit")
+    best = None
+    for counts in itertools.product(*[range(groups[k] + 1) for k in kinds]):
+        n = sum(counts)
+        if best is not None and n >= best:
+            continue
+        extra = list(base_extra) + [json.loads(k) for k, c in zip(kinds, counts) for _ in range(c)]
+        if goal.met(extra):
+            best = n
+    return best
+
+
+class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
+    """rules-v8: rules-v7 に、既存の順位で［エナジートランス］を選んだあとの入力（移動元 → エネルギー → 移動先）を、バトル場のワザ・「にげる」の費用に近づく組から
+    選ぶ規則を加える（docs/tr8-energy-trans-progress-policy-design.md の D1〜D5 を確定した形）。
+
+    - ランナーの差し込み口（この方策だけが持つ）: ``wants_retreat_inputs(candidate)``（［エナジートランス］を選んだとき真）、
+      ``progress_retreat_inputs(items)``（同じ応答の「にげる」の候補の inputs。読み取り専用で取得した値・同じ局面で取得済みの値）、``last_progress``（試みの記録）
+    - 入力の制限（``input_restriction``）: rules-v6 の結果（外す組・DEFER_ALL・None）を先に求め、DEFER_ALL ならそのまま返す。残りの組を優先 1・2・3 に分け、
+      組がある最上位の段（D4 で、払える費用を保つ組があればその組）だけを残す制限を返す。優先 3 で絞らないときは rules-v6 の結果をそのまま返す（rules-v7 と同じ）
+    - 到達できるかは rules-v6 の除外の前の全組から判定し、選ぶのは除外のあとの組から。組を推測で外さない（評価できなければ絞らない）"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP,
+                 cards: dict[str, dict[str, Any]] | None = None):
+        super().__init__(seed, STAGE, threshold=threshold, cap=cap)
+        self.version = RULES8_VERSION
+        self.distribution = RULES8_DISTRIBUTION
+        self.energy_trans_progress = ENERGY_TRANS_PROGRESS
+        self._cards = cards or {}
+        self._view: dict[str, Any] | None = None
+        self._retreat_items: list[dict[str, Any]] = []
+        self.last_progress: dict[str, Any] | None = None
+
+    def observe_view(self, view: dict[str, Any], position: int) -> None:
+        super().observe_view(view, position)
+        self._view = view
+
+    def wants_retreat_inputs(self, candidate: dict[str, Any]) -> bool:
+        return et_target(candidate)
+
+    def progress_retreat_inputs(self, items: list[dict[str, Any]]) -> None:
+        self._retreat_items = list(items)
+
+    def input_restriction(self, candidate: dict[str, Any], stages: list[dict[str, Any]], allowed):
+        base = super().input_restriction(candidate, stages, allowed)
+        self.last_progress = None
+        if not et_target(candidate):
+            return base
+        items, self._retreat_items = self._retreat_items, []
+        if base == DEFER_ALL:
+            return base
+        record, restriction = self._progress(stages, allowed, base if isinstance(base, frozenset) else frozenset(), items)
+        self.last_progress = record
+        self.loop_counts["progress_" + record["result"].split(":")[0]] += 1
+        if record["result"].startswith("unevaluable"):
+            self.loop_counts["progress_" + record["result"]] += 1
+        return base if restriction is None else restriction
+
+    # -- 目標の組み立て
+    def _goals(self, active: dict[str, Any], items: list[dict[str, Any]], skipped: Counter) -> list[_Goal]:
+        goals: list[_Goal] = []
+        cards = self._cards
+        attached = [e for e in active.get("energy") or [] if isinstance(e, dict)]
+        basic = all((cards.get(e.get("card_id")) or {}).get("basic_energy") for e in attached)
+        per_card = {e.get("card"): [[(cards.get(e.get("card_id")) or {}).get("provides")]] for e in attached} if basic else {}
+        view_units = sorted(json.dumps(sorted(u)) for u in active.get("energy_units") or [])
+        card_units = sorted(json.dumps(us[0]) for us in per_card.values())
+        units_match = basic and view_units == card_units
+        form = active.get("form") or {}
+        for a in active.get("attacks") or []:
+            if not isinstance(a, dict):
+                continue
+            why = None
+            if a.get("route") != "form" or form.get("kind") != "printed" or a.get("card_id") != active.get("card_id"):
+                why = "attack_not_own_printed"
+            elif a.get("provider") is not None or a.get("payer") is not None or a.get("problem") is not None:
+                why = "attack_provider_payer_or_problem"
+            elif not basic:
+                why = "attack_special_energy_on_active"
+            elif not units_match:
+                why = "attack_units_differ_from_cards"
+            else:
+                printed = ((cards.get(a.get("card_id")) or {}).get("attacks") or [])
+                idx = a.get("attack_index")
+                if type(idx) is not int or not 0 <= idx < len(printed):
+                    why = "attack_not_in_registry"
+            if why is not None:
+                skipped[why] += 1
+                continue
+            goals.append(_Goal("attack", f"attack:{a.get('attack_index')}", "registry", cost=list(printed[idx]), units=per_card))
+        for item in items:
+            why = item.get("status")
+            stages = item.get("stages")
+            discard = [s for s in stages or [] if isinstance(s, dict) and s.get("role") == "discard"]
+            if why == "ok":
+                if len(discard) != 1 or "cost_evaluation" in discard[0] or not isinstance(discard[0].get("total_units"), dict):
+                    why = "retreat_discard_unrecognized"
+                else:
+                    d = discard[0]
+                    opts = [o for o in d.get("options") or [] if isinstance(o, dict)]
+                    lo, hi = d["total_units"].get("min"), d["total_units"].get("max")
+                    if any(type(o.get("units")) is not int or type(o.get("card")) is not int for o in opts) or type(lo) is not int or type(hi) is not int:
+                        why = "retreat_units_unrecognized"
+                    elif d.get("count") != {"min": 0, "max": len(opts)} and not (lo == 0 and hi == 0):
+                        why = "retreat_count_shape"
+            if why != "ok":
+                skipped[f"retreat_{why}" if not str(why).startswith("retreat_") else why] += 1
+                continue
+            goals.append(_Goal("retreat", "retreat", item.get("source"), card_units={o["card"]: o["units"] for o in opts}, total=(lo, hi)))
+        return goals
+
+    def _progress(self, stages, allowed, excluded: frozenset, items) -> tuple[dict[str, Any], frozenset | None]:
+        from .actions import DEEP_PROCESSABILITY, transfer_moves
+        skipped: Counter = Counter()
+
+        def out(result, **extra):
+            return {"result": result, **extra, **({"skipped": dict(sorted(skipped.items()))} if skipped else {})}, None
+
+        moves = transfer_moves(stages, allowed) if frozenset(allowed) == DEEP_PROCESSABILITY else None
+        if moves is None:
+            return out("unevaluable:inputs_shape")
+        me = _own_player(self._view)
+        active = (me or {}).get("active")
+        if me is None:
+            return out("unevaluable:view_unavailable")
+        if not isinstance(active, dict) or type(active.get("pokemon_id")) is not int:
+            return out("unevaluable:no_active")
+        if active.get("energy_units_determined") is not True or not isinstance(active.get("energy_units"), list):
+            return out("unevaluable:active_units_undetermined")
+        if any(c in SLEEP_PARALYSIS for c in active.get("special_conditions") or []):
+            return out("unevaluable:sleep_or_paralysis")
+        aid = active["pokemon_id"]
+        card_of = {o.get("card"): o.get("card_id") for o in (stages[1].get("options") or []) if isinstance(o, dict)}
+        unit_of = {}
+        for _s, e, _t in moves:
+            d = self._cards.get(card_of.get(e)) or {}
+            if not d.get("basic_energy") or not d.get("provides"):
+                return out("unevaluable:moved_card_not_basic")
+            unit_of[e] = [[d["provides"]]]
+        goals = self._goals(active, items, skipped)
+        if not goals:
+            return out("unevaluable:no_evaluable_goal", moves=len(moves), excluded_v6=len(excluded & moves))
+        movable = {e: unit_of[e] for s, e, t in moves if t == aid and s != aid}  # 到達の判定は rules-v6 の除外の前の全組
+        try:
+            met_now = [g.met([]) for g in goals]
+            deficits = [0 if m else _deficit(g, [], list(movable.values())) for g, m in zip(goals, met_now)]
+            choosable = sorted(moves - excluded)
+            tiers, keeps = {}, {}
+            for move in choosable:
+                s, e, t = move
+                if t == aid and s != aid:
+                    extra, rest = [unit_of[e]], [u for c, u in movable.items() if c != e]
+                    if any(not m and g.met(extra) for g, m in zip(goals, met_now)):
+                        tiers[move] = 1
+                    elif any(not m and d is not None and (a := _deficit(g, extra, rest)) is not None and a < d
+                             for g, m, d in zip(goals, met_now, deficits)):
+                        tiers[move] = 2
+                    else:
+                        tiers[move] = 3
+                    keeps[move] = all(g.met(extra) for g, m in zip(goals, met_now) if m)
+                else:
+                    tiers[move] = 3
+                    removed = frozenset([e]) if s == aid else frozenset()
+                    keeps[move] = all(g.met([], removed) for g, m in zip(goals, met_now) if m)
+        except OverflowError:
+            return out("unevaluable:search_limit", moves=len(moves))
+        sizes = [sum(1 for m in choosable if tiers[m] == k) for k in (1, 2, 3)]
+        tier = next(k for k in (1, 2, 3) if sizes[k - 1])
+        chosen = [m for m in choosable if tiers[m] == tier]
+        d4 = None
+        if any(met_now):
+            kept = [m for m in chosen if keeps[m]]
+            d4 = "kept" if kept and len(kept) < len(chosen) else "all_keep" if kept else "none_keep"
+            if kept:
+                chosen = kept
+        goals_rec = [{"kind": g.kind, "label": g.label, "source": g.source, "met": m, "deficit": d} for g, m, d in zip(goals, met_now, deficits)]
+        state = "reachable" if any(not m and d is not None for m, d in zip(met_now, deficits)) else "goal_met_only" if any(met_now) else "unreachable"
+        record = {"result": f"tier{tier}", "state": state, "moves": len(moves), "excluded_v6": len(excluded & moves), "choosable": len(choosable),
+                  "tier_sizes": sizes, "chosen_set": len(chosen), "d4": d4, "goals": goals_rec,
+                  "set": sorted([list(m) for m in chosen]), **({"skipped": dict(sorted(skipped.items()))} if skipped else {})}
+        if len(chosen) == len(choosable):
+            record["restricted"] = False
+            return record, None  # 絞らない: rules-v6 の結果のまま（rules-v7 と同じ選び方）
+        record["restricted"] = True
+        return record, frozenset(moves - frozenset(chosen))
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**TRANSITION_DEFERRAL, "swap_cap": self.swap_cap, "energy_trans_deferral": self.energy_trans_deferral, "retreat_deferral": self.retreat_deferral,
+                "energy_trans_progress": self.energy_trans_progress, "counts": dict(sorted(self.loop_counts.items()))}
 
 
 def mix_seed(policy_seed: int, player: int) -> str:

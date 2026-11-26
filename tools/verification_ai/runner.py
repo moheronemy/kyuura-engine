@@ -12,6 +12,7 @@ import json
 import time
 import traceback
 from dataclasses import asdict, dataclass, field
+from functools import lru_cache
 from typing import Any
 
 from kyuura_engine import diagnostics as D
@@ -23,7 +24,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, RULES8_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransProgressRulePolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -163,6 +164,7 @@ class Runner:
         self._episode = None
         self._turn_key = None
         self._started = None
+        self._progress_cache: dict[tuple, dict[str, Any]] = {}  # rules-v8: (主体, 局面, 候補の中身) → 取得済みの「にげる」の inputs（評価用。方策の記録とは別）
 
     # ---------------------------------------------------------------- 入口
 
@@ -252,6 +254,46 @@ class Runner:
             raise
         except Exception as error:  # noqa: BLE001
             recorder.fail("on_fetch", error, counts_complete=False)
+
+    def _progress_fetch(self, actor, endpoint, policy, cands, in_scope, reasons, handle_base, log) -> dict[str, Any]:
+        """rules-v8（TOOL_VERSION 19。D1）: ［エナジートランス］を選んだ試みで、同じ候補の応答（同じ取っ手）にある「にげる」の候補の inputs を読み取り専用で取り、方策へ渡す。
+
+        送るのは inputs だけ（check・submit・candidates は送らない）。状態・乱数・ログ・決定・更新の箱を変えない（client_api の inputs は読み取り）。方策の乱数を使わず、
+        metrics・counters・coverage を変えない（方策が「にげる」を選んだ件数・送信の件数に入らない）。取った値は同じ主体・同じ局面（受理の通し番号）・同じ候補の中身に
+        限って再利用する。本人の記録（actor_logs）には、新しく取った応答だけを試みの行に残す。
+
+        対象は同じ応答の「にげる」の候補のうち、範囲の中の候補と、このエピソードで入力を作れなかったために範囲から外した候補（支払えない費用も評価に使う）。"""
+        items, record = [], []
+        scoped = {c["id"] for c in in_scope}
+        for c in cands["candidates"]:
+            if not isinstance(c, dict) or c.get("kind") != "retreat":
+                continue
+            if c["id"] not in scoped and not reasons.get(c["id"], "").startswith("unbuildable:"):
+                continue
+            slot = (actor, self.position, candidate_key(c))
+            cached = self._progress_cache.get(slot)
+            if cached is None:
+                answer = request(endpoint, "inputs", **handle_base, candidate=c["id"]) if c.get("input_stages") else None
+                cached = {"answer": answer, "source": "fetched"}
+                self._progress_cache[slot] = cached
+                log.setdefault("progress_retreat_inputs", []).append({"candidate": c["id"], "inputs": answer})
+                source = "fetched"
+            else:
+                source = "reused_" + cached["source"]
+            answer = cached["answer"]
+            body = (answer or {}).get("response") or {}
+            if answer is None:
+                status, stages = "no_input_stages", None
+            elif not answer.get("ok"):
+                status, stages = "inputs_refused", None
+            elif "withheld" in body:
+                status, stages = "withheld", None
+            else:
+                status, stages = "ok", body.get("stages")
+            items.append({"candidate": c, "stages": stages, "status": status, "source": source})
+            record.append({"candidate": c["id"], "status": status, "source": source})
+        policy.progress_retreat_inputs(items)
+        return {"retreat_candidates": len(record), "items": record}
 
     def _elapsed(self) -> float:
         return self.clock() - self._started
@@ -424,11 +466,17 @@ class Runner:
                     raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "stage_dependency_problems", "problems": problems, "attempt": entry["n"]})
                 entry["stages"] = stages
                 restriction = None
+                if kind == "retreat" and hasattr(policy, "progress_retreat_inputs"):  # rules-v8（TOOL_VERSION 19）: この局面で取った「にげる」の inputs を、同じ候補の評価に再利用する
+                    self._progress_cache.setdefault((actor, self.position, candidate_key(candidate)), {"answer": answer, "source": "attempt"})
+                if hasattr(policy, "wants_retreat_inputs") and policy.wants_retreat_inputs(candidate):  # rules-v8: 同じ応答の「にげる」の候補の inputs を読み取り専用で取る
+                    entry["progress_fetch"] = self._progress_fetch(actor, endpoint, policy, cands, in_scope, reasons, handle_base, log)
                 if hasattr(policy, "input_restriction"):  # rules-v4（TOOL_VERSION 15）・rules-v6（17。3 段の移動）: 組の写しを保存し、後回しの組を外す（ほかの方策は持たない）
                     policy.observe_inputs(candidate, stages, allowed)
                     restriction = policy.input_restriction(candidate, stages, allowed)
                     if policy.last_restriction is not None:
                         entry["input_restriction"] = dict(policy.last_restriction)
+                    if getattr(policy, "last_progress", None) is not None:  # rules-v8: 優先の段の記録（静的な評価。受理とは別）
+                        entry["energy_trans_progress"] = dict(policy.last_progress)
                     if restriction == DEFER_ALL:  # 新しい応答で外さない組が 0: 組み立てずに、この候補をエピソードの残りで順位 7 にして選び直す
                         entry["build"] = DEFER_ALL
                         continue
@@ -722,6 +770,21 @@ def run_game(config: Config, **kwargs) -> dict[str, Any]:
     return Runner(config, **kwargs).run()
 
 
+@lru_cache(maxsize=1)
+def progress_card_table() -> dict[str, dict[str, Any]]:
+    """rules-v8（D2）: 固定したエンジンのカードの登録（``kyuura_engine.cards.load_card_pool``）から、方策に渡す JSON の値の表を作る（方策は kyuura_engine を import しない）。
+
+    ポケモン: 印刷のワザの必要なエネルギー（位置の順、記号の値）。エネルギー: 基本エネルギーか・基本エネルギーのタイプ。効果の登録・補正・禁止の条件は入れない。"""
+    from kyuura_engine.cards import load_card_pool
+    out: dict[str, dict[str, Any]] = {}
+    for cid, d in load_card_pool().definitions.items():
+        if d.category == "pokemon":
+            out[cid] = {"attacks": [[symbol.value for symbol in a.cost] for a in d.attacks]}
+        elif d.category == "energy":
+            out[cid] = {"basic_energy": d.is_basic_energy, "provides": None if d.provides is None else d.provides.value}
+    return out
+
+
 def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
     """主体ごとの方策（V2）。ホストの係（ジャンケンの勝者）は、どの方策でも均等（UniformPolicy。V0・V1 と同じ種）。
 
@@ -735,6 +798,10 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES8_VERSION:  # rules-v8（試験。明示的に選んだときだけ。rules-v7 + ［エナジートランス］の入力で費用に近づく移動を優先）
+        cards = progress_card_table()
+        players = {p: EnergyTransProgressRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold, cards=cards) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES7_VERSION:  # rules-v7（試験。明示的に選んだときだけ。rules-v6 + 支払い条件が変わらない「にげる」の後回し）
         players = {p: RetreatDeferralRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold) for p in (0, 1)}
