@@ -1,0 +1,1491 @@
+{
+ "status": "analysis_done",
+ "doc": "docs/tr8-retreat-input-build-analysis.md",
+ "date": "2026-11-26",
+ "base": "b61e084ff99a799f4a1ea93c20ce82eaaf6305cb",
+ "branch": "claude/tr8-retreat-input-build-analysis",
+ "execution_commit": "e75a87316a3b821ff70cff1c48fba76e6b657f04",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 17,
+  "mode": "rules-v6",
+  "conventions": "CS-KYUURA-PLAY-TR8@1",
+  "conventions_digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01"
+ },
+ "sources": {
+  "main": "verifier/runs/vai-tr8v6d-run",
+  "game": "verifier/runs/vai-batch-tr8v6a-b4c2/games/g006-rules-v6-s9074/attempt-001",
+  "recount": "verifier/runs/vai-batch-tr8v6a-b{1..4}c{1..4} (96 games, 1 complete attempt each)",
+  "code": [
+   "tools/verification_ai/actions.py@e75a873",
+   "tools/verification_ai/runner.py@e75a873",
+   "tools/verification_ai/policies.py@e75a873"
+  ]
+ },
+ "before_checks": {
+  "protection_errors": 0,
+  "evidence_files": 19874,
+  "evidence_aggregate": "b5a4ad5e4cf6d4a2dbb59011fa9be4528e18562f9baa61bc70ac0bd2419eda13",
+  "manifest_stores": 25,
+  "manifest_entries": 35265,
+  "manifest_mismatches": 0
+ },
+ "answer": {
+  "payable_set_at_failure_9074": false,
+  "failures_9074": 15,
+  "failed_in": "input build: actions.py _choose_by_units line 361 Unbuildable('total_units_unreachable', 2)",
+  "same_failure_reselected_9074": 13,
+  "same_failure_reselected_union": 429,
+  "fix_first": "policy_reselection"
+ },
+ "turn_9074": {
+  "turn": [
+   0,
+   24
+  ],
+  "attempts_in_turn": 43,
+  "retreat_attempts": [
+   {
+    "n": 91,
+    "position": 80,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 90,
+     "selected": "evolve"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "first"
+   },
+   {
+    "n": 94,
+    "position": 82,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 93,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 96,
+    "position": 83,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      []
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 95,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 99,
+    "position": 85,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      []
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 98,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 101,
+    "position": 86,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      []
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097",
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 100,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "changed_payment"
+   },
+   {
+    "n": 106,
+    "position": 90,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 105,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 110,
+    "position": 93,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 109,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 112,
+    "position": 94,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097",
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 111,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 115,
+    "position": 96,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097",
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 114,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 117,
+    "position": 97,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 116,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 119,
+    "position": 98,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      []
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097",
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 118,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 123,
+    "position": 100,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 122,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": false,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 125,
+    "position": 101,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      [
+       "PMCG1-097"
+      ]
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 124,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 127,
+    "position": 102,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "active_units": [
+     [
+      "grass"
+     ]
+    ],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [
+     [
+      "PMCG1-097",
+      1
+     ]
+    ],
+    "count": [
+     0,
+     1
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 126,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   },
+   {
+    "n": 129,
+    "position": 103,
+    "attempt_in_position": 1,
+    "refetch_required": false,
+    "active": "PMCG1-011",
+    "active_energy": [],
+    "active_units": [],
+    "bench_energy": [
+     [
+      "PMCG1-007",
+      [
+       "PMCG1-097",
+       "PMCG1-097"
+      ]
+     ],
+     [
+      "PMCG1-008",
+      []
+     ]
+    ],
+    "new_active_options": [
+     [
+      "PMCG1-007",
+      true
+     ],
+     [
+      "PMCG1-008",
+      true
+     ]
+    ],
+    "discard_options": [],
+    "count": [
+     0,
+     0
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "payable_sets": 0,
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    },
+    "next_selected": "use_power(エナジートランス)",
+    "previous_accepted": {
+     "n": 128,
+     "selected": "use_power(エナジートランス)"
+    },
+    "active_energy_changed_by_previous_accepted": true,
+    "reselect_class": "same_payment"
+   }
+  ],
+  "states_active_2_energy_not_selected": [
+   {
+    "n": 93,
+    "position": 81,
+    "selected": "use_power(エナジートランス)",
+    "reason": "rule6:priority5:use_power:tie2",
+    "retreat_in_scope": true,
+    "inputs_fetched_for_retreat": false
+   },
+   {
+    "n": 98,
+    "position": 84,
+    "selected": "use_power(エナジートランス)",
+    "reason": "rule6:priority5:use_power:tie2",
+    "retreat_in_scope": true,
+    "inputs_fetched_for_retreat": false
+   }
+  ],
+  "constant_in_turn": {
+   "active": "PMCG1-011 (retreat 2)",
+   "board_energy": "PMCG1-097 x2 (1 unit each)",
+   "bench": [
+    "PMCG1-007",
+    "PMCG1-008"
+   ],
+   "special_conditions": []
+  }
+ },
+ "recount": {
+  "conditions": {
+   "section1": "own accepted Energy Trans >= 20 in (segment, turn); candidate kind retreat",
+   "section2": "candidate_reason contains ':retreat:' and ':swap_cap'",
+   "union": "section1 or section2 (overlap 0: section1 only C2, section2 only C1/C3)"
+  },
+  "sections": {
+   "section1": {
+    "selected": 391,
+    "build_unbuildable:total_units_unreachable@2": 381,
+    "accepted": 10,
+    "payable_not_payable|unbuildable": 381,
+    "build_ok": 10,
+    "payable_payable|ok": 10
+   },
+   "section2": {
+    "selected": 116,
+    "build_unbuildable:total_units_unreachable@2": 104,
+    "accepted": 12,
+    "payable_not_payable|unbuildable": 104,
+    "build_ok": 12,
+    "payable_payable|ok": 12
+   },
+   "union": {
+    "selected": 507,
+    "build_unbuildable:total_units_unreachable@2": 485,
+    "accepted": 22,
+    "payable_not_payable|unbuildable": 485,
+    "build_ok": 22,
+    "payable_payable|ok": 22
+   },
+   "all": {
+    "selected": 3342,
+    "build_ok": 514,
+    "accepted": 514,
+    "payable_payable|ok": 514,
+    "build_unbuildable:total_units_unreachable@2": 2786,
+    "payable_not_payable|unbuildable": 2786,
+    "build_suppressed_by_policy": 42,
+    "payable_payable|suppressed_by_policy": 42
+   }
+  },
+  "by_stage": {
+   "section1": {
+    "B1": {
+     "selected": 101,
+     "build_unbuildable:total_units_unreachable@2": 99,
+     "accepted": 2,
+     "payable_not_payable|unbuildable": 99,
+     "build_ok": 2,
+     "payable_payable|ok": 2
+    },
+    "B2": {
+     "selected": 257,
+     "build_unbuildable:total_units_unreachable@2": 249,
+     "accepted": 8,
+     "payable_not_payable|unbuildable": 249,
+     "build_ok": 8,
+     "payable_payable|ok": 8
+    },
+    "B4": {
+     "selected": 33,
+     "build_unbuildable:total_units_unreachable@2": 33,
+     "accepted": 0,
+     "payable_not_payable|unbuildable": 33
+    }
+   },
+   "section2": {
+    "B1": {
+     "selected": 59,
+     "build_unbuildable:total_units_unreachable@2": 48,
+     "accepted": 11,
+     "payable_not_payable|unbuildable": 48,
+     "build_ok": 11,
+     "payable_payable|ok": 11
+    },
+    "B3": {
+     "selected": 39,
+     "build_unbuildable:total_units_unreachable@2": 38,
+     "accepted": 1,
+     "payable_not_payable|unbuildable": 38,
+     "build_ok": 1,
+     "payable_payable|ok": 1
+    },
+    "B4": {
+     "selected": 18,
+     "build_unbuildable:total_units_unreachable@2": 18,
+     "accepted": 0,
+     "payable_not_payable|unbuildable": 18
+    }
+   },
+   "union": {
+    "B1": {
+     "selected": 160,
+     "build_unbuildable:total_units_unreachable@2": 147,
+     "accepted": 13,
+     "payable_not_payable|unbuildable": 147,
+     "build_ok": 13,
+     "payable_payable|ok": 13
+    },
+    "B2": {
+     "selected": 257,
+     "build_unbuildable:total_units_unreachable@2": 249,
+     "accepted": 8,
+     "payable_not_payable|unbuildable": 249,
+     "build_ok": 8,
+     "payable_payable|ok": 8
+    },
+    "B3": {
+     "selected": 39,
+     "build_unbuildable:total_units_unreachable@2": 38,
+     "accepted": 1,
+     "payable_not_payable|unbuildable": 38,
+     "build_ok": 1,
+     "payable_payable|ok": 1
+    },
+    "B4": {
+     "selected": 51,
+     "build_unbuildable:total_units_unreachable@2": 51,
+     "accepted": 0,
+     "payable_not_payable|unbuildable": 51
+    }
+   }
+  },
+  "union_unpayable_breakdown": {
+   "units_sum_below_min": 485,
+   "need2_have0": 293,
+   "need3_have1": 16,
+   "need3_have2": 49,
+   "need3_have0": 11,
+   "need2_have1": 92,
+   "need1_have0": 24
+  },
+  "matches_vai_tr8v6d": {
+   "section1": [
+    391,
+    381,
+    10
+   ],
+   "section2": [
+    116,
+    104,
+    12
+   ],
+   "union": [
+    507,
+    485,
+    22
+   ]
+  }
+ },
+ "static": {
+  "script": "vai-tr8v6d-run/scripts/static_et.py",
+  "rule": "met: len(active energy) >= printed retreat_cost; reachable: len(board energy) >= retreat_cost; counted per state, not per attempt",
+  "turn_9074_states": {
+   "total": 26,
+   "active_2": 2,
+   "active_1": 11,
+   "active_0": 13,
+   "board_total_2": 26
+  },
+  "at_attempt": {
+   "union": {
+    "counts": {
+     "undetermined": 0,
+     "static_cards_not_met|inputs_not_payable": 485,
+     "static_units_not_met|inputs_not_payable": 485,
+     "api_total_units_min_eq_printed": 507,
+     "static_cards_met|inputs_payable": 22,
+     "static_units_met|inputs_payable": 22
+    },
+    "examples_mismatch": []
+   },
+   "all": {
+    "counts": {
+     "static_cards_met|inputs_payable": 556,
+     "static_units_met|inputs_payable": 556,
+     "api_total_units_min_eq_printed": 3342,
+     "static_cards_not_met|inputs_not_payable": 2786,
+     "static_units_not_met|inputs_not_payable": 2786
+    },
+    "examples_mismatch": []
+   }
+  },
+  "verdict": "not an aggregation error; the 2 cost-met states were positions 81 and 84 where retreat was not selected"
+ },
+ "input_api": {
+  "candidate_preconditions": "check_retreat_declaration only (cost not checked at candidate level)",
+  "inputs": "discard stage options = active energy; total_units = printed retreat cost (equal in 3342/3342); count = 0..options",
+  "verdict": "no defect found"
+ },
+ "build_code": [
+  {
+   "where": "actions.py 313-321 _choose_options",
+   "what": "stage with total_units -> _choose_by_units"
+  },
+  {
+   "where": "actions.py 344-361 _choose_by_units",
+   "what": "all combinations for k in count range; none in total_units range -> Unbuildable total_units_unreachable",
+   "values_9074": "1 grass: options 1, k 0..1, sums {0,1} vs 2..2; 0 grass: options 0, k 0, sum 0 vs 2..2"
+  },
+  {
+   "where": "runner.py 446-451",
+   "what": "build {unbuildable, stage}; unbuildable[candidate_key] set; reselect in the same episode"
+  }
+ ],
+ "build_missed_sets": 0,
+ "combinations_limit_hits": 0,
+ "input_restriction_on_retreat": 0,
+ "classification": {
+  "9074": {
+   "static_error": 0,
+   "not_payable_with_inputs": 15,
+   "builder_missed": 0,
+   "insufficient_evidence": 0
+  },
+  "union_485": {
+   "static_error": 0,
+   "not_payable_with_inputs": 485,
+   "builder_missed": 0,
+   "insufficient_evidence": 0
+  },
+  "note": "485 classified by saved inputs only; causes of energy shortage outside 9074 not investigated"
+ },
+ "reselection": {
+  "definitions": {
+   "first": "first unbuildable retreat in the turn",
+   "same_position": "same position as an earlier failure",
+   "same_payment": "new position, payment signature (active pokemon_id, sorted active energy units, total_units, count) equal to an earlier failure in the turn",
+   "changed_payment": "signature differs from every earlier failure in the turn"
+  },
+  "counts": {
+   "all": {
+    "first": 1490,
+    "unbuildable": 2786,
+    "same_payment": 1213,
+    "changed_payment": 83
+   },
+   "section2": {
+    "same_payment": 94,
+    "unbuildable": 104,
+    "first": 9,
+    "changed_payment": 1
+   },
+   "union": {
+    "same_payment": 429,
+    "unbuildable": 485,
+    "first": 29,
+    "changed_payment": 27
+   },
+   "section1": {
+    "first": 20,
+    "unbuildable": 381,
+    "same_payment": 335,
+    "changed_payment": 26
+   }
+  },
+  "turn_9074": [
+   {
+    "n": 91,
+    "position": 80,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "first"
+   },
+   {
+    "n": 94,
+    "position": 82,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 96,
+    "position": 83,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 99,
+    "position": 85,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 101,
+    "position": 86,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "changed_payment"
+   },
+   {
+    "n": 106,
+    "position": 90,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 110,
+    "position": 93,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 112,
+    "position": 94,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 115,
+    "position": 96,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 117,
+    "position": 97,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 119,
+    "position": 98,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 123,
+    "position": 100,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 125,
+    "position": 101,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 127,
+    "position": 102,
+    "active_energy": [
+     "PMCG1-097"
+    ],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 1,
+    "payable": "not_payable",
+    "class": "same_payment"
+   },
+   {
+    "n": 129,
+    "position": 103,
+    "active_energy": [],
+    "total_units": [
+     2,
+     2
+    ],
+    "option_units_sum": 0,
+    "payable": "not_payable",
+    "class": "same_payment"
+   }
+  ],
+  "mechanism_code": "runner._episode_loop keeps unbuildable per episode (cleared on each acceptance); policy rules ranks retreat and use_power both 5, uniform tie draw",
+  "confirmed_from_records": "9074: 15 x rule6:priority5:retreat:tie2; next pick at same position 15 x rule6:priority5:use_power",
+  "estimated": "after a bench-only Energy Trans, retreat returns to scope and is drawn with about 1/2 probability (not measured)"
+ },
+ "controls": {
+  "accepted_after_move": {
+   "game": "vai-batch-tr8v6a-b1c2/g006-rules-v6-s9056",
+   "turn": [
+    0,
+    23
+   ],
+   "section": 1,
+   "sequence": "161 retreat unbuildable (active grass 1, cost 2) -> 162 ET accepted (active grass 2) -> 163 retreat built, accepted -> 164 use_attack accepted"
+  },
+  "accepted_after_earlier_failure_in_turn": {
+   "all": 45,
+   "in_union": 8
+  },
+  "cost_short_failures": "9074 15 attempts (option units 0-1, cost 2)",
+  "payable_not_selected": "9074 positions 81, 84 (tie draw chose ET; retreat inputs not fetched)"
+ },
+ "recommendation": {
+  "fix_first": "policy re-selection (runner/policy, a new explicitly selected mode; default unchanged)",
+  "why": [
+   "static count agrees with inputs at attempt time (3342/3342)",
+   "input API matches observation and printed cost",
+   "builder missed 0 sets",
+   "429 of 485 union failures (13 of 15 in 9074) re-selected under an unchanged payment condition"
+  ],
+  "defer_when": [
+   "own retreat in this (segment, turn) failed with total_units_unreachable",
+   "key: actor, segment, turn, candidate_identity, active pokemon_id / form / evolution stack, active energy cards and units, active special conditions / markers / persistent effects / trainers, stadium, opponent active pokemon_id / powers / trainer effects, total_units of the failed response",
+   "a new episode offers retreat and the observation part of the key is equal"
+  ],
+  "defer_how": "rank 7 (after end_turn) like rules-v2 demotion; if only rank 7 remains, do not stop (rule2:no_alternative); reason code marks the deferral",
+  "reenable_when": [
+   "active energy cards / units changed (Energy Trans onto the active, attach, discard)",
+   "active Pokemon changed (switch, evolve, devolve, replacement after knock out)",
+   "active special conditions / markers / persistent effects / trainers, stadium, or opponent active / powers / trainer effects changed",
+   "turn changed"
+  ],
+  "keep_deferred_when": "Energy moved only between bench Pokemon",
+  "expected_not_run": "union 429 and 9074 13 would not be selected; positions like 81/84 re-enable; 9056 control unchanged; RNG use changes later play, valid-move effect needs a same-seed comparison",
+  "later": {
+   "static": "count per attempt and by units (display / diagnostics only)",
+   "input_api": "not hiding unpayable retreat candidates would change the contract; not shown necessary"
+  }
+ },
+ "minimal_boards_not_run": [
+  {
+   "id": "M1",
+   "purpose": "reproduce payable-but-unbuildable",
+   "status": "none found (0 in 96 games)",
+   "substitute": "active Venusaur PMCG1-011 with 2 grass: build ok, accepted (both modes)"
+  },
+  {
+   "id": "M2",
+   "purpose": "unpayable control",
+   "board": "active Venusaur with 1 grass, Ivysaur with 1 grass, Bulbasaur",
+   "rules_v6": "total_units_unreachable@2; may be re-selected after bench-only ET",
+   "proposal": "first failure same; rank 7 after bench-only ET"
+  },
+  {
+   "id": "M3",
+   "purpose": "payable after energy move",
+   "board": "as M2; ET from Ivysaur to the active",
+   "rules_v6": "first fails; after ET onto active, build ok, accepted",
+   "proposal": "first fails; re-enabled by condition 1, build ok, accepted"
+  },
+  {
+   "id": "M4",
+   "purpose": "cost-modifier control (reference)",
+   "board": "M2 plus a change of active special condition or stadium",
+   "proposal": "re-enabled by condition 3"
+  }
+ ],
+ "unconfirmed": [
+  "why energy was short in the 470 failures outside 9074",
+  "retreat inputs at positions 81 and 84 (not fetched)",
+  "tie-draw probability (RNG values)",
+  "valid-move effect of the proposal (needs same-seed comparison)"
+ ],
+ "not_done": [
+  "games, constructed boards, judge / replay re-runs",
+  "product code, policy, conventions, judge, GUI, version, default mode changes",
+  "rules-v6 default decision",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8rb-run/",
+ "failures": []
+}
