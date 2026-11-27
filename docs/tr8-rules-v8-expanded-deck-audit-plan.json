@@ -1,5 +1,5 @@
 {
- "status": "plan_draft",
+ "status": "pilot_stopped_policy",
  "doc": "docs/tr8-rules-v8-expanded-deck-audit-plan.md",
  "date": "2026-11-27",
  "base": "9bbfc3ed86fb7e32c7d39ef1991f29a37b37b6fc",
@@ -197,7 +197,7 @@
      },
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json"
     },
     "1": {
      "identifier": "R58",
@@ -264,7 +264,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    },
    "pair_source": "v0.116",
@@ -338,7 +338,7 @@
       }
      ],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json"
     },
     "1": {
      "identifier": "R58",
@@ -405,7 +405,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    },
    "pair_source": "v0.58",
@@ -431,7 +431,7 @@
      "special_energy": {},
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json"
     },
     "1": {
      "identifier": "C121",
@@ -460,7 +460,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json"
     }
    },
    "pair_source": "v0.122",
@@ -469,9 +469,15 @@
   }
  },
  "decklist_files": {
-  "status": "to be written by the execution unit from DECKS verbatim (same entries and order); content_sha256 must equal this plan",
+  "status": "written by vai-tr8v8x-run from 280660b DECKS verbatim (same entries and order); content_sha256 and expanded_sha256 equal this plan; 60 cards; deck_problems empty",
   "decision": "if this copy counts as adding a deck definition, the three new conditions cannot run",
-  "paths": null
+  "paths": {
+   "A122": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json",
+   "C116": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json",
+   "C121": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json",
+   "E58": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json",
+   "R58": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
+  }
  },
  "seeds": {
   "rule": "9083 から上へ、連続 7 値がすべて未使用の最初の組（先頭 1 値が先行・残り 6 値が本実行）",
@@ -488,7 +494,21 @@
    9088,
    9089
   ],
-  "recheck_before_run": null
+  "recheck_before_run": {
+   "selected": [
+    9083,
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_used": 9082,
+   "files": 784,
+   "errors": [],
+   "unchanged": true
+  }
  },
  "plans": [
   {
@@ -502,7 +522,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "0871e0895710f688160ecb8984a4e8ccd2642adc7752119fdb6b8e2b71109b77",
    "decks": {
     "0": {
      "identifier": "hitmonchan-dewgong-v2",
@@ -585,7 +605,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "45765b16e57b11fe128fc1bad4be7c2c4db6d24deecb26512ab972af5b113f37",
    "decks": {
     "0": {
      "identifier": "hitmonchan-dewgong-v2",
@@ -668,7 +688,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "946bdccfa169ffe345d52c673932d4acb8be14fd049de43688498a77ad022849",
    "decks": {
     "0": {
      "identifier": "C116",
@@ -696,7 +716,7 @@
      },
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json"
     },
     "1": {
      "identifier": "R58",
@@ -763,7 +783,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -778,7 +798,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "57e05c797db2ff01bdf7d3bdb1af04e5ffcaadb4212ac31039f5f164fada86a1",
    "decks": {
     "0": {
      "identifier": "C116",
@@ -806,7 +826,7 @@
      },
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json"
     },
     "1": {
      "identifier": "R58",
@@ -873,7 +893,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -888,7 +908,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "c92764dd2c7c89004a187f440e417dfc8ff08f94895d5f9cd0e84137efbccecc",
    "decks": {
     "0": {
      "identifier": "E58",
@@ -955,7 +975,7 @@
       }
      ],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json"
     },
     "1": {
      "identifier": "R58",
@@ -1022,7 +1042,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -1037,7 +1057,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "56d784f6f4a7dd13f071a2fa643daeda3563f01f4cc691ab98601315de0ed012",
    "decks": {
     "0": {
      "identifier": "E58",
@@ -1104,7 +1124,7 @@
       }
      ],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json"
     },
     "1": {
      "identifier": "R58",
@@ -1171,7 +1191,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -1186,7 +1206,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "32ce3e42b832f607da41df8be8e415961fc6dbf388c927545b4288d7da61efb3",
    "decks": {
     "0": {
      "identifier": "A122",
@@ -1205,7 +1225,7 @@
      "special_energy": {},
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json"
     },
     "1": {
      "identifier": "C121",
@@ -1234,7 +1254,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json"
     }
    }
   },
@@ -1249,7 +1269,7 @@
    "max_games": 1,
    "budget_seconds": 300,
    "evidence_max_mb": 512,
-   "plan_sha256": null,
+   "plan_sha256": "b3fc867deb9773636f03eba028251322c9f29bfe5fb5791903d20fb019bbeb4e",
    "decks": {
     "0": {
      "identifier": "A122",
@@ -1268,7 +1288,7 @@
      "special_energy": {},
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json"
     },
     "1": {
      "identifier": "C121",
@@ -1297,7 +1317,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json"
     }
    }
   },
@@ -1317,7 +1337,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "0f07b21fd6e982e9e57521703ad7927776791b2ff3d17b7fb9e3a6cb61323ba0",
    "decks": {
     "0": {
      "identifier": "hitmonchan-dewgong-v2",
@@ -1405,7 +1425,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "72e4c88ae52da242947672a97702f6c74b3f1bbec5f5ef99eb14e18e8866ee9e",
    "decks": {
     "0": {
      "identifier": "hitmonchan-dewgong-v2",
@@ -1493,7 +1513,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "023756e730f9bc18277377fa5e30855870721c24463e331f5e76868cd719e2bd",
    "decks": {
     "0": {
      "identifier": "C116",
@@ -1521,7 +1541,7 @@
      },
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json"
     },
     "1": {
      "identifier": "R58",
@@ -1588,7 +1608,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -1608,7 +1628,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "dfcff2cee696aec78518b6596051ada6f46d35fa603224f0d4b81c911649dcf2",
    "decks": {
     "0": {
      "identifier": "C116",
@@ -1636,7 +1656,7 @@
      },
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json"
     },
     "1": {
      "identifier": "R58",
@@ -1703,7 +1723,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -1723,7 +1743,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "a6aaefc01b64ef6ebf3824b785a2957531c92cc985464467577c0af8539dba5c",
    "decks": {
     "0": {
      "identifier": "E58",
@@ -1790,7 +1810,7 @@
       }
      ],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json"
     },
     "1": {
      "identifier": "R58",
@@ -1857,7 +1877,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -1877,7 +1897,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "beec73f6f2d65bc6e50432169a6eccb4b5aead9926626bdb040ccaac2161d771",
    "decks": {
     "0": {
      "identifier": "E58",
@@ -1944,7 +1964,7 @@
       }
      ],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json"
     },
     "1": {
      "identifier": "R58",
@@ -2011,7 +2031,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
     }
    }
   },
@@ -2031,7 +2051,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "d45b322b3a63adb60591305defe981eaa7badc2aa3a17a55316815c63c7e4271",
    "decks": {
     "0": {
      "identifier": "A122",
@@ -2050,7 +2070,7 @@
      "special_energy": {},
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json"
     },
     "1": {
      "identifier": "C121",
@@ -2079,7 +2099,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json"
     }
    }
   },
@@ -2099,7 +2119,7 @@
    "max_games": 6,
    "budget_seconds": 900,
    "evidence_max_mb": 1024,
-   "plan_sha256": null,
+   "plan_sha256": "2c87a3f97536138a91ece0b8f2d907b759427952e572201b942354637d6b4798",
    "decks": {
     "0": {
      "identifier": "A122",
@@ -2118,7 +2138,7 @@
      "special_energy": {},
      "colour_and_colorless_attacks": [],
      "cli": "--decklist0 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json"
     },
     "1": {
      "identifier": "C121",
@@ -2147,7 +2167,7 @@
       }
      ],
      "cli": "--decklist1 <path>",
-     "decklist_path": null
+     "decklist_path": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json"
     }
    }
   }
@@ -2604,7 +2624,83 @@
   },
   "after_pilot": {
    "procedure": "recompute with the pilot games; new conditions use max(pilot, all past games); record the main outlook; limits unchanged",
-   "values": null
+   "values": {
+    "pilot_used": {
+     "tool": 19.399,
+     "outer": 90.295,
+     "bytes": 27945538
+    },
+    "pilot_per_condition": {
+     "reference": {
+      "tool_seconds": 7.171,
+      "outer_seconds": 31.026,
+      "bytes": 9798830,
+      "check_wall_seconds": 21.704
+     },
+     "different_colour": {
+      "tool_seconds": 5.058,
+      "outer_seconds": 28.244,
+      "bytes": 7297708,
+      "check_wall_seconds": 21.506
+     },
+     "special_energy": {
+      "tool_seconds": null,
+      "outer_seconds": null,
+      "bytes": null,
+      "check_wall_seconds": null
+     },
+     "no_ability": {
+      "tool_seconds": null,
+      "outer_seconds": null,
+      "bytes": null,
+      "check_wall_seconds": null
+     }
+    },
+    "main_outlook": {
+     "normal": {
+      "startable_of_48": 48,
+      "first_binding": null,
+      "total_after_48": {
+       "tool_seconds": 401.395,
+       "outer_seconds": 1613.119,
+       "bytes": 546943261
+      }
+     },
+     "observed_max": {
+      "startable_of_48": 48,
+      "first_binding": null,
+      "total_after_48": {
+       "tool_seconds": 1717.111,
+       "outer_seconds": 3233.335,
+       "bytes": 2586776098
+      }
+     },
+     "single_game_limit": {
+      "startable_of_48": 40,
+      "first_binding": [
+       "total_evidence"
+      ]
+     }
+    },
+    "first_main_game_start": {
+     "batch": "vai-batch-tr8v8x-m1-v7",
+     "ok": true,
+     "values": {
+      "plan_remaining_seconds": 900.0,
+      "program_tool_used_seconds": 19.399,
+      "program_remaining_tool_seconds": 7180.601,
+      "program_outer_used_seconds": 90.295,
+      "program_remaining_outer_seconds": 14309.705,
+      "plan_remaining_evidence_bytes": 1073675495,
+      "program_evidence_bytes": 27945538,
+      "program_remaining_evidence_bytes": 4267021758,
+      "required_bytes": 402653184,
+      "reference_1_5x_biggest_bytes": 14705124,
+      "max_complete_attempt_bytes": 9803416,
+      "drive_free_bytes": 241244581888
+     }
+    }
+   }
   }
  },
  "progress_conditions": {
@@ -2656,11 +2752,147 @@
   ]
  },
  "runtime_values": {
-  "plan_sha256": null,
-  "decklist_paths": null,
-  "cache": null,
-  "per_game": null,
-  "results": null
+  "plan_sha256": {
+   "vai-batch-tr8v8x-p1-v7": "0871e0895710f688160ecb8984a4e8ccd2642adc7752119fdb6b8e2b71109b77",
+   "vai-batch-tr8v8x-p1-v8": "45765b16e57b11fe128fc1bad4be7c2c4db6d24deecb26512ab972af5b113f37",
+   "vai-batch-tr8v8x-p2-v7": "946bdccfa169ffe345d52c673932d4acb8be14fd049de43688498a77ad022849",
+   "vai-batch-tr8v8x-p2-v8": "57e05c797db2ff01bdf7d3bdb1af04e5ffcaadb4212ac31039f5f164fada86a1",
+   "vai-batch-tr8v8x-p3-v7": "c92764dd2c7c89004a187f440e417dfc8ff08f94895d5f9cd0e84137efbccecc",
+   "vai-batch-tr8v8x-p3-v8": "56d784f6f4a7dd13f071a2fa643daeda3563f01f4cc691ab98601315de0ed012",
+   "vai-batch-tr8v8x-p4-v7": "32ce3e42b832f607da41df8be8e415961fc6dbf388c927545b4288d7da61efb3",
+   "vai-batch-tr8v8x-p4-v8": "b3fc867deb9773636f03eba028251322c9f29bfe5fb5791903d20fb019bbeb4e",
+   "vai-batch-tr8v8x-m1-v7": "0f07b21fd6e982e9e57521703ad7927776791b2ff3d17b7fb9e3a6cb61323ba0",
+   "vai-batch-tr8v8x-m1-v8": "72e4c88ae52da242947672a97702f6c74b3f1bbec5f5ef99eb14e18e8866ee9e",
+   "vai-batch-tr8v8x-m2-v7": "023756e730f9bc18277377fa5e30855870721c24463e331f5e76868cd719e2bd",
+   "vai-batch-tr8v8x-m2-v8": "dfcff2cee696aec78518b6596051ada6f46d35fa603224f0d4b81c911649dcf2",
+   "vai-batch-tr8v8x-m3-v7": "a6aaefc01b64ef6ebf3824b785a2957531c92cc985464467577c0af8539dba5c",
+   "vai-batch-tr8v8x-m3-v8": "beec73f6f2d65bc6e50432169a6eccb4b5aead9926626bdb040ccaac2161d771",
+   "vai-batch-tr8v8x-m4-v7": "d45b322b3a63adb60591305defe981eaa7badc2aa3a17a55316815c63c7e4271",
+   "vai-batch-tr8v8x-m4-v8": "2c87a3f97536138a91ece0b8f2d907b759427952e572201b942354637d6b4798"
+  },
+  "decklist_paths": {
+   "A122": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/A122.json",
+   "C116": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C116.json",
+   "C121": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/C121.json",
+   "E58": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/E58.json",
+   "R58": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-run/decklists/R58.json"
+  },
+  "cache": {
+   "dir": "C:\\dev\\kyuura-engine-pyc-cache\\cpython-314-280660b-tr8v8",
+   "pyc_files": 185,
+   "bytes": 14026421,
+   "unchanged": "before, after dry-run, before / after each game, after final"
+  },
+  "per_game": [
+   {
+    "batch": "vai-batch-tr8v8x-p1-v7",
+    "game": "g001-rules-v7-s9083",
+    "condition": "reference",
+    "mode": "rules-v7",
+    "tool_seconds": 7.792,
+    "outer_seconds": 32.37,
+    "check_wall_seconds": 22.0321582,
+    "bytes": 9794244,
+    "termination": "game_over"
+   },
+   {
+    "batch": "vai-batch-tr8v8x-p1-v8",
+    "game": "g001-rules-v8-s9083",
+    "condition": "reference",
+    "mode": "rules-v8",
+    "tool_seconds": 6.549,
+    "outer_seconds": 29.681,
+    "check_wall_seconds": 21.3748855,
+    "bytes": 9803416,
+    "termination": "game_over"
+   },
+   {
+    "batch": "vai-batch-tr8v8x-p2-v7",
+    "game": "g001-rules-v7-s9083",
+    "condition": "different_colour",
+    "mode": "rules-v7",
+    "tool_seconds": 5.058,
+    "outer_seconds": 28.244,
+    "check_wall_seconds": 21.5063464,
+    "bytes": 7297708,
+    "termination": "no_progress"
+   }
+  ],
+  "results": {
+   "c1": {
+    "complete": [
+     "v7",
+     "v8"
+    ],
+    "incomplete_or_not_started": [],
+    "finish": "both",
+    "identical_games": true,
+    "v7": {
+     "termination": "game_over",
+     "winner": 1,
+     "operations": 125,
+     "accepted": 125,
+     "turns": 31,
+     "et_choices": 0,
+     "progress_records": 0,
+     "skipped": {},
+     "d4": {},
+     "goal_rows": 0
+    },
+    "v8": {
+     "termination": "game_over",
+     "winner": 1,
+     "operations": 125,
+     "accepted": 125,
+     "turns": 31,
+     "et_choices": 0,
+     "progress_records": 0,
+     "skipped": {},
+     "d4": {},
+     "goal_rows": 0
+    }
+   },
+   "c2": {
+    "complete": [
+     "v7"
+    ],
+    "incomplete_or_not_started": [
+     "v8"
+    ],
+    "finish": null,
+    "identical_games": null,
+    "v7": {
+     "termination": "no_progress",
+     "winner": null,
+     "operations": 97,
+     "accepted": 96,
+     "turns": 28,
+     "et_choices": 0,
+     "progress_records": 0,
+     "skipped": {},
+     "d4": {},
+     "goal_rows": 0
+    }
+   },
+   "c3": {
+    "complete": [],
+    "incomplete_or_not_started": [
+     "v7",
+     "v8"
+    ],
+    "finish": null,
+    "identical_games": null
+   },
+   "c4": {
+    "complete": [],
+    "incomplete_or_not_started": [
+     "v7",
+     "v8"
+    ],
+    "finish": null,
+    "identical_games": null
+   }
+  }
  },
  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-plan-run/",
  "failures": [
@@ -2669,5 +2901,119 @@
    "what": "first deck search did not include tools/existing_effect_games.py DECKS; extended and rerun",
    "kept": "raw/F1/"
   }
- ]
+ ],
+ "execution": {
+  "unit": "vai-tr8v8x-run",
+  "branch": "claude/tr8-rules-v8-expanded-deck-pilot",
+  "doc_base": "88825e2e36266b801476fb6d1c37525b25397e17",
+  "execution_commit": "280660be69630d5a9007e11e1022db3f221630b1",
+  "code_equal_to_doc_base": true,
+  "decklists": {
+   "A122": {
+    "file_sha256": "c7bbe445be310bc97d3a894a0a72de1776b4bd9524bcda7462ac12beb165aae8",
+    "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+    "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+    "total": 60,
+    "uses": [
+     "no_ability/0"
+    ],
+    "ok": true
+   },
+   "C116": {
+    "file_sha256": "f164a659b553782152e9bd3b4db7c9c49e44c43303aac1729f720c444d1aa811",
+    "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+    "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+    "total": 60,
+    "uses": [
+     "different_colour/0"
+    ],
+    "ok": true
+   },
+   "C121": {
+    "file_sha256": "ca5715e3eae1f8ac703f59697ce8321b4f9f9e10ce609d288aa820c3ff552e6f",
+    "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+    "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+    "total": 60,
+    "uses": [
+     "no_ability/1"
+    ],
+    "ok": true
+   },
+   "E58": {
+    "file_sha256": "1ac3bc9bf09ba1700ad287cb04c46cb0ad1f60247a027d0c3ea45151f7227367",
+    "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+    "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+    "total": 60,
+    "uses": [
+     "special_energy/0"
+    ],
+    "ok": true
+   },
+   "R58": {
+    "file_sha256": "da803eea3b5d59c7022b168b24ffa711df9a82d1053cc5ee170654ce19a46d57",
+    "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+    "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+    "total": 60,
+    "uses": [
+     "different_colour/1",
+     "special_energy/1"
+    ],
+    "ok": true
+   }
+  },
+  "plans_check": {
+   "ok": true,
+   "plans": 16,
+   "only_policy_differs_in_pairs": true
+  },
+  "dry_run": {
+   "plans": 16,
+   "use_cache": true,
+   "not_started": true
+  },
+  "aggregation_reproduced": {
+   "seeds": [
+    9076,
+    9077
+   ],
+   "ok": true
+  },
+  "pilot": {
+   "started": 3,
+   "complete": 3,
+   "game_over": 2,
+   "no_progress": 1,
+   "not_started": [
+    "vai-batch-tr8v8x-p2-v8",
+    "vai-batch-tr8v8x-p3-v7",
+    "vai-batch-tr8v8x-p3-v8",
+    "vai-batch-tr8v8x-p4-v7",
+    "vai-batch-tr8v8x-p4-v8"
+   ],
+   "incomplete": 0,
+   "stopped_at": {
+    "batch": "vai-batch-tr8v8x-p2-v7",
+    "game": "g001-rules-v7-s9083",
+    "stop": [
+     "undetermined:no_progress:1"
+    ],
+    "cause": "seat 0 use_attack rejected once (unresolved_ruling UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD, continuable), then the same attack re-chosen 63 times (ok_already_tried) until draws_per_position 64",
+    "records_ok": true
+   }
+  },
+  "progress_decision": {
+   "can_proceed_to_main": false,
+   "reason": "stop policy triggered in the pilot (no_progress); 5 pilot games not started",
+   "first_main_game_start_condition_met": true,
+   "main_not_started": true
+  },
+  "not_done": [
+   "main games",
+   "retry",
+   "stop release",
+   "extra games",
+   "limit extension",
+   "DECKS / deck definition / policy / engine / convention / judge / default changes"
+  ]
+ }
 }
