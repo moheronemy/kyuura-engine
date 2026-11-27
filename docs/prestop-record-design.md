@@ -5,7 +5,7 @@
 2026-11-15。調査・設計・文書化だけです。実装・テスト・ビルド・対戦・judge・replay・追加の計測はしていません。`kyuura_engine`・`tools.verification_ai` は import していません（コードを文字として読んだだけ）。
 
 - 基点: `claude/prestop-ruling-breakdown` の `7f51ce4`（origin と一致。main `b1e4430` の子孫で main には入っていない。コードは main と同じ）。作業は worktree `C:\dev\kyuura-engine-lt30`・ブランチ `claude/prestop-record-design`。
-- 前提の調査: [受理の前の未裁定の候補の内訳](prestop-ruling-breakdown.md)（13 バッチの延べ `play_trainer` 5,052・`discard_from_play` 317・`use_stadium` 18。停止コードは記録にない）。
+- 前提の調査: [受理の前の未裁定の候補の内訳](history/prestop-ruling-breakdown.md)（13 バッチの延べ `play_trainer` 5,052・`discard_from_play` 317・`use_stadium` 18。停止コードは記録にない）。
 - 機械可読の下書き: [prestop-record-design.json](prestop-record-design.json)（`status: draft`）。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/prestop-record-design/`。
 
@@ -306,8 +306,8 @@
 
 ### 11.7 初回の限定バッチに残る確認
 
-- → 2026-11-15: 初回の小規模確認バッチを設計した（未実行）: [初回の小規模確認バッチの計画](prestop-first-batch-plan.md)
-- → 2026-11-15: 実行した（4 局すべて完了・R1〜R6 成立・記録用の取得は累積時間の約 0.017%・新しい 4 局だけのカード別の内訳（突風・きずぐすり・ポケモンいれかえ、discard_from_play はすべて本人のうら））: [初回確認バッチ vai-batch-x1 の結果](prestop-first-batch-plan.md) 9 章
+- → 2026-11-15: 初回の小規模確認バッチを設計した（未実行）: [初回の小規模確認バッチの計画](history/prestop-first-batch-plan.md)
+- → 2026-11-15: 実行した（4 局すべて完了・R1〜R6 成立・記録用の取得は累積時間の約 0.017%・新しい 4 局だけのカード別の内訳（突風・きずぐすり・ポケモンいれかえ、discard_from_play はすべて本人のうら））: [初回確認バッチ vai-batch-x1 の結果](history/prestop-first-batch-plan.md) 9 章
 
 - 照合式 6・7 を、新しいバッチの局で確かめる（前回の 2 倍の誤りを繰り返さない）
 - `refused`・`contract_unknown`・`error`・`oversize`・上限の到達が 0 か、0 でないなら件数と理由

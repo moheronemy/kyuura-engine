@@ -10,7 +10,7 @@ U7-5e（v0.171）で候補の作成に使うことにした、状態の複製の
 |---|---|
 | コードの基点 | `a0c1312586eb726a5eb84e8374c5ac211d01ad94`（`claude/pt5e-from-state-fix`。from_state の修正 `09dc7f8`・版 0.177.0 の `01317a6`、PT-5e・U-R3a・検証用 AI の追従を含む。`origin/main`（`88ad4d9`）には入っていない） |
 | 読んだコードの版 | パッケージ 0.177.0（`kyuura_engine/__init__.py`） |
-| 参照した文書の版 | `docs/legal-actions-u7-5e.md`（v0.171 の記録と CORR-3 の訂正）、`docs/legal-actions-u7-5-design.md`・`.json`（UP-5t の行。v0.171 の記録）、`docs/verification-ai-inventory.md`（v0.177 までの追記）、`docs/legal-actions-r5-audit.md`（UP-5t を「監査が未完了」に移した記録） |
+| 参照した文書の版 | `docs/legal-actions-u7-5e.md`（v0.171 の記録と CORR-3 の訂正）、`docs/legal-actions-u7-5-design.md`・`.json`（UP-5t の行。v0.171 の記録）、`docs/history/verification-ai-inventory.md`（v0.177 までの追記）、`docs/history/legal-actions-r5-audit.md`（UP-5t を「監査が未完了」に移した記録） |
 | 作業ブランチ | `claude/up5t-audit`（専用の worktree `C:\dev\kyuura-engine-vai`。利用者の `C:\dev\kyuura-engine` は main のまま、変更なし） |
 | 証跡 | `C:/dev/kyuura-engine-verification-vai/verifier/runs/up5t-audit/`（走査のスクリプト・出力・コマンド） |
 

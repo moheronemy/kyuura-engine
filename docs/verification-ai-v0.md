@@ -1,6 +1,6 @@
 # 検証用 AI の V0（固定条件の 1 対戦の縦通し）
 
-[仕様](verification-ai-design.md) と [実装計画](verification-ai-implementation-plan.md) の V0 だけを実装しました。目的は AI の強さではなく、公開の API（`client_api`）から操作の列を
+[仕様](verification-ai-design.md) と [実装計画](history/verification-ai-implementation-plan.md) の V0 だけを実装しました。目的は AI の強さではなく、公開の API（`client_api`）から操作の列を
 作り、エンジンの問題を記録・再現できる最小の縦通しを作ることです。V1 以降（分布の拡張・ルールの方策・混合・`boundary`・`negative`・双子・広い対象・最小化）は実装していません。
 
 ## 1. 基点と範囲

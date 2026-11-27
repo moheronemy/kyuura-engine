@@ -1,11 +1,11 @@
 # エンジン検証用 AI の仕様（設計だけ。実装していない）
 
 この文書は、合法手 API（U7）を通して対戦を自動で進め、エンジンの不具合・入力 API の不足・状態の不整合・情報境界の問題を見つけて、再現できる記録を残すための
-「検証用 AI」の仕様です。段階ごとの実装計画は [verification-ai-implementation-plan.md](verification-ai-implementation-plan.md) にあります。
+「検証用 AI」の仕様です。段階ごとの実装計画は [verification-ai-implementation-plan.md](history/verification-ai-implementation-plan.md) にあります。
 
 - この文書を作った時点（`17e31a9`）は調査・設計・文書化だけで、確認は文書とコードの静的な読み取りだけでした
-- 実装の状況: V0（[verification-ai-v0.md](verification-ai-v0.md)）・V1（[verification-ai-v1.md](verification-ai-v1.md)）・V2（[verification-ai-v2.md](verification-ai-v2.md)。補完の rules-v2: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)）を実装した。D-1〜D-12 の状態（承認済み・暫定・保留・今回扱わない）は V1 の文書の 2 章（V2 で D-7 の混合の単位を選択のエピソードに決めた。V2 の文書の 4 章）。V3 は V3-1（通常の進行の中の negative）と V3-2（カツラの固定の到達例。[verification-ai-v3-2.md](verification-ai-v3-2.md)）と V3-3（構築盤面の代表例。[verification-ai-v3-3.md](verification-ai-v3-3.md)）を実装した（[verification-ai-v3-1.md](verification-ai-v3-1.md)。仕様と計画: [verification-ai-v3-design.md](verification-ai-v3-design.md)。D-6 は V3-1〜V3-3 の範囲だけを補足して使い（判定の規則 3）、全体は採用待ち）。V3-4 以降は未実装
-- v0.173: CN-1（`ReplayCollector`・`ViewHost` の `failure`）をエンジンの側で直した（[cn1-failure-v0.173.md](cn1-failure-v0.173.md)）。V0〜V3-3 と U7 の残件の一覧: [verification-ai-inventory.md](verification-ai-inventory.md)
+- 実装の状況: V0（[verification-ai-v0.md](verification-ai-v0.md)）・V1（[verification-ai-v1.md](verification-ai-v1.md)）・V2（[verification-ai-v2.md](verification-ai-v2.md)。補完の rules-v2: [verification-ai-v2-repeat.md](verification-ai-v2-repeat.md)）を実装した。D-1〜D-12 の状態（承認済み・暫定・保留・今回扱わない）は V1 の文書の 2 章（V2 で D-7 の混合の単位を選択のエピソードに決めた。V2 の文書の 4 章）。V3 は V3-1（通常の進行の中の negative）と V3-2（カツラの固定の到達例。[verification-ai-v3-2.md](verification-ai-v3-2.md)）と V3-3（構築盤面の代表例。[verification-ai-v3-3.md](verification-ai-v3-3.md)）を実装した（[verification-ai-v3-1.md](verification-ai-v3-1.md)。仕様と計画: [verification-ai-v3-design.md](history/verification-ai-v3-design.md)。D-6 は V3-1〜V3-3 の範囲だけを補足して使い（判定の規則 3）、全体は採用待ち）。V3-4 以降は未実装
+- v0.173: CN-1（`ReplayCollector`・`ViewHost` の `failure`）をエンジンの側で直した（[cn1-failure-v0.173.md](cn1-failure-v0.173.md)）。V0〜V3-3 と U7 の残件の一覧: [verification-ai-inventory.md](history/verification-ai-inventory.md)
 - 検証用 AI の目的は、勝つことではありません。ランダムの行動と小さなルールの行動を組み合わせて多様な操作の列を作り、異常を分類して記録することです
 - いちばん大事な原則: **ゲームの合法性（エンジン・U7）と AI の戦略を分ける**。戦略は、U7 が返した候補・入力の中で順位をつけるだけで、合法性を判定し直さない
 
@@ -147,7 +147,7 @@
   当てはめるのは「API の契約を読む」ことで、ゲームのルールの再実装ではありません。契約にない条件（「このワザはエネルギーが足りない」など）を B・C は判定しません
 - C は「選ばない」ことで候補を除けますが、それは戦略の評価です。記録には「戦略が選ばなかった」と残し、「合法でない」とは書きません
 - 実行の方針（4.5 節のプロファイル）が処理可能性の区分で候補を除くのは、U7 が返した公開の区分による検証範囲の選択で、D が記録に「範囲から除いた」と残します
-- C は `kyuura_engine` を import しません（テストで import を確かめる。[実装計画](verification-ai-implementation-plan.md) の V0）
+- C は `kyuura_engine` を import しません（テストで import を確かめる。[実装計画](history/verification-ai-implementation-plan.md) の V0）
 
 ### 2.1 置き場所
 
@@ -393,7 +393,7 @@ U7 の版が変わったら照らし直します。文を実行時に読んで�
 | R-B U7 の経路の再実行 | 記録の操作ごとに、同じ主体の入口で `candidates` を取り直し、候補を種類と公開の項目で、選ぶものを公開の項目で探して、同じ `check`・`submit` を送る | しない | U7 の応答（取っ手を除く）と結果が記録と一致する。異常が同じ位置で起きる |
 | R-C 方策の再実行 | 同じ `game_seed`・方策の版・設定・`policy_seed`・`host_seed` で最初から走らせる | する | 同じ操作の列になる（方策のコードが同じときだけ意味がある） |
 
-再現は R-A・R-B を基本にし、R-C は方策の決定性の確かめに使います。自動の最小化（列を縮める）は後の段にします（[実装計画](verification-ai-implementation-plan.md) の V6）。
+再現は R-A・R-B を基本にし、R-C は方策の決定性の確かめに使います。自動の最小化（列を縮める）は後の段にします（[実装計画](history/verification-ai-implementation-plan.md) の V6）。
 
 ### 6.8 到達範囲の測り方
 

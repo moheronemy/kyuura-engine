@@ -1,0 +1,454 @@
+{
+ "status": "executed",
+ "date": "2026-11-21",
+ "doc": "docs/history/h4-tr4-tr6-comparison.md",
+ "base": {
+  "branch": "claude/h4-zero-v0196",
+  "commit": "2a44065ad928a072b3205edb53872be4c018d20d"
+ },
+ "fixed_commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+ "work_branch": "claude/h4-tr4-tr6-compare",
+ "evidence": {
+  "run": "kyuura-engine-verification-vai/verifier/runs/vai-batch-h4c-run/",
+  "batches": [
+   "vai-batch-h4c-tr4",
+   "vai-batch-h4c-tr6"
+  ]
+ },
+ "identity": {
+  "version": "0.196.0",
+  "behavior": "4a8edcf09117881bc1bd5971c45bcba6f27e2329001cd58bf6c4eb0170c6b3fc",
+  "instrumentation": "13c773a8892efc0736d8896544d2f29bd8d6ce94a534502a852daabf07eba27a",
+  "tool": "be95aa1e5c6fc5ee45755f9741d7fbbda7ddea5567b7968b7f44ecadd4935a41",
+  "tool_version": 13,
+  "judge_rules": 10,
+  "formats": [
+   "kyuura-vai-batch-plan/7",
+   "kyuura-vai-batch-complete/7"
+  ],
+  "basis": {
+   "lost_target_p1": "e1d389e7afc41c7cbafd4cb433db7fb4948bda449486543f9795109329fc7a59",
+   "lost_target_p3": "89d12d2eda30a1d1e90cc299ffd4aa30c74f7acdb20ff9fb9336316801dc2f5b",
+   "lost_target_p2": "d652db2467a7f5223cac5de88ea5e1c9a5b4a482cb815accf00e928073b2be4d",
+   "recover_zero": "b3864eca11e2733581175f4bb05024a67fbbb9a98468e68e2f6ceee20ac8d1b0"
+  }
+ },
+ "sets": {
+  "CS-KYUURA-PLAY-TR4@1": {
+   "members": 24,
+   "digest": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552"
+  },
+  "CS-KYUURA-PLAY-TR6@1": {
+   "members": 25,
+   "digest": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2"
+  },
+  "tr6_minus_tr4": [
+   "PC-ENERGY-CONVERSION-ZERO@1"
+  ]
+ },
+ "conditions": [
+  {
+   "pair": 1,
+   "source": "vai-batch-tr3u1-p3/g001-rules-v2-s9006",
+   "game": "g001-rules-v2-s9006",
+   "seed": 9006
+  },
+  {
+   "pair": 2,
+   "source": "vai-batch-tr3u1-m3/g003-rules-v2-s9009",
+   "game": "g002-rules-v2-s9009",
+   "seed": 9009
+  }
+ ],
+ "common": {
+  "decks": {
+   "0": "P42（decklist-P42.json）",
+   "1": "L67-U（decklist-L67-U.json）"
+  },
+  "mode": "rules-v2",
+  "policy": "rules",
+  "profile": "deep",
+  "observation": true,
+  "prestop": true,
+  "only_difference": "conventions"
+ },
+ "plans": {
+  "vai-batch-h4c-tr4": "31d442dae3e5e1737d2e3aeb686c2f4a21b90855ac888bfaa3d08a1165176709",
+  "vai-batch-h4c-tr6": "7348e8d9c8335a004da30eed5dc161874c596954fed7c1b9fa0d03891c9298e0"
+ },
+ "budget": {
+  "plan": {
+   "tool_seconds": 900,
+   "evidence_mib": 512
+  },
+  "program": {
+   "tool_seconds": 1800,
+   "outer_seconds": 3600,
+   "evidence_mib": 1024
+  },
+  "start": {
+   "tool_remaining_s": 150,
+   "outer_remaining_s": 600,
+   "evidence_required": "max(384 MiB, 1.5 x largest completed game)",
+   "drive_free_mib": 4096
+  }
+ },
+ "games": {
+  "planned": 4,
+  "started": 4,
+  "complete": 4,
+  "incomplete": 0,
+  "not_started": 0
+ },
+ "plan_status": {
+  "vai-batch-h4c-tr4": "completed",
+  "vai-batch-h4c-tr6": "completed"
+ },
+ "termination": {
+  "1": "game_over",
+  "2": "game_over",
+  "3": "game_over",
+  "4": "game_over"
+ },
+ "pairs": [
+  {
+   "pair": 1,
+   "class": "MATCHED",
+   "first_divergence_row": 27,
+   "attempt": {
+    "tr4": 28,
+    "tr6": 28
+   },
+   "matched": {
+    "row_index": 27,
+    "attempt": 28,
+    "operation_id": "g001-rules-v2-s9006-000028",
+    "path": "original"
+   },
+   "conditions": {
+    "same_actor": true,
+    "same_attack_and_path": true,
+    "same_recover_options": true,
+    "same_decision": true,
+    "empty_answer_both_check_valid": true
+   },
+   "tr4": {
+    "rejected_h4": true,
+    "awaiting_same_decision": true,
+    "viewers_unchanged": true,
+    "updates_zero": true,
+    "judge_known_stop": true,
+    "first_submitted_reanswer_same_decision": true
+   },
+   "tr6": {
+    "accepted": true,
+    "decision_closed": true,
+    "convention_applied_once": true,
+    "self_damage_10_next": true,
+    "no_recover_energy": true,
+    "same_events_all_viewers": true,
+    "hand_unchanged": true,
+    "nothing_removed_from_discard": true,
+    "judge_expected": true
+   },
+   "tr4_reanswers": {
+    "not_submitted": 10,
+    "not_submitted_attempts": [
+     29,
+     30,
+     31,
+     32,
+     33,
+     34,
+     35,
+     36,
+     37,
+     38
+    ],
+    "submitted": [
+     {
+      "attempt": 39,
+      "kind": "answer_decision",
+      "decision_kind": "recover_energy",
+      "choices": 1,
+      "outcome": "accepted",
+      "engine_code": null,
+      "same_options": true
+     }
+    ]
+   },
+   "tr6_added_events": [
+    {
+     "kind": "convention_applied",
+     "convention": "PC-ENERGY-CONVERSION-ZERO",
+     "version": 1,
+     "scene": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+     "code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+     "player": 0,
+     "available": 1
+    },
+    {
+     "kind": "damage",
+     "player": 0,
+     "target": "self",
+     "amount": 10,
+     "effect": "PMCG3-029#1",
+     "pokemon": 10,
+     "pokemon_id": 2,
+     "total_damage": 10
+    },
+    {
+     "kind": "turn_end",
+     "player": 0
+    },
+    {
+     "kind": "pokemon_check"
+    },
+    {
+     "kind": "turn_start",
+     "player": 1
+    },
+    {
+     "kind": "draw",
+     "player": 1
+    }
+   ],
+   "tr6_knock_out": [],
+   "excluded_from_comparison": [
+    "計画名（batch_id）・局の run_id は trace の試みの行の action に入らない",
+    "規約集合の識別（ID・照合値）は action に入らない（集合は分析の sets で別に照らす）",
+    "時刻・秒・取っ手（候補・選択肢の id・revision）・評価の値（action_sequence がもとから除く）"
+   ],
+   "rejudge_equal": true,
+   "reference_after_divergence": {
+    "tr4_zero": [
+     [
+      126,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ],
+     [
+      132,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ],
+     [
+      146,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ]
+    ],
+    "tr6_zero": [
+     [
+      48,
+      "accepted",
+      null,
+      "original"
+     ]
+    ]
+   }
+  },
+  {
+   "pair": 2,
+   "class": "MATCHED",
+   "first_divergence_row": 95,
+   "attempt": {
+    "tr4": 96,
+    "tr6": 96
+   },
+   "matched": {
+    "row_index": 95,
+    "attempt": 96,
+    "operation_id": "g002-rules-v2-s9009-000087",
+    "path": "original"
+   },
+   "conditions": {
+    "same_actor": true,
+    "same_attack_and_path": true,
+    "same_recover_options": true,
+    "same_decision": true,
+    "empty_answer_both_check_valid": true
+   },
+   "tr4": {
+    "rejected_h4": true,
+    "awaiting_same_decision": true,
+    "viewers_unchanged": true,
+    "updates_zero": true,
+    "judge_known_stop": true,
+    "first_submitted_reanswer_same_decision": true
+   },
+   "tr6": {
+    "accepted": true,
+    "decision_closed": true,
+    "convention_applied_once": true,
+    "self_damage_10_next": true,
+    "no_recover_energy": true,
+    "same_events_all_viewers": true,
+    "hand_unchanged": true,
+    "nothing_removed_from_discard": true,
+    "judge_expected": true
+   },
+   "tr4_reanswers": {
+    "not_submitted": 1,
+    "not_submitted_attempts": [
+     97
+    ],
+    "submitted": [
+     {
+      "attempt": 98,
+      "kind": "answer_decision",
+      "decision_kind": "recover_energy",
+      "choices": 1,
+      "outcome": "accepted",
+      "engine_code": null,
+      "same_options": true
+     }
+    ]
+   },
+   "tr6_added_events": [
+    {
+     "kind": "convention_applied",
+     "convention": "PC-ENERGY-CONVERSION-ZERO",
+     "version": 1,
+     "scene": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+     "code": "UNRESOLVED_RECOVER_ZERO_ENERGY",
+     "player": 0,
+     "available": 6
+    },
+    {
+     "kind": "damage",
+     "player": 0,
+     "target": "self",
+     "amount": 10,
+     "effect": "PMCG3-029#1",
+     "pokemon": 10,
+     "pokemon_id": 8,
+     "total_damage": 10
+    },
+    {
+     "kind": "discard_attached_trainer",
+     "player": 1,
+     "pokemon": 61,
+     "pokemon_id": 10
+    },
+    {
+     "kind": "turn_end",
+     "player": 0
+    },
+    {
+     "kind": "pokemon_check"
+    },
+    {
+     "kind": "turn_start",
+     "player": 1
+    },
+    {
+     "kind": "draw",
+     "player": 1
+    }
+   ],
+   "tr6_knock_out": [],
+   "excluded_from_comparison": [
+    "計画名（batch_id）・局の run_id は trace の試みの行の action に入らない",
+    "規約集合の識別（ID・照合値）は action に入らない（集合は分析の sets で別に照らす）",
+    "時刻・秒・取っ手（候補・選択肢の id・revision）・評価の値（action_sequence がもとから除く）"
+   ],
+   "rejudge_equal": true,
+   "reference_after_divergence": {
+    "tr4_zero": [],
+    "tr6_zero": []
+   }
+  }
+ ],
+ "direct_comparisons": 2,
+ "zero_answers": {
+  "tr4": {
+   "total": 5,
+   "rejected_h4": 5,
+   "reanswers_submitted": 5,
+   "reanswers_accepted": 5,
+   "not_submitted": 12,
+   "known_stop": 5
+  },
+  "tr6": {
+   "total": 3,
+   "accepted": 3,
+   "expected": 3,
+   "convention_applied": 3,
+   "recover_energy_events": 0
+  },
+  "in_direct_comparison": 2,
+  "after_first_branch_reference": {
+   "1": {
+    "tr4_zero": [
+     [
+      126,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ],
+     [
+      132,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ],
+     [
+      146,
+      "rejected",
+      "UNRESOLVED_RECOVER_ZERO_ENERGY",
+      "original"
+     ]
+    ],
+    "tr6_zero": [
+     [
+      48,
+      "accepted",
+      null,
+      "original"
+     ]
+    ]
+   },
+   "2": {
+    "tr4_zero": [],
+    "tr6_zero": []
+   }
+  }
+ },
+ "reference": {
+  "winners": {
+   "pair1": {
+    "tr4": 0,
+    "tr6": 0
+   },
+   "pair2": {
+    "tr4": 1,
+    "tr6": 0
+   }
+  },
+  "tr4_equal_to_old_tr3_action_and_contract": true,
+  "note": "分岐のあとの結果・勝敗は参考。独立した比較・完走率の推定には使わない"
+ },
+ "time": {
+  "tool_seconds": 35.683,
+  "outer_seconds": 119.773
+ },
+ "evidence_bytes_plans": 69710307,
+ "limits": [
+  "ゆびをふるの経路は出なかった（構築盤面・スモークだけ）",
+  "自分へのダメージのきぜつは出なかった",
+  "2 組だけ（頻度・完走率は推定しない）",
+  "旧記録の basis の不一致は対象の外"
+ ],
+ "failures": [
+  "計画の作成の 1 回目: 外側の引数の数の確かめの誤りで何も呼ばずに止まり、直して作り直した"
+ ],
+ "not_done": [
+  "製品のコード・規約・judge・版・GUI の変更",
+  "旧記録の basis の不一致への対応",
+  "再試行・seed の差し替え・局の追加"
+ ]
+}

@@ -3,7 +3,7 @@
 2026-11-15。調査・文書化だけです。新しい裁定は決めていません。エンジン・judge・方策・GUI・データは変えていません。テスト・対戦・judge・replay はしていません。`kyuura_engine`・`tools.verification_ai` は import していません（コード・文書・保存済みの JSON を文字として読んだだけ）。
 
 - 基点: `claude/vai-batch-x1` の `36c8c0d`（origin と一致。main `b1e4430` の子孫で main に入っていない。コードは x1 の実行コミット `6ac3d3d` と差 0）。作業は worktree `C:\dev\kyuura-engine-lt34`・ブランチ `claude/prestop-three-trainers`。
-- 出発点: [初回確認バッチ vai-batch-x1 の結果](prestop-first-batch-plan.md) 9.4 節。
+- 出発点: [初回確認バッチ vai-batch-x1 の結果](history/prestop-first-batch-plan.md) 9.4 節。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/prestop-three-trainers/`（事前計画・`scripts/collect.py`・`out/collect.json`）。
 - kyuura（研究の基準）は、固定の `71d1728` を `git show` で読み、手元の checkout（`b9e7cff`。`71d1728` の祖先）とも照らしました。どちらも変えていません。
 

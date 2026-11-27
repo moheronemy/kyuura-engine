@@ -13,7 +13,7 @@
 |---|---|
 | 基点 | `claude/p2n1-secret-plan-trace` = `1dfc124`（origin と一致。main `b1e4430` の子孫で、main に入っていない） |
 | 作業 | worktree `kyuura-engine-lt53`、ブランチ `claude/recover-zero-energy-design` |
-| 対象バッチ | vai-batch-p2n1（[P2-min の new_game 小規模確認バッチ](p2-min-batch-plan.md) 10 章） |
+| 対象バッチ | vai-batch-p2n1（[P2-min の new_game 小規模確認バッチ](history/p2-min-batch-plan.md) 10 章） |
 | 実行コミット | `00690294c64ad99e7ca43c83bcb22e8cc2be02e3`。エンジン 0.187.0・`TOOL_VERSION` 12・判定の規則 9・形式 7 |
 | コードの差 | 基点と実行コミットで `kyuura_engine`・`tools`・`tests`・`scripts`・`pyproject.toml` の差 0。以下のコードの位置は、実行のときと今で同じ |
 | 記録の実装の識別 | 記録の header の behavior_digest `ae974fff…` = 今のエンジン |
@@ -436,7 +436,7 @@ ER9 の表（`RECORDED_STOP_CONDITIONS`）に `recover_energy` を足すだけ�
 **言えること:**
 
 - 規則 10 は、保存例の 1 件を設計どおり known_stop と判定します。ほかの判定の内容は変えません。
-- P2-min が new_game で未出現という結果（[P2-min の new_game 小規模確認バッチ](p2-min-batch-plan.md) 10 章）は変わりません。
+- P2-min が new_game で未出現という結果（[P2-min の new_game 小規模確認バッチ](history/p2-min-batch-plan.md) 10 章）は変わりません。
 
 **言えないこと・していないこと:**
 

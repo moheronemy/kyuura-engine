@@ -1,6 +1,6 @@
 # `rules-v9` の拡大デッキ 4 条件の先行試験（seed 9090・各 1 局）
 
-2026-11-27。[rules-v9 の試験](tr8-rules-v9-refused-input-experiment.md) の続きとして、[拡大デッキの監査](tr8-rules-v8-expanded-deck-audit-plan.md) の 4 条件を、新しい seed で各 1 局ずつ `rules-v9` で実行した記録です。
+2026-11-27。[rules-v9 の試験](tr8-rules-v9-refused-input-experiment.md) の続きとして、[拡大デッキの監査](history/tr8-rules-v8-expanded-deck-audit-plan.md) の 4 条件を、新しい seed で各 1 局ずつ `rules-v9` で実行した記録です。
 
 - これは `rules-v9` の先行試験です。`rules-v9` は明示的に選んだときだけ使います。
 - 次のものは変えていません: 方策・エンジン・規約・judge・単局の上限・既定の設定。

@@ -1,6 +1,6 @@
 # うらのバトル場のワザの候補の保証の文（S1 監査の F-1 の修正。v0.180.0）
 
-2026-11-13。[vai-batch-s1 の拒否の監査](verification-ai-batch-s1-rejection-audit.md) 3.3 節の F-1 を直しました。U7-5 の設計の F-1（錯乱ジム。[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)）とは別のものです。
+2026-11-13。[vai-batch-s1 の拒否の監査](history/verification-ai-batch-s1-rejection-audit.md) 3.3 節の F-1 を直しました。U7-5 の設計の F-1（錯乱ジム。[chaos-gym-borrow-t-f1.md](chaos-gym-borrow-t-f1.md)）とは別のものです。
 
 - 直したのは、候補の保証の文（`guarantees`）と実装の対応だけです。ゲームの処理・拒否の判定・裁定は変えていません。
 - 候補・選べるものの有無・順序・参照・入力の形、処理可能性と理由、inputs・check・submit の判定、エンジンの状態遷移・乱数の消費は変わりません。
@@ -127,7 +127,7 @@
 ## 9. 未確認・残件
 
 - new_game からの対戦で、うらのバトル場のワザの候補の新しい文を見た記録はありません（構築盤面と導入スモークだけ）。
-- LOST_TARGET の根拠の登録・judge の規則 7（[S1 監査](verification-ai-batch-s1-rejection-audit.md) 4 章と、証跡の `judge_proposal_lost_target.md`）は別の単位です。
+- LOST_TARGET の根拠の登録・judge の規則 7（[S1 監査](history/verification-ai-batch-s1-rejection-audit.md) 4 章と、証跡の `judge_proposal_lost_target.md`）は別の単位です。
 - うらのバトル場のワザの拒否のための judge の専用の規則（今は一般の規則で正常な拒否と判定）も、別の単位です。
 - ほかの保証の文の整理はしていません。
 

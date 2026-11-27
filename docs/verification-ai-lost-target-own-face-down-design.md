@@ -5,7 +5,7 @@
 - 調査・設計・文書化だけです。judge・エンジン・runner の実装、テスト、ビルド、replay の再実行、対戦、seed の探索はしていません。
 - `kyuura_engine`・`tools.verification_ai` は import していません。コード・文書・保存済みの JSON を読み、静的に調べました。補助のスクリプトは証跡の側にあります（12 章）。
 - 今の undetermined を急いで known_stop に変えるための文書ではありません。根拠が足りなければ undetermined を続けることも、正式な選択肢です（10 章）。
-- 前の監査: [verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) 4 章と、証跡 `vai-batch-s1-reject-audit/judge_proposal_lost_target.md` の変更案。この文書は、その案の条件 5（本当のカードがたねでないこと）の扱いを決め、条件を実装できる粒度にします。
+- 前の監査: [verification-ai-batch-s1-rejection-audit.md](history/verification-ai-batch-s1-rejection-audit.md) 4 章と、証跡 `vai-batch-s1-reject-audit/judge_proposal_lost_target.md` の変更案。この文書は、その案の条件 5（本当のカードがたねでないこと）の扱いを決め、条件を実装できる粒度にします。
 
 ## 1. 基点
 

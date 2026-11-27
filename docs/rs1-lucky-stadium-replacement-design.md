@@ -53,7 +53,7 @@
 
 ## 4. 旧 TR3・TR6 監査の `use_stadium` の再照合
 
-旧監査（[tr3-unresolved-batch-plan](tr3-unresolved-batch-plan.md) 13.5 節・[tr6-unresolved-batch-plan](tr6-unresolved-batch-plan.md)）は、`use_stadium` の除外をコード不明にしていました。候補の記録に停止のコードがなく（`legal_actions._stadium_found` は理由を `stops_before_acceptance` にするだけ）、prestop も段がない（no_stages）ためです。今回は保存済みの局の観測から、場のスタジアム・`stadium_uses_this_turn`・`trainer_locks`・場のポケモンの card_id・トラッシュのカードを読みました。5 章の判定の順番に当てはめ、条件がそろった局面だけを RS1 に対応づけています。
+旧監査（[tr3-unresolved-batch-plan](tr3-unresolved-batch-plan.md) 13.5 節・[tr6-unresolved-batch-plan](history/tr6-unresolved-batch-plan.md)）は、`use_stadium` の除外をコード不明にしていました。候補の記録に停止のコードがなく（`legal_actions._stadium_found` は理由を `stops_before_acceptance` にするだけ）、prestop も段がない（no_stages）ためです。今回は保存済みの局の観測から、場のスタジアム・`stadium_uses_this_turn`・`trainer_locks`・場のポケモンの card_id・トラッシュのカードを読みました。5 章の判定の順番に当てはめ、条件がそろった局面だけを RS1 に対応づけています。
 
 | 監査 | 読んだ局 | 延べ | 取り直し除外後 | 局面 | 局 | 実測 | 静的に RS1 | コード不明 | 旧集計 |
 |---|---|---|---|---|---|---|---|---|---|

@@ -3,7 +3,7 @@
 2026-11-15。設計・文書化だけです。実装・テスト・対戦・judge・replay・裁定の決定はしていません。`kyuura_engine`・`tools.verification_ai` は import していません（コード・文書・保存済みの JSON を文字として読み、少量の例を読み取り専用のスクリプトで確かめただけ）。→ 同じ日の追記: 4 章の派生の記録を作る読み取り専用のスクリプトを証跡の側に実装し、x1 の 4 局に当てた（L1〜L7 成立）。結果は 8 章です。0〜7 章は設計の時点の記述のままです。
 
 - 基点: `claude/prestop-three-trainers` の `a9806d2`（origin と一致。main `b1e4430` の子孫で main に入っていない。取り込み・削除・更新はない。コードは x1 の実行コミット `6ac3d3d` と差 0）。作業は worktree `C:\dev\kyuura-engine-lt35`・ブランチ `claude/prestop-observation-link`。
-- 前提: [3 枚の未裁定の整理](prestop-three-trainers.md)・[記録の設計と実装](prestop-record-design.md) 11 章・[x1 の結果](prestop-first-batch-plan.md) 9 章。
+- 前提: [3 枚の未裁定の整理](prestop-three-trainers.md)・[記録の設計と実装](prestop-record-design.md) 11 章・[x1 の結果](history/prestop-first-batch-plan.md) 9 章。
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/prestop-observation-link/`（事前計画・`scripts/feasibility.py`・`out/feasibility.json`）。
 
 ## 0. 結論

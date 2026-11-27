@@ -1,6 +1,6 @@
 # 検証用 AI の V2（小さなルールの方策とランダムとの混合）
 
-[仕様](verification-ai-design.md)・[実装計画](verification-ai-implementation-plan.md) の V2 を実装しました。目的は勝率の向上ではなく、対戦を深く進めながらランダムの行動も交えて、
+[仕様](verification-ai-design.md)・[実装計画](history/verification-ai-implementation-plan.md) の V2 を実装しました。目的は勝率の向上ではなく、対戦を深く進めながらランダムの行動も交えて、
 エンジンの問題を見つけることです。V3 以降（`boundary`・`negative`・双子・広い対象・最小化）は開始していません。V1 の内容は [verification-ai-v1.md](verification-ai-v1.md)。
 
 この文書の 1 章〜5 章は対戦の実行の前に書き、コードと同じコミットに入れました（優先順位・混合の単位・計画を結果を見て変えないため）。6 章以降は実行のあとに書きました。

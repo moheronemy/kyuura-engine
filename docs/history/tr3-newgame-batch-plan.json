@@ -1,0 +1,223 @@
+{
+ "status": "draft",
+ "not_a_confirmed_plan": true,
+ "doc": "docs/history/tr3-newgame-batch-plan.md",
+ "purpose": "new_game の通常の対戦で CS-KYUURA-PLAY-TR3@1 を選び、規約による使用不可の選択肢を避けながら局が進むかを確かめる（構築盤面の再証明ではない）",
+ "base": {
+  "branch": "claude/status-ledger-v0187",
+  "commit": "915132a",
+  "code_equals_distribution_commit": "d562ec16e3f493569ed0251cbcf9062ceccdbb1a"
+ },
+ "expected_identity": {
+  "engine_version": "0.187.0",
+  "behavior_digest_prefix": "ae974fff",
+  "instrumentation_digest_prefix": "13c773a8",
+  "tool_version": 11,
+  "tool_digest_prefix": "6e0616cc",
+  "judge_rules_version": 8,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "p1_basis_prefix": "2ed8732f",
+  "p3_basis_prefix": "9499db41"
+ },
+ "plan": {
+  "batch_id": "vai-batch-tr3n1",
+  "decks": {
+   "0": "decklist L67-U (vai-batch-d/decklists/decklist-L67-U.json, sha256 097b7db9621cc28e..., content 72690ceea389..., expansion 5fb91539...)",
+   "1": "same as 0"
+  },
+  "modes": [
+   "rules-v2",
+   "boundary"
+  ],
+  "conventions": {
+   "key": "CS-KYUURA-PLAY-TR3@1",
+   "digest_prefix": "sha256:a7b800cf",
+   "usage": "development",
+   "members": 23,
+   "tr3_members": [
+    "PC-GUST-WITHOUT-OPPONENT-BENCH@1",
+    "PC-SWITCH-WITHOUT-BENCH@1",
+    "PC-POTION-WITHOUT-DAMAGE@1"
+   ]
+  },
+  "seeds": [
+   9002,
+   9003
+  ],
+  "seed_rule": "9002 から上へ、連続 2 値がどちらも未使用の最初の組（保存済みの plan.json・header.json 336 ファイル・24 ストア。9000〜9100 は 9001 だけ使用）",
+  "order": [
+   "g001 rules-v2 9002",
+   "g002 boundary 9002",
+   "g003 rules-v2 9003",
+   "g004 boundary 9003"
+  ],
+  "games": 4,
+  "game_limits": "default runner.Limits (operations 2000, accepted 1000, turns 200, seconds 120)",
+  "batch_limits": {
+   "max_games": 4,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "game_reserve_seconds": "default 150",
+   "evidence_reserve_mib": "default 64"
+  },
+  "observation": true,
+  "prestop_inputs": {
+   "enabled": true,
+   "limits": "default (256 fetches, 16384 bytes, 1 MiB)"
+  },
+  "undetermined_evidence_missing": "continue",
+  "negative": false,
+  "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-tr3n1 --engine-commit <HEAD> --tool-commit <HEAD> --seeds 9002 9003 --modes rules-v2 boundary --decklist0 <L67-U> --decklist1 <L67-U> --conventions CS-KYUURA-PLAY-TR3@1 --max-games 4 --budget-seconds 300 --evidence-max-mb 512 --observation --prestop-inputs --undetermined-evidence-missing continue",
+  "not_included": [
+   "CURRENT との比べの対戦",
+   "規約の有効・無効の比べ",
+   "デッキの改造",
+   "未出現のときの追加の局"
+  ]
+ },
+ "s1_cache": {
+  "dir_pattern": "C:\\dev\\kyuura-engine-pyc-cache\\bae974ff-t6e0616c-cpython-314-<HEAD7>-tr3n1",
+  "prepare_script": "vai-batch-x1-run/scripts/prepare_pyc_cache_x1.py (copy, as is)",
+  "run_script": "vai-batch-x1-run/scripts/run_seq_pyc_x1.py --sessions 1 (copy, as is)",
+  "per_game_checks": [
+   "cache_same.py",
+   "check_game.py"
+  ],
+  "dry_run_required": true,
+  "capacity_rule": "max(128 MiB, largest saved complete attempt x 1.5) for both remaining and disk free"
+ },
+ "evidence_side_changes": {
+  "check_plan": "copy of vai-batch-x1-run/scripts/check_plan_x1.py with expected values changed only (conventions TR3 and digest, seeds 9002 9003, batch id)",
+  "analyze_tr3": "new read-only script in the run unit (T1-T6)",
+  "engine_or_tool_changes": "none"
+ },
+ "convention_exclusion_sources": {
+  "direct": "actors/<actor>.jsonl attempt rows: inputs.response.stages[].options[] with eligible false and convention = PC-* (chosen candidate only)",
+  "indirect": "candidates.response.candidates[] play_trainer not_implemented with reason no_eligible_card; evaluate 3 conditions from own observation at the same (episode, position). Not a record of the convention itself",
+  "not_prestop": "prestop records only candidates whose processability is unresolved_ruling; TR3 exclusions are not_implemented and are not in prestop"
+ },
+ "optional_minimal_change_not_recommended": "extend prestop targets to play_trainer not_implemented/no_eligible_card (changes tool identity, TOOL_VERSION and formats; needs limited tests and fixed fingerprints)",
+ "post_run_tables": {
+  "T1": "TR3 in plan, header, full_record, aggregate (direct)",
+  "T2": "terminations (direct)",
+  "T3": "per convention appearance: direct and indirect separately; units: options (total), games, positions (actor, position); retries and multiple copies separately",
+  "T4": "excluded options not in choice/check/submit; no refusal codes NO_OPPONENT_BENCH, NO_BENCH, NO_DAMAGE_COUNTERS (direct)",
+  "T5": "progress with usable options (direct)",
+  "T6": "out-of-scope unresolved, refusals, stops (direct)"
+ },
+ "acceptance": {
+  "validity": {
+   "V1": "run commit code equals d562ec1, no changes, identity as expected",
+   "V2": "4 planned games with CS-KYUURA-PLAY-TR3@1 and digest, fixed by plan.sha256",
+   "V3": "header convention_set is TR3 for each completed game",
+   "V4": "completion marker, judge, replay, observation, prestop R1-R6 hold",
+   "V5": "cache unchanged"
+  },
+  "to_confirm": {
+   "C1": "no convention-excluded option in choice/check/submit (stop and report if any)",
+   "C2": "zero refusals with the 3 convention codes",
+   "C3": "games progressed using usable options"
+  },
+  "count_only": [
+   "terminations",
+   "per-convention appearance (direct/indirect/not appeared)",
+   "out-of-scope unresolved and stops",
+   "fetch status",
+   "time and size"
+  ],
+  "not_pass_conditions": [
+   "3 conditions appear",
+   "all games game_over"
+  ]
+ },
+ "stop_policy": {
+  "limits_reached": "record as termination and continue (default)",
+  "prestop_capped": "note and continue",
+  "record_failure": "stop after saving the game",
+  "reconcile_mismatch_or_missing": "stop",
+  "suspect_state_replay_contract": "stop (default)",
+  "outer_check_failure": "do not call the next game",
+  "acknowledge_stop_unlock_budget_extension": "never automatic",
+  "extra_games_if_not_appeared": "never"
+ },
+ "unverified_before_run": {
+  "run_commit": null,
+  "code_diff_vs_d562ec1": null,
+  "identity_matches": null,
+  "deck_problems_at_run": null,
+  "plan_sha256": null,
+  "games_conventions_in_plan": null,
+  "cache_dir": null,
+  "cache_prepare_record": null,
+  "dry_run_use_cache": null,
+  "disk_free_bytes": null,
+  "outer_script_sha256": null
+ },
+ "expected_not_guaranteed": {
+  "seconds_total_upper_guess": 60,
+  "evidence_mb_upper_guess": 100,
+  "basis": "x1 (0.185.0, same decks and modes, observation and prestop): game 0.33-9.24 s, accounted 36.187 s, evidence 47.2 MB for 4 games"
+ },
+ "execution": {
+  "status": "executed",
+  "chapter": 10,
+  "run_commit": "f69459a23e3898b3f2dbd1a1a3e6aecc9feef290",
+  "plan_sha256": "96332e6092d1c3cf8cd642346ca08683a3dc52742888c53757b10ccd287bb917",
+  "cache_dir": "C:\\dev\\kyuura-engine-pyc-cache\\bae974ff-t6e0616c-cpython-314-f69459a-tr3n1",
+  "cache_files": 185,
+  "cache_bytes": 13792512,
+  "games": {
+   "planned": 4,
+   "complete": 4,
+   "complete_with_stop": 0,
+   "not_started": 0,
+   "attempts_each": 1,
+   "terminations": {
+    "game_over": 4
+   }
+  },
+  "accounted_seconds": 35.537,
+  "game_seconds_sum": 21.965,
+  "outer_wall_seconds": 38.25,
+  "prestop_seconds": 0.001194,
+  "peak_working_set_bytes_max": 205819904,
+  "game_evidence_bytes": 51036691,
+  "validity": {
+   "V1": true,
+   "V2": true,
+   "V3": true,
+   "V4": true,
+   "V5": true
+  },
+  "to_confirm": {
+   "C1": "0 excluded options chosen/checked/submitted (883 chosen options)",
+   "C2": "0 refusals",
+   "C3": "accepted 736, play_trainer 86"
+  },
+  "direct_by_convention": {
+   "PC-GUST-WITHOUT-OPPONENT-BENCH@1": {
+    "games": 3,
+    "options": 18,
+    "positions": 12
+   },
+   "PC-SWITCH-WITHOUT-BENCH@1": {
+    "games": 3,
+    "options": 10,
+    "positions": 10
+   },
+   "PC-POTION-WITHOUT-DAMAGE@1": {
+    "games": 3,
+    "options": 28,
+    "positions": 24
+   }
+  },
+  "no_eligible_card": {
+   "rows": 141,
+   "positions": 117,
+   "chosen": 0,
+   "indirect_linked": 117
+  },
+  "evidence": "verifier/runs/vai-batch-tr3n1-run/"
+ }
+}

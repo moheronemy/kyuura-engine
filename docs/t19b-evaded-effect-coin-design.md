@@ -5,7 +5,7 @@
 - **対象:** TR6 の監査の本実行の C3・seed 9017 の局（`vai-batch-tr6a-m3` の `g004-rules-v2-s9017`）で、フーディン（PMCG1-049）の［あやしいひかり］が `UNRESOLVED_EVADED_EFFECT_COIN`（裁定 T19b。kyuura の論点 `UQ-COIN-IN-NULLIFIED-ELEMENT`）で拒否された場面です。
 - **照合表:** [t19b-evaded-effect-coin-design.json](t19b-evaded-effect-coin-design.json)。**証跡:** `kyuura-engine-verification-vai/verifier/runs/t19b-evaded-effect-coin-design/`。
 - **2026-11-22 の追記:** 利用者が案 B を採用し、0.197.0 で実装しました（規約 `PC-T19B-NULLIFIED-STATUS-COIN@1`・集合 `CS-KYUURA-PLAY-TR7@1`。[v0.197 の文書](play-convention-tr7-v0.197.md)・8 章）。下の 0〜7 章は設計の時点の記録のまま残します（仮の名前 `PC-EVADED-STATUS-COIN`・TR7 は 8 章の名前に置きかわりました）。
-- **関連:** [TR6 の監査の計画と結果](tr6-unresolved-batch-plan.md)（13 章）・[「とうめい」の裁定](transparency-v0.9.md)（T19b）・[プレイ用規約の族の計画](play-policy-family-plan.md)（`PC-NULLIFIED-ELEMENT-COIN`）。
+- **関連:** [TR6 の監査の計画と結果](history/tr6-unresolved-batch-plan.md)（13 章）・[「とうめい」の裁定](transparency-v0.9.md)（T19b）・[プレイ用規約の族の計画](play-policy-family-plan.md)（`PC-NULLIFIED-ELEMENT-COIN`）。
 
 ## 0. 先に結論
 

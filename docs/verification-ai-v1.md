@@ -1,6 +1,6 @@
 # 検証用 AI の V1（ランダムの分布と到達範囲の計測）
 
-[仕様](verification-ai-design.md)・[実装計画](verification-ai-implementation-plan.md) の V1 を実装しました。目的は、検証用 AI のランダムの選択の分布と、到達範囲・選択の過程を
+[仕様](verification-ai-design.md)・[実装計画](history/verification-ai-implementation-plan.md) の V1 を実装しました。目的は、検証用 AI のランダムの選択の分布と、到達範囲・選択の過程を
 測れるようにすることです。ルールの方策・混合の方策（V2）、`boundary`・`negative`（V3）、双子（V4）は実装していません。V0 の内容は [verification-ai-v0.md](verification-ai-v0.md)。
 
 ## 1. 基点と範囲

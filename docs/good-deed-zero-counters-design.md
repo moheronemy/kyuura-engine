@@ -5,7 +5,7 @@
 - **対象:** ナツメのルージュラ（PMCG6-052）の［よいおこない］で、ダメージカウンターののった相手のポケモンを選んだあと、とりのぞく数の決定（`remove_counters`）に 0 で答える場面です（停止コード `UNRESOLVED_DISCARD_ANY_NUMBER_ZERO`。裁定 HC5 と同じ問い。kyuura の論点 `UQ-UP-TO-ZERO-CHOICE`）。
 - **対象外:** 同じ停止コードを使うほかのワザ・トレーナー（6 章）、コピー・変身でこのワザを使う経路、ER9・H4 の規約、ほかの「最大N枚」の場面。
 - **照合表:** [good-deed-zero-counters-design.json](good-deed-zero-counters-design.json)。**証跡:** `kyuura-engine-verification-vai/verifier/runs/vai-gooddeed-zero-run/`。
-- **主資料:** TR8 の本監査の C3（`vai-batch-tr8a-m3`）の 2 局と、[TR8 の監査の計画と結果](tr8-unresolved-batch-plan.md) 13 章。本監査の実行コミットは `a3583786cf93ee67ce95b94a5b94505f5fcef1b0`（0.198.0）です。2 局とも局の header で確かめました。基点の `kyuura_engine`・`pyproject.toml` は、このコミットと差が 0 です（下の行番号はどちらにも当たる）。
+- **主資料:** TR8 の本監査の C3（`vai-batch-tr8a-m3`）の 2 局と、[TR8 の監査の計画と結果](history/tr8-unresolved-batch-plan.md) 13 章。本監査の実行コミットは `a3583786cf93ee67ce95b94a5b94505f5fcef1b0`（0.198.0）です。2 局とも局の header で確かめました。基点の `kyuura_engine`・`pyproject.toml` は、このコミットと差が 0 です（下の行番号はどちらにも当たる）。
 
 ## 0. 先に結論
 

@@ -1,7 +1,7 @@
 # ［エナジートランス］で、ワザや「にげる」の費用に近づく移動を優先する設計（rules-v8 の案）
 
 - 日付: 2026-11-26
-- 基点: `claude/tr8-rules-v7-9056-et-analysis` の `61cca98`（[tr8-rules-v7-9056-energy-trans-analysis](tr8-rules-v7-9056-energy-trans-analysis.md)）
+- 基点: `claude/tr8-rules-v7-9056-et-analysis` の `61cca98`（[tr8-rules-v7-9056-energy-trans-analysis](history/tr8-rules-v7-9056-energy-trans-analysis.md)）
 - 実行時のコード: `24c5728`（0.198.0・道具の版 18）。読むだけで、実装・構築盤面・対戦はしていない
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/vai-tr8v8d-run/`
 - 機械可読の要約: [tr8-energy-trans-progress-policy-design.json](tr8-energy-trans-progress-policy-design.json)

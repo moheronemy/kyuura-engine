@@ -1,6 +1,6 @@
 # 検証用 AI の V3-2（カツラの固定の到達例: options_by_path と BoundaryPolicy）
 
-[V3 の仕様と計画](verification-ai-v3-design.md) の V3-2 を、既存のカツラの固定の到達例に絞って実装しました。`options_by_path` の正常な入力と不正な入力を確かめ、boundary の
+[V3 の仕様と計画](history/verification-ai-v3-design.md) の V3-2 を、既存のカツラの固定の到達例に絞って実装しました。`options_by_path` の正常な入力と不正な入力を確かめ、boundary の
 対象へ届いたかを分けて記録します。構築した盤面・seed の探索・広いデッキと規約集合・R-B・V3-3 以降は対象外です。V3-1 は [verification-ai-v3-1.md](verification-ai-v3-1.md)。
 
 1 章〜7 章は対戦の実行の前に書き、コードと同じコミットに入れました。8 章以降は実行のあとに書きます。指示の最後の文は「必要な場面の確認後は計」で途切れていたので、

@@ -352,7 +352,7 @@
 
 - 枠 A の undetermined 2 件は、どちらも boundary の局の特殊能力の送信で、理由は `stop_condition_not_evidenced:UNSUPPORTED_SECRET_PLAN_LOST_TARGET` です。
   - 停止方針の `evidence_missing_stop: continue` で続けました。known_stop へ変更していません。
-  - 拒否 8 件・undetermined 2 件・再送回避 5 件の、保存済みの記録による確認は [verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) です。
+  - 拒否 8 件・undetermined 2 件・再送回避 5 件の、保存済みの記録による確認は [verification-ai-batch-s1-rejection-audit.md](history/verification-ai-batch-s1-rejection-audit.md) です。
 
 ### 9.4 枠 A: 通常の進行の結果
 
@@ -473,13 +473,13 @@
   - 異なる到達例・未到達例として二重に評価しません。未到達の理由の主体ごとの件数には、2 局がそれぞれの方式の側で入っています。
   - 同じ seed による対戦の統計的独立性は仮定しません。
   - 元の「独立な 2 局として数えません」は、実行件数を減らす意味ではありません。
-- 枠 A の拒否 8 件・undetermined 2 件・再送回避 5 件の確認は [verification-ai-batch-s1-rejection-audit.md](verification-ai-batch-s1-rejection-audit.md) です（保存済みの記録の読み取りだけ）。
+- 枠 A の拒否 8 件・undetermined 2 件・再送回避 5 件の確認は [verification-ai-batch-s1-rejection-audit.md](history/verification-ai-batch-s1-rejection-audit.md) です（保存済みの記録の読み取りだけ）。
 
 ## 10. 次の計画での参照（2026-11-14 追記）
 
 - エンジン 0.181.0・規則 8 の次の小規模バッチ（枠 A 6 局・枠 B 8 局、観測の記録つき）の見積もりは、この文書の s1・s2 の実測と r1・r2 を参照した: [verification-ai-batch-plan-p3s-v0181.md](verification-ai-batch-plan-p3s-v0181.md) 5 章。
 - この文書の見積もり・実行結果の数値は変えていない。
-- その実行で開始の照合が 1 セッションあたり約 11.7 秒（この文書の s1・s2 は 1.6〜2.0 秒）になった原因の調査と改善案: [verification-ai-startup-check-investigation.md](verification-ai-startup-check-investigation.md)（pyc を書けない `-B` での毎回のコンパイル。完全な照合は変えない案 S-1 を推奨）。
+- その実行で開始の照合が 1 セッションあたり約 11.7 秒（この文書の s1・s2 は 1.6〜2.0 秒）になった原因の調査と改善案: [verification-ai-startup-check-investigation.md](history/verification-ai-startup-check-investigation.md)（pyc を書けない `-B` での毎回のコンパイル。完全な照合は変えない案 S-1 を推奨）。
 - S-1 を次のバッチの外側の手順にした: [verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md)（準備の時間・容量は道具の累積時間・ゲームの証跡と別に記録する）。
 - その手順の実運用（vai-batch-u1・4 局）: 開始の照合 1 セッション 1.6〜1.7 秒・単独の最終集計 1.9 秒（[verification-ai-pyc-cache-procedure.md](verification-ai-pyc-cache-procedure.md) 9 章）。
 - 次の小規模バッチ（w1〜w3。9 局・600 秒・832 MiB）の見積もりは、t1・u1・C1・C2・b2・s2 の実測を参照した: [verification-ai-coverage-inventory-next-batch.md](verification-ai-coverage-inventory-next-batch.md) 5.2 節。

@@ -5,7 +5,7 @@
 - 実装: `280660b`（道具の版 19。エンジン 0.198.0・規約集合 CS-KYUURA-PLAY-TR8@1）
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/vai-tr8v8-run/`、対戦の 2 計画 `vai-batch-tr8v8-v7`・`vai-batch-tr8v8-v8`
 - 機械可読: [同名の JSON](tr8-energy-trans-progress-policy-experiment.json)
-- 続き: C2 の未使用 seed 8 組での比較は [tr8-rules-v8-fresh-seed-comparison](tr8-rules-v8-fresh-seed-comparison.md)
+- 続き: C2 の未使用 seed 8 組での比較は [tr8-rules-v8-fresh-seed-comparison](history/tr8-rules-v8-fresh-seed-comparison.md)
 
 ## 0. 結論
 

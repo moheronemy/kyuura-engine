@@ -1,6 +1,6 @@
 # 次のバッチの外側の実行手順: 外部の pyc キャッシュ（S-1）
 
-2026-11-14。[開始の照合の時間の調査](verification-ai-startup-check-investigation.md) の改善案 S-1 を、次のバッチの外側の実行手順として整え、対戦なしで効果と安全性を確かめました。
+2026-11-14。[開始の照合の時間の調査](history/verification-ai-startup-check-investigation.md) の改善案 S-1 を、次のバッチの外側の実行手順として整え、対戦なしで効果と安全性を確かめました。
 エンジン・検証用 AI のコード、既存の計画、保存済みの証跡は変えていません。新しい対戦・`batch run`・元のバッチへの `aggregate` はしていません。
 
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/vai-pyc-cache-procedure/`（事前計画 `00_plan.md`、スクリプト `scripts/`、生の結果と比較 `raw/`、作業の記録 `commands.txt`）。
