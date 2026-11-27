@@ -1,0 +1,614 @@
+{
+ "status": "analysis_only",
+ "doc": "docs/tr8-rainbow-as-basic-energy-stop-analysis.md",
+ "date": "2026-11-27",
+ "base": "cdf9f3d2d8a2f5988a915089708ffd6ed4083302",
+ "branch": "claude/tr8-rainbow-as-basic-energy-stop-analysis",
+ "execution_commit": "280660be69630d5a9007e11e1022db3f221630b1",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 19,
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "mode": "rules-v7",
+  "policy": "rules"
+ },
+ "game": {
+  "batch": "vai-batch-tr8v8x-p2-v7",
+  "game": "g001-rules-v7-s9083",
+  "condition": "different_colour",
+  "decks": {
+   "0": "C116",
+   "1": "R58"
+  },
+  "seed": 9083
+ },
+ "sources": {
+  "run": "vai-tr8v8x-run",
+  "records": [
+   "trace.jsonl",
+   "actors/0.jsonl",
+   "full_record.json",
+   "observe/",
+   "prestop/",
+   "judge.json",
+   "result.json",
+   "ledger.jsonl",
+   "aggregate.json"
+  ],
+  "kyuura_research_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+  "kyuura_files": [
+   "data/sidecar/rulings.json",
+   "data/sidecar/latest_descriptions.json",
+   "data/sidecar/card_checks.json"
+  ],
+  "code": [
+   "kyuura_engine/resolution/flow.py",
+   "kyuura_engine/resolution/programs.py (MoveOpponentFieldEnergy)",
+   "kyuura_engine/effects.py (FailOnTailsMoveOpponentFieldEnergy, opponent_field_energy_options, RAINBOW_BASIC_*)",
+   "kyuura_engine/resolution/questions.py:250",
+   "tools/verification_ai/runner.py (_episode_loop, _scope)",
+   "tools/verification_ai/policies.py (PRIORITY, RulePolicy)",
+   "tools/verification_ai/batch.py (undetermined_category, stop_reasons)",
+   "tools/verification_ai/judge.py (_known_stop_or_undetermined)"
+  ]
+ },
+ "before_checks": {
+  "evidence_files": 22465,
+  "evidence_aggregate": "8c23dd3901a6ec820903e8ba8e48f46e44c96d408096106a7cedc50c11700869",
+  "manifest_stores": 25,
+  "manifest_mismatches": 0
+ },
+ "answer": {
+  "unresolved_attack": {
+   "card_id": "PR1-022",
+   "pokemon": "ミュウツー",
+   "attack": "エナジーコントロール",
+   "attack_index": 0,
+   "user_seat": 0,
+   "process": "choosing the opponent's field energy card '(特殊エネルギー以外)' to remove (MoveOpponentFieldEnergy.run, heads branch of the preflight)",
+   "ruling": "RB3",
+   "code": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+  },
+  "decided_before": [
+   "check_use_attack (valid)",
+   "tails = attack fails",
+   "special energy other than Rainbow excluded (Double Colorless Energy)",
+   "attack cost paid by basic psychic energy"
+  ],
+  "needed_basic_card_judgement": "whether the Rainbow Energy attached to the opponent's benched Pokemon is selectable as a non-special (basic) energy card; it was the only candidate",
+  "rejections_sent": 1,
+  "reselections_same_input": 63,
+  "reselections_called_check": 0,
+  "reselections_called_submit": 0,
+  "termination": "no_progress (draws_per_position 64, rejections 1)",
+  "stopped_by": "undetermined:no_progress:1 (the rejection itself was undetermined:evidence_missing_stop -> continue)",
+  "alternatives_confirmed_executable": 0,
+  "alternatives_offered_in_scope": [
+   "retreat (supported, inputs not fetched)",
+   "end_turn (no input)"
+  ],
+  "sources_decide": false,
+  "recommendation": "C",
+  "energy_trans_cost_audit_related": false
+ },
+ "attack": {
+  "card_id": "PR1-022",
+  "name_ja": "ミュウツー",
+  "attack": "エナジーコントロール",
+  "attack_index": 0,
+  "user_seat": 0,
+  "user_pokemon_id": 3,
+  "attacker_energy_units": [
+   [
+    "grass"
+   ],
+   [
+    "psychic"
+   ]
+  ],
+  "card_attacks": [
+   {
+    "name_ja": "エナジーコントロール",
+    "cost": [
+     "psychic"
+    ]
+   },
+   {
+    "name_ja": "テレキネシス",
+    "cost": [
+     "psychic",
+     "psychic",
+     "psychic"
+    ]
+   }
+  ],
+  "stage1_options": [
+   "エナジーコントロール"
+  ],
+  "stage2_options": [],
+  "declared_input": [
+   "o1"
+  ],
+  "command": {
+   "attack_index": 0,
+   "card": 20,
+   "player": 0,
+   "type": "use_attack"
+  }
+ },
+ "opponent_field_energy_at_stop": [
+  {
+   "pokemon_id": 10,
+   "pokemon": "フシギダネ",
+   "card": 82,
+   "card_id": "PMCG1-096",
+   "name_ja": "無色2個エネルギー",
+   "category": "energy",
+   "energy_kind": "special",
+   "pokemon_energy_units": [
+    [
+     "colorless"
+    ],
+    [
+     "colorless"
+    ],
+    [
+     "fighting",
+     "fire",
+     "grass",
+     "lightning",
+     "psychic",
+     "water"
+    ]
+   ],
+   "energy_control_option": "special_excluded"
+  },
+  {
+   "pokemon_id": 10,
+   "pokemon": "フシギダネ",
+   "card": 79,
+   "card_id": "PMCG4-065",
+   "name_ja": "レインボーエネルギー",
+   "category": "energy",
+   "energy_kind": "special",
+   "pokemon_energy_units": [
+    [
+     "colorless"
+    ],
+    [
+     "colorless"
+    ],
+    [
+     "fighting",
+     "fire",
+     "grass",
+     "lightning",
+     "psychic",
+     "water"
+    ]
+   ],
+   "energy_control_option": "rainbow_rb3"
+  }
+ ],
+ "energy_control_option_classes": {
+  "special_excluded": 1,
+  "rainbow_rb3": 1
+ },
+ "all_selectable_are_rainbow": true,
+ "check": {
+  "contract": "kyuura-client-api",
+  "format": 1,
+  "ok": true,
+  "refetch_required": false,
+  "response": {
+   "refusal": null,
+   "valid": true
+  },
+  "type": "check"
+ },
+ "submit": {
+  "error": null,
+  "ok": true,
+  "outcome": "rejected",
+  "refetch_required": false,
+  "refusal": null,
+  "result": {
+   "case_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+   "case_status": "identified",
+   "category": "unresolved_ruling",
+   "continuable": true,
+   "convention_set": {
+    "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+    "id": "CS-KYUURA-PLAY-TR8",
+    "version": 1
+   },
+   "diagnostic_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+   "halt": null,
+   "kyuura_diagnostic_schema": 1,
+   "message": "この場面の扱いは、基準のルールと記録からは決まらないため、エンジンはこの操作を受け付けません。",
+   "next": [
+    {
+     "kind": "turn_action",
+     "player": 0
+    }
+   ],
+   "operation_id": "g001-rules-v7-s9083-000097",
+   "outcome": "rejected",
+   "role": "actor",
+   "stage": "turn_action",
+   "status": "in_progress",
+   "subkind": null,
+   "viewer": 0
+  },
+  "verifier": {
+   "category": "unresolved_ruling",
+   "diagnostic_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+   "engine_code": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+  }
+ },
+ "state_rng_log_unchanged_by_reject": true,
+ "state_before_reject": {
+  "decision": null,
+  "halt": null,
+  "log_length": 251,
+  "rng": "793be81c74d4e9ffc5ef940200696095551f2eb7b22e0d50d2536b1016503b99",
+  "segment": 0,
+  "state": "fb0d12a969e2bdc5004a49b532c436338994931db86ac477485d67822a5024f6",
+  "status": "in_progress"
+ },
+ "view_entries": {
+  "view-0": 98,
+  "view-1": 97,
+  "view-spectator": 97
+ },
+ "view_note": "seat 0 has one extra own_rejection entry; seat 1 and spectator have none; anomalies 0",
+ "attempts_at_stop": [
+  {
+   "build": "ok",
+   "candidate": "c3",
+   "check_called": true,
+   "submit_called": true,
+   "count": 1
+  },
+  {
+   "build": "ok_already_tried",
+   "candidate": "c3",
+   "check_called": false,
+   "submit_called": false,
+   "count": 63
+  }
+ ],
+ "episode_at_stop": [
+  {
+   "actor": 0,
+   "attempts": 64,
+   "episode": 97,
+   "mode": "rule",
+   "policy": "rules",
+   "position": 96,
+   "result": "no_progress",
+   "type": "episode"
+  }
+ ],
+ "candidates_at_stop": [
+  {
+   "id": "c1",
+   "kind": "end_turn",
+   "processability": "may_stop_later",
+   "input_disclosure": "no_input"
+  },
+  {
+   "id": "c2",
+   "kind": "retreat",
+   "processability": "supported",
+   "input_disclosure": "confirmed"
+  },
+  {
+   "id": "c3",
+   "kind": "use_attack",
+   "processability": "may_stop_later",
+   "input_disclosure": "confirmed"
+  }
+ ],
+ "candidates_and_inputs_refetched": [
+  {
+   "candidates_same": true,
+   "inputs_same": true,
+   "choice": {
+    "candidate": "c3",
+    "choices": [
+     "o1"
+    ],
+    "picks": [
+     {
+      "index": 0,
+      "items": 1,
+      "purpose": "option",
+      "reason": "uniform:option",
+      "stage": 1
+     }
+    ],
+    "reason": "rule7:priority4:use_attack"
+   },
+   "count": 1
+  },
+  {
+   "candidates_same": false,
+   "inputs_same": true,
+   "choice": {
+    "candidate": "c3",
+    "choices": [
+     "o1"
+    ],
+    "picks": [
+     {
+      "index": 0,
+      "items": 1,
+      "purpose": "option",
+      "reason": "uniform:option",
+      "stage": 1
+     }
+    ],
+    "reason": "rule7:priority4:use_attack"
+   },
+   "count": 63
+  }
+ ],
+ "alternatives": [
+  {
+   "move": "same attack, other input",
+   "offered": false,
+   "why": "stage 1 offers only エナジーコントロール; stage 2 (declaration options) is empty; the energy to remove is a decision after acceptance",
+   "chosen": 0,
+   "inputs_built": "n/a",
+   "sent": 0,
+   "accepted": null
+  },
+  {
+   "move": "テレキネシス",
+   "offered": false,
+   "why": "not in stage 1 options (cost psychic x3; attached units grass + psychic)",
+   "chosen": 0,
+   "inputs_built": "n/a",
+   "sent": 0,
+   "accepted": null
+  },
+  {
+   "move": "retreat (c2)",
+   "offered": true,
+   "processability": "supported",
+   "chosen": 0,
+   "inputs_built": "not fetched",
+   "sent": 0,
+   "accepted": null,
+   "static": {
+    "retreat_cost_printed": 2,
+    "attached_units": 2,
+    "bench": 5,
+    "special_conditions": [],
+    "trainer_locks": [],
+    "units_cover_cost_static": true,
+    "note": "static reading of the public observation only; retreat inputs were not fetched at position 96, check / submit not called"
+   }
+  },
+  {
+   "move": "end_turn (c1)",
+   "offered": true,
+   "processability": "may_stop_later",
+   "input_disclosure": "no_input",
+   "chosen": 0,
+   "inputs_built": "no input needed",
+   "sent": 0,
+   "accepted": null
+  }
+ ],
+ "earlier_energy_control_uses": [
+  {
+   "n": 106,
+   "position": 88,
+   "turn": [
+    0,
+    24
+   ],
+   "build": "ok",
+   "outcome": "accepted"
+  },
+  {
+   "n": 111,
+   "position": 92,
+   "turn": [
+    0,
+    26
+   ],
+   "build": "ok",
+   "outcome": "accepted"
+  },
+  {
+   "n": 116,
+   "position": 96,
+   "turn": [
+    0,
+    28
+   ],
+   "build": "ok",
+   "outcome": "rejected"
+  }
+ ],
+ "earlier_uses_note": "turns 24 and 26: accepted, heads, no basic and no Rainbow on the opponent's field -> nothing removed; Rainbow attached on turn 27",
+ "stop_chain": {
+  "rejection_judge": [
+   {
+    "attempt": 116,
+    "category": "unresolved_ruling",
+    "diagnostic_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+    "engine_code": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+    "kind": "use_attack",
+    "outcome": "rejected",
+    "reasons": [
+     "stop_condition_not_evidenced:UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+    ],
+    "refusal": null,
+    "verdict": "undetermined"
+   }
+  ],
+  "termination": {
+   "at": {
+    "accepted": 96,
+    "attempt": 179,
+    "operations": 97,
+    "position": 96,
+    "turns": 28
+   },
+   "class": "no_progress",
+   "detail": {
+    "actor": 0,
+    "draws": 64,
+    "reason": "draws_per_position",
+    "rejections": 1
+   }
+  },
+  "aggregate_mentions_evidence_missing_stop_note": 2,
+  "ledger_policy_stop": [
+   {
+    "at": "2026-11-27T06:38:03+00:00",
+    "elapsed": 5.043,
+    "event": "policy_stop",
+    "game": "g001-rules-v7-s9083",
+    "reasons": [
+     "undetermined:no_progress:1"
+    ],
+    "session": "bdc46dd952ad435b9ce43db0b1d511cd"
+   },
+   {
+    "accounted_seconds_total": 5.058,
+    "at": "2026-11-27T06:38:03+00:00",
+    "elapsed": 5.058,
+    "event": "session_end",
+    "evidence_bytes": 7318918,
+    "session": "bdc46dd952ad435b9ce43db0b1d511cd",
+    "status": "stopped_policy",
+    "stop": {
+     "game": "g001-rules-v7-s9083",
+     "reasons": [
+      "undetermined:no_progress:1"
+     ]
+    }
+   }
+  ]
+ },
+ "code_reading": {
+  "policy_priority": {
+   "use_attack": 4,
+   "retreat": 5,
+   "end_turn": 6,
+   "demoted": 7
+  },
+  "policy_knows_rejection": false,
+  "runner_tried_set": "per episode; same (candidate key, meaning) -> ok_already_tried without check / submit",
+  "runner_scope_excludes": "unbuildable candidates only (rejected candidates stay in scope)",
+  "rules_v8_expected_same": "estimate (v8 changes only Energy Trans input choice; Energy Trans not chosen in this game); not run"
+ },
+ "source_findings": {
+  "UQ-SPECIAL-ENERGY-AS-TYPED-ENERGY": {
+   "status": "UNRESOLVED",
+   "official_material": "insufficient",
+   "case": "RB3"
+  },
+  "CR-ENERGY-TRANS-RAINBOW": {
+   "status": "CONFIRMED",
+   "scope": "Energy Trans only; not used for basic energy card selection"
+  },
+  "PR1-022_or_PMCG4-065_latest_descriptions_or_checks": 0,
+  "english_text_used": false
+ },
+ "other_rb3_paths_not_covered": [
+  "effects.py:18921 (trainer check_playable)",
+  "effects.py:21326 (_target)",
+  "effects.py:37851",
+  "resolution/kernel.py:2627,2641 (Exp.ALL)",
+  "resolution/programs.py:7593",
+  "Mew Rainbow Wave / Ho-Oh count (test_type_energy_colors_v0_88)"
+ ],
+ "options": {
+  "A": {
+   "name": "source-based",
+   "attack_accepted": "if decided",
+   "ai_continues": "if decided",
+   "status": "not possible now (insufficient material; new sources need an explicit request)"
+  },
+  "B": {
+   "name": "limited explicit-selection play convention",
+   "attack_accepted": true,
+   "ai_continues": true,
+   "status": "needs the user's choice of reading and a new convention set version"
+  },
+  "C": {
+   "name": "defer rejected inputs at the same position (policy)",
+   "attack_accepted": false,
+   "ai_continues": true,
+   "status": "recommended next"
+  },
+  "D": {
+   "name": "status quo",
+   "attack_accepted": false,
+   "ai_continues": false,
+   "status": "pilot stays stopped"
+  }
+ },
+ "minimal_boards_not_run": {
+  "engine": {
+   "R1": "only Rainbow selectable -> rejected with the code; state / rng / log unchanged; no public update",
+   "R2": "basic + Rainbow -> accepted; unresolved_choices = Rainbow only; basic proceeds, Rainbow stops",
+   "R3": "no selectable card -> accepted; heads removes nothing",
+   "R4": "other RB3 paths keep their stop"
+  },
+  "policy_C": {
+   "P1": "after one rejection the same signature is not rebuilt; next pick retreat or end_turn; rejections stay 1",
+   "P2": "only rejected inputs removed; candidate keeps rank while an unrejected buildable input exists",
+   "P3": "deferral keyed by position; cleared after an acceptance; re-evaluated in the new position",
+   "P4": "only deferred candidates -> pick them; ends with no_progress as now; record 'no alternative'",
+   "P5": "rules-v7 / rules-v8 unchanged unless the new version is selected explicitly"
+  }
+ },
+ "unconfirmed": [
+  "whether retreat / end_turn would be accepted",
+  "which preflight branch hit the question (code reading: heads)",
+  "whether the rules-v8 game stops at the same position",
+  "period Q&A / rulings / magazines (not searched)",
+  "frequency in other conditions and seeds"
+ ],
+ "pilot_and_main": {
+  "pilot_not_started": 5,
+  "main_not_started": 48,
+  "unchanged": true
+ },
+ "not_done": [
+  "remaining pilot games",
+  "main games",
+  "retry",
+  "--acknowledge-stop",
+  "extra games",
+  "constructed boards",
+  "convention registration",
+  "engine / policy / judge / default / DECKS changes",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8rnb-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "derived script headers broke the docstring (three tries); evidence hash raised SyntaxError before writing; kept in raw/F1, derive script rewritten"
+  },
+  {
+   "id": "F2",
+   "what": "reconcile_rnb.py zipped cards with energy units (Double Colorless gives 2 units), misclassifying Rainbow; output kept in raw/F2, fixed and rerun"
+  },
+  {
+   "id": "F3",
+   "what": "--sites found 1 new site (doc line used the scanner keyword 結果が変わらない); reworded, the 4 assumption checks rerun ok, --sites 1,827 = base; first compare kept in raw/F3"
+  }
+ ]
+}
