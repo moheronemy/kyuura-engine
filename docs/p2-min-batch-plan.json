@@ -1,0 +1,235 @@
+{
+ "status": "draft",
+ "not_a_confirmed_plan": true,
+ "doc": "docs/p2-min-batch-plan.md",
+ "purpose": "new_game の通常の対戦で P2-min（ゲンガーの［のろい］の target に相手のうら 1 匹・source は相手のおもて）が出るかを見る（実装の完了の条件ではない。出なくても実装の不良とは扱わない）",
+ "base": {
+  "branch": "claude/lost-target-p2-min",
+  "commit": "309ee16",
+  "implementation_commit": "b780981"
+ },
+ "expected_identity": {
+  "engine_version": "0.187.0",
+  "behavior_digest_prefix": "ae974fff",
+  "tool_version": 12,
+  "tool_digest_prefix": "8cfa17bb",
+  "judge_rules_version": 9,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "p2_basis_prefix": "720f4641",
+  "p2_basis_files": [
+   "cards.py",
+   "data/kyuura_cards.json",
+   "effects.py",
+   "engine.py",
+   "zones.py",
+   "observation.py",
+   "state.py"
+  ]
+ },
+ "plan": {
+  "batch_id": "vai-batch-p2n1",
+  "decks": {
+   "0": "decklist P42 (new file decklist-P42.json from tools/existing_effect_games.py DECKS[\"P42\"] unchanged; 60 cards, content a4ed8e25..., expansion 243c137f..., file 41cc8911a66ba352...)",
+   "1": "decklist L67-U (vai-batch-d/decklists/decklist-L67-U.json; content 72690ceea389..., expansion 5fb91539..., file 097b7db9621cc28e...)"
+  },
+  "modes": [
+   "boundary"
+  ],
+  "conventions": {
+   "key": "CS-KYUURA-PLAY-TR3@1",
+   "digest_prefix": "sha256:a7b800cf",
+   "members": 23
+  },
+  "seeds": [
+   9004,
+   9005
+  ],
+  "seed_rule": "9004 から上へ、連続 2 値がどちらも未使用の最初の組（保存済みの plan.json・header.json 341 ファイル・24 ストア。9000〜9100 は 9001〜9003 だけ使用）",
+  "order": [
+   "g001 boundary 9004",
+   "g002 boundary 9005"
+  ],
+  "games": 2,
+  "game_limits": "default runner.Limits (operations 2000, accepted 1000, turns 200, seconds 120)",
+  "batch_limits": {
+   "max_games": 2,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "game_reserve_seconds": "default 150",
+   "evidence_reserve_mib": "default 64"
+  },
+  "observation": true,
+  "prestop_inputs": {
+   "enabled": true,
+   "limits": "default"
+  },
+  "undetermined_evidence_missing": "continue",
+  "negative": false,
+  "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-p2n1 --engine-commit <HEAD> --tool-commit <HEAD> --seeds 9004 9005 --modes boundary --decklist0 <P42> --decklist1 <L67-U> --conventions CS-KYUURA-PLAY-TR3@1 --max-games 2 --budget-seconds 300 --evidence-max-mb 512 --observation --prestop-inputs --undetermined-evidence-missing continue",
+  "not_included": [
+   "rules-v2",
+   "デッキの向きの入れ替え",
+   "デッキの改造・方策の変更",
+   "未出現のときの追加の局・seed・予算の延長"
+  ]
+ },
+ "reachability_static": [
+  "A1 ゲンガー（2 回の進化）",
+  "A2 ［のろい］を使える",
+  "A3 相手のダメージのあるおもて",
+  "A4 相手のうら（マチスの秘策）",
+  "A5 準備の伏せ札でない",
+  "A6 boundary の範囲と入力",
+  "A7 均等の選び方で source・target を選ぶ"
+ ],
+ "stages_counted_independently": {
+  "P0": "対戦の作成・保存・終わり方",
+  "P1s": "ゲンガーが場に出た（P42 の主体の本人の観測）",
+  "P2s": "［のろい］が候補に出た（試みの行の候補）",
+  "P3s": "P2s の局面で、相手のダメージのあるおもてとうらが同時にあった（同じ局面の本人の観測）",
+  "P4s": "P2-min の入力が選ばれ送信された",
+  "P5s": "UNSUPPORTED_SECRET_PLAN_LOST_TARGET の拒否と規則 9 の known_stop（judge.json）",
+  "P6s": "undetermined・別の経路の拒否"
+ },
+ "on_appearance": [
+  "opponent_face_down_lost_target_failure が None（Q1〜Q12）",
+  "Q11 は実装の識別の一致（P2 の basis の値も記録）",
+  "保存記録から作り直した judge_trace の行が judge.json と同じ",
+  "単局の入口は同じ submit_evidence（構造と既存テスト。局の中では走らせない）"
+ ],
+ "acceptance": {
+  "validity": {
+   "V1": "code equals b780981, identity as expected",
+   "V2": "2 games P42 vs L67-U boundary TR3 fixed by plan.sha256",
+   "V3": "header convention_set and decks as planned",
+   "V4": "completion, judge, replay, observation, prestop R1-R6",
+   "V5": "cache unchanged"
+  },
+  "to_confirm": {
+   "C1": "if P4s, known_stop by rule 9 with Q1-Q12 none and same rows when rebuilt",
+   "C2": "if Curse chosen at a P3s position, target stage has the opponent face-down option"
+  },
+  "count_only": [
+   "P0-P6s",
+   "known_stop and undetermined",
+   "other refusals and rejections",
+   "time and size"
+  ],
+  "not_pass_conditions": [
+   "P2-min appears",
+   "all games game_over"
+  ]
+ },
+ "stop_policy": {
+  "stop": [
+   "record failure",
+   "reconcile mismatch or missing files",
+   "suspect",
+   "replay mismatch",
+   "contract unknown",
+   "cache mismatch",
+   "time or size shortage",
+   "existing stop policy stops"
+  ],
+  "continue": [
+   "normal end",
+   "limits",
+   "prestop capped (note)",
+   "known_stop",
+   "evidence_missing_stop undetermined"
+  ],
+  "never_automatic": [
+   "acknowledge-stop",
+   "unlock",
+   "rerun",
+   "extra games",
+   "seed change",
+   "budget extension"
+  ]
+ },
+ "pre_run_checks": {
+  "related_tests": [
+   "tests.test_verification_ai_lost_target_p2",
+   "tests.test_lost_target_p2_min_v0_187",
+   "tests.test_verification_ai_lost_target_p1",
+   "tests.test_verification_ai_lost_target_p3",
+   "tests.test_verification_ai_batch",
+   "tests.test_verification_ai_v2_repeat",
+   "tests.test_verification_ai_prestop"
+  ],
+  "known_flaky": "tests.test_verification_ai_prestop の test_row_too_big_after_request_is_not_written_and_stops_requests（時間に依存。失敗したら同じ理由かを確かめ、再実行の結果と分けて記録する。直さない）",
+  "evidence_side_scripts_to_write": [
+   "P2 用 gate.py",
+   "analyze_p2.py",
+   "check_plan の写し（期待値だけ）"
+  ]
+ },
+ "unverified_before_run": {
+  "run_commit": null,
+  "identity_matches": null,
+  "p2_basis_at_run": null,
+  "deck_problems_at_run": null,
+  "plan_sha256": null,
+  "cache_dir": null,
+  "cache_prepare_record": null,
+  "dry_run_use_cache": null,
+  "disk_free_bytes": null,
+  "outer_script_sha256": null
+ },
+ "expected_not_guaranteed": {
+  "seconds_total_upper_guess": 240,
+  "evidence_mb_upper_guess": 100,
+  "basis": "単局の上限 120 秒 × 2。過去の局の最大は L67-U どうし 9.24 秒・約 15 MB、固定デッキ 19.2 秒・45 MB。このデッキの組の実測はない"
+ },
+ "execution": {
+  "status": "executed",
+  "chapter": 10,
+  "run_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+  "plan_sha256": "f460a7a03b621eb2317f2cb6b6d74ccb27fa9be9fbe08f7eb613fa37d557d045",
+  "cache_dir": "C:\\dev\\kyuura-engine-pyc-cache\\bae974ff-t8cfa17b-cpython-314-0069029-p2n1",
+  "cache_files": 185,
+  "games": {
+   "planned": 2,
+   "complete": 2,
+   "not_started": 0,
+   "attempts_each": 1,
+   "terminations": {
+    "game_over": 2
+   }
+  },
+  "stages": {
+   "P1s_positions": [
+    81,
+    21
+   ],
+   "P2s_positions": [
+    16,
+    13
+   ],
+   "P3s_positions": [
+    0,
+    0
+   ],
+   "P4s_submits": [
+    0,
+    0
+   ],
+   "P5s_rule9_known_stop": [
+    0,
+    0
+   ],
+   "P6s_undetermined": [
+    0,
+    1
+   ]
+  },
+  "p2_min_appeared": false,
+  "judge_rebuilt_equal_saved": true,
+  "accounted_seconds": 26.865,
+  "game_seconds_sum": 18.781,
+  "peak_working_set_bytes_max": 228827136,
+  "game_evidence_bytes": 34746149,
+  "evidence": "verifier/runs/vai-batch-p2n1-run/"
+ }
+}

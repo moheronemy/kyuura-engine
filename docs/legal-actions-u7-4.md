@@ -64,7 +64,7 @@
 | 区分 | 条件 | どこで確かめるか |
 |---|---|---|
 | A. 公開の情報と本人の知識だけで決まる | 番・段階・ねむり・マヒ・ワザを使えない効果（しっぽをふる・すごむ・［いあつ］・あわあわ）・1 回しか使えないワザ・必要なエネルギー（色と個数）・説明の使う条件（ベンチの空き・ダメージカウンター・マーカー・相手の控え）・効果の登録・要素の並び・TE2・選ぶと止めるワザ（`option.problem`） | 候補の作成（ワザごとに `check_use_attack`） |
-| B. 入力がそろって初めて決まる | 宣言といっしょに選ぶものの組み合わせ（同じ力の 2 回の指定・`with_power` と `with_powers` の併記・クチバシティジムとワザの組） | 入力の検査（`check`・`submit` で完成した `UseAttack` に `check_use_attack`）。ゲーム上できない組み合わせは `CANDIDATE_INPUT_INVALID`、止める組み合わせは `CANDIDATE_NOT_EXECUTABLE` |
+| B. 入力がそろって初めて決まる | 宣言といっしょに選ぶものの組み合わせ（同じ力の 2 回の指定・`with_power` と `with_powers` の併記・クチバシティジムとワザの組） | 入力の検査（`check`・`submit` で完成した `UseAttack` に `check_use_attack`）。ゲーム上できない組み合わせは `CANDIDATE_INPUT_INVALID`、止める組み合わせは `CANDIDATE_NOT_EXECUTABLE`（v0.193 の限定例外と、検査の段ごとの区分は 4 章） |
 | C. コイン・検索の開始のあとで決まる | コインの結果・こんらんの「うら」・山札の中身・検索の選択肢・きぜつ・サイド | 受理のあと（エンジンの処理と既存の決定）。候補は評価しない |
 | D. 今の実装では候補の段で安全に判断できない | 宣言の前の先読みが試すコインの結果・ワザの途中の決定の答えで当たる停止（HC1 など）・自分のうらのバトル場のポケモンのワザ | 候補では呼ばない（`preflight_not_evaluated`・`face_down_reveal_not_evaluated`）。最終の判定は `apply_command` |
 
@@ -91,6 +91,38 @@
   作らない
 - ゲーム上できない組・数・段の並び・重なり・知らない番号は `CANDIDATE_INPUT_INVALID`。止める選択（未裁定・未対応）は `CANDIDATE_NOT_EXECUTABLE`。どちらもエンジンに渡さない（状態は
   変わらない。取っ手は失効しない）
+- 限定例外（v0.193。C-TF1）: 変身で写した、写すことを確かめていない宣言用の力（`attack_power`・`with_power`）は 2 段目に示さない（番号は欠番）。その番号を送ると、未提示の番号として
+  `CANDIDATE_INPUT_INVALID`。同じ宣言をエンジンの直接のコマンドで送ると `UNSUPPORTED_TRANSFORM_COPIED_POWER`（未対応）で拒否される。ゲーム上の禁止ではない
+  （[v0.193 の文書](r2-transform-copied-power-v0.193.md) 3 章）
+
+### 4.1 入力の検査の段と診断（2026-11-19 の訂正。AC-1〜AC-3）
+
+`check`・`submit` は、ワザの候補に対して次の段で入力を確かめます（`legal_actions._input_problem`・`_attack_input_problem`・候補の `verify`）。診断のコードは、どの段で止まったかを示すもので、
+それだけではカードの裁定やゲーム上の禁止の理由を示しません。
+
+| 段 | 確かめるもの | 止まったときの診断 |
+|---|---|---|
+| 候補そのもの | 候補の処理可能性が実行できる区分か（例: うらの使い手で印刷のワザがない候補は `not_implemented`・`no_printed_attack`・`stages: []`） | `CANDIDATE_NOT_EXECUTABLE`（この例では入力の中身によらない） |
+| 番号と組（API の段。エンジンを呼ばない） | 番号が応答で示したものか・段の並び・重なり・1 段目の番号と 2 段目の組が `options_by_choice` にあるか | 合わなければ `CANDIDATE_INPUT_INVALID`。示した組が止める組（`eligible: false`）なら `CANDIDATE_NOT_EXECUTABLE` |
+| 宣言の確かめ（示した組だけ） | 完成した `UseAttack` に `check_use_attack` | `IllegalActionError` は `CANDIDATE_INPUT_INVALID`、`UnsupportedError` は `CANDIDATE_NOT_EXECUTABLE` |
+
+- `CANDIDATE_INPUT_INVALID` は「送った入力が、その候補の示した番号・組・数・並びに合わない（または示した組を宣言の確かめが通さない）」という意味です。示していない番号には、ゲーム上できない組と、
+  上の限定例外で除いた写した力の番号の両方が入ります。
+- `CANDIDATE_NOT_EXECUTABLE` の一般則は「選んだもの（または候補そのもの）が、今の規約集合と実装では処理できない（ゲーム上の禁止ではない）」です。v0.193 の写した力は、この区分で示す前に
+  選択肢から取り除いたので、この区分にはなりません（`CANDIDATE_INPUT_INVALID`）。
+- 確かめた 3 例（構築盤面。保存した応答で確かめた。ほかの候補・入力での診断の優先順位は、この 3 例からは決めていません）:
+
+| 場面 | 結果 | どの段か |
+|---|---|---|
+| おもてのメタモン（写したアンノーンX・ランターン）で、示していない写した力の番号（`o2`）を送る | `check` は `CANDIDATE_INPUT_INVALID`。`submit` は `refused`（同じコード。状態・更新・ログは変わらない） | 番号と組（`check_use_attack` の前） |
+| うらのメタモンで、`no_printed_attack` の実行できない候補を開いて `check`（`[]`・人工の `["o1"]`） | どちらも `CANDIDATE_NOT_EXECUTABLE`（`inputs` は `stages: []`） | 候補そのもの |
+| 同じ未検証の写した力を、エンジンの直接のコマンド（`UseAttack` の `with_power`・`with_powers`・`attack_power`）で宣言 | `rejected`・`UNSUPPORTED_TRANSFORM_COPIED_POWER`（状態は変わらない） | エンジンの確かめ（入力 API を通らない） |
+
+- 保証の文との関係（`GUARANTEE_ATTACK`。0.179.0 からの固定値で、変えていません）:
+  - `preconditions` の「`check_use_attack` を候補の作成と入力の検査に使う」は、示した組について成り立ちます。v0.193 で示さない組は、`check_use_attack`（エンジンの
+    `copied_attack_power_check`）が `UnsupportedError` で止める組の一部で、受け付ける組を除いてはいません。除く理由は、この文ではなく v0.193 の文書 3 章に書いてあります。
+  - `check` が `valid` でも、宣言の受理は保証しません（`acceptance`。宣言の前の先読みは呼ばない）。受理のあとの効果も評価していません（`after_acceptance`）。`check` が確かめるのは
+    上の 3 つの段までです。
 
 ## 5. 処理可能性・coverage
 
@@ -113,7 +145,8 @@
 - U7 経由・`client_api` 経由・直接の `UseAttack` で、受理のあとの状態・乱数・ログ・診断が同じ（構築盤面の各場面と、`new_game` からの接続の列）
 - 意図した差:
   - 選ぶと止めるワザ・組を選ぶと、ホストの段で `CANDIDATE_NOT_EXECUTABLE`（エンジンに渡さない）。直接送れば、エンジンの拒否（`rejected`・停止の診断）
-  - ゲーム上できない組み合わせは `CANDIDATE_INPUT_INVALID`（直接送れば、エンジンの拒否）
+  - ゲーム上できない組み合わせと、示していない番号（v0.193 で示さない写した力を含む）は `CANDIDATE_INPUT_INVALID`（直接送れば、エンジンの拒否。写した力は
+    `UNSUPPORTED_TRANSFORM_COPIED_POWER` の未対応で、ゲーム上の禁止ではない。4.1 節）
   - 宣言の前の先読みで止まるワザ（こんらんのほのおのうずの HC1 など）は、候補では `may_stop_later` のまま。送るとエンジンの拒否（`rejected`・`unresolved_ruling` の診断。状態は
     変わらず、取っ手は失効しない。相手・観戦者への更新は作らない）。拒否と、受理のあとの決定の答えで止まる（ドライアップの DU1。`accepted`・`halted`）は結果で区別できる
   - 番の候補にワザの候補が加わった（U7-1・U7-3 のテストの、候補の種類と `not_covered_kinds` の期待を直した）
@@ -170,7 +203,8 @@
 |---|---|
 | 候補・選べるものの `processability: may_stop_later`（`preflight_not_evaluated`） | 「宣言できます。エンジンが宣言を確かめるときに、扱えない場合として断ることがあります」 |
 | 選べるものの `eligible: false`・`processability: unresolved_ruling`（`stops_before_acceptance`） | 「このワザは、今の規約集合では扱えません（ゲーム上の禁止ではありません）」。送ると `refused`・`CANDIDATE_NOT_EXECUTABLE` |
-| `submit` が `refused`・`CANDIDATE_INPUT_INVALID` | 「この組み合わせでは宣言できません」（エンジンに渡していない。取り直さなくてよい） |
+| 候補の `processability: not_implemented`（うらの使い手の `no_printed_attack` など）で `check`・`submit` | 「この候補は、今の実装では処理できません（ゲーム上の禁止ではありません）」。`CANDIDATE_NOT_EXECUTABLE`（入力によらない） |
+| `submit` が `refused`・`CANDIDATE_INPUT_INVALID` | 「送った入力が、この候補の選べるものに合いません。示された番号・組から選び直してください」（エンジンに渡していない。取っ手は失効しないので、候補を取り直さなくてよい）。このコードだけから、カードの裁定やゲーム上の禁止の理由を表示しない（示していない番号には、v0.193 で除いた写した力の番号も入る。4.1 節） |
 | `submit` が `rejected`・`category: unresolved_ruling`（HC1 など） | 「この場面の扱いは決まらないため、エンジンが宣言を受け付けませんでした」（状態は変わらない。番は続く） |
 | `submit` が `accepted`・`status: awaiting_decision` | 決定の入力へ（`candidates` を取り直す） |
 | `accepted` のあとの `status: halted` | 「処理できない場面で対戦が止まりました」（`halt` を表示する） |
@@ -186,6 +220,7 @@
 - 入力画面: ワザの一覧（名前・必要なエネルギー・ダメージの表示・説明・出どころ）→ 宣言といっしょに選ぶもの（なければ省く）→ 送信。対象・トラッシュ・検索・写すワザは、受理のあとの
   `answer_decision` の候補で選ぶ（宣言の画面に入れない）
 - 表示: `processability` ごとに区別し、`unresolved_ruling`・`not_implemented` を「ゲーム上できない」と表示しない。`refused` と `rejected` と `accepted`（そのあとの `halted`）を分ける
+- 表示（2026-11-19 の訂正）: `CANDIDATE_INPUT_INVALID` は入力の見直しの案内にし、ゲーム上の禁止と断定しない（4.1 節・7.1 節の表）
 
 ## 9. 制限・引き継ぎ
 
@@ -193,3 +228,14 @@
 - 自分のうらのバトル場のポケモンのワザは `unverified`（エンジンの確かめは呼ばない）。うらのカードで宣言といっしょに選ぶものは示さない。印刷のワザがないうらのカードは `not_implemented`
 - U7-5: トレーナー・特殊能力・スタジアム・`RemoveDisguise`・`DiscardFromPlay`・`RevealFaceDown`・`CheckFaceUpDeckCard`。宣言といっしょに選ぶものの表し方（`options_by_choice`・
   入力の検査でのエンジンの確かめ）と、処理の前半を関数にして候補の作成に使う方法は、そのまま使える
+
+## 10. 訂正の記録（2026-11-19。AC-1〜AC-3）
+
+[C-TF2 の修正設計](r2-transform-frozen-reveal-design.md) 2.2 節の訂正候補 AC-1〜AC-3（D-TF-12）を、この文書に入れました。文書だけの訂正で、API・保証の文（`GUARANTEE_ATTACK`）・
+コード・GUI の動作は変えていません。根拠は、0.193.0 の C-TF1 の確かめと、GUI の 0.194.0 への追従（GUI `feature/engine-0194-r2-transform` @ `3127862`、契約の文書 35 章）で保存した応答です。
+
+| ID | 訂正した箇所 | 内容 |
+|---|---|---|
+| AC-1 | 4.1 節（保証の文との関係） | `GUARANTEE_ATTACK` の文は変えない。示した組は `check_use_attack` で確かめ、示さない組はそれが止める組の一部。理由は v0.193 の文書 3 章（設計の案の「4 章」は、その文書の入力 API の章である 3 章に直して参照した） |
+| AC-2 | 3 章の表 B・4 章（限定例外）・4.1 節（検査の段）・6 章（意図した差） | 写した未検証の宣言用の力は示さない。未提示の番号として `CANDIDATE_INPUT_INVALID`、直接のコマンドは `UNSUPPORTED_TRANSFORM_COPIED_POWER`。`CANDIDATE_NOT_EXECUTABLE` の一般則と分けて書いた |
+| AC-3 | 7.1 節の表示の例（設計の案の「8 章」は 7.1 節の表）・8 章の表示 | `CANDIDATE_INPUT_INVALID` を入力の見直しの案内にした。うらの実行できない候補の例を足した |

@@ -19,7 +19,7 @@
   "ledger": {
    "path": "docs/stop-policy-classification.json",
    "base_commit": "3e25ac5eff0f90dbea224045e77c2b60e025bf2d",
-   "entries": 429
+   "entries": 435
   },
   "research": {
    "path": "kyuura_engine/data/research_links.json",
@@ -3073,7 +3073,11 @@
    "applies_when": "同じ番の中で、記録のあるカード・ポケモンが入れかわった・もどった・退化した場面（対象の一覧のコード）",
    "targets": [
     {
-     "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+     "coverage": "needs_implementation"
+    },
+    {
+     "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other",
      "coverage": "needs_implementation"
     },
     {
@@ -3140,10 +3144,10 @@
     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
    ],
-   "scene_count": 5,
+   "scene_count": 6,
    "code_count": 5,
    "coverage_counts": {
-    "needs_implementation": 4,
+    "needs_implementation": 5,
     "needs_secret_review": 1
    },
    "ruling_ids": [
@@ -3166,7 +3170,7 @@
    "reachability_counts": {
     "constructed_board": 1,
     "legal_sequence": 1,
-    "static_only": 3
+    "static_only": 4
    }
   },
   {
@@ -4148,17 +4152,18 @@
    "candidate": "PC-ONCE-PER-TURN-IDENTITY",
    "stage": "S3",
    "whole_game": false,
-   "scenes": 5,
+   "scenes": 6,
    "codes": 5,
    "observed": {
     "halted_games": 0,
     "rejections": 58,
-    "rejection_games": 26
+    "rejection_games": 26,
+    "note": "事例を分けたコード ['UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT'] の数は、ほかの事例の分を含む"
    },
    "prerequisite_for": [],
    "burden": "小",
    "risk": "小",
-   "scenes_with_residual_stops_or_unverified": 5
+   "scenes_with_residual_stops_or_unverified": 6
   },
   {
    "candidate": "PC-COPIED-ATTACK-AS-OWN",
@@ -7603,7 +7608,11 @@
     "docs/energy-retrieval-v0.23.md"
    ],
    "candidate": "PC-UP-TO-ZERO",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-ENERGY-RETRIEVAL-ZERO",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_ENERGY_STADIUM_WITHOUT_TARGET",
@@ -7840,7 +7849,11 @@
     "docs/transparency-v0.9.md"
    ],
    "candidate": "PC-NULLIFIED-ELEMENT-COIN",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-T19B-NULLIFIED-STATUS-COIN",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_EVOLUTION_HP",
@@ -8577,7 +8590,11 @@
     "docs/gust-v0.21.md"
    ],
    "candidate": "PC-USE-WITHOUT-TARGET",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-GUST-WITHOUT-OPPONENT-BENCH",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_HAND_TRAINER_LOCK_BORROW",
@@ -11141,7 +11158,11 @@
     "docs/trainers-v0.2b.md"
    ],
    "candidate": "PC-USE-WITHOUT-EFFECT",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-POTION-WITHOUT-DAMAGE",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_POWER_COUNTER_MOVE_TO_SAME_POKEMON",
@@ -12026,7 +12047,11 @@
     "docs/haunter-line-v0.9.md"
    ],
    "candidate": "PC-UP-TO-ZERO",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-ENERGY-CONVERSION-ZERO",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_REDUCED_DAMAGE_BENCH_TARGET",
@@ -13100,8 +13125,8 @@
    "individual_reason": "カード固有の説明の読み方（同じ言い回しの別のカードに広げない）"
   },
   {
-   "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
-   "parent": null,
+   "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+   "parent": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
    "code": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
    "entry_kind": "research_stop_code",
    "family": "PF-HISTORY-LASTING",
@@ -13114,7 +13139,37 @@
    "reachability": "static_only",
    "whole_game": false,
    "whole_game_basis": null,
-   "secret_dependency": null,
+   "secret_dependency": "public_only",
+   "ruling_ids": [
+    "RS1"
+   ],
+   "kyuura_issue": null,
+   "ruling_documents": [
+    "docs/remaining-stadiums-v0.74.md"
+   ],
+   "candidate": "PC-ONCE-PER-TURN-IDENTITY",
+   "coverage": "needs_implementation",
+   "adopted_convention": [
+    "PC-LUCKY-STADIUM-REPLACEMENT",
+    1
+   ]
+  },
+  {
+   "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other",
+   "parent": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+   "code": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+   "entry_kind": "research_stop_code",
+   "family": "PF-HISTORY-LASTING",
+   "ledger_classification": "C",
+   "plan_class": "A",
+   "class_reason": "研究上の未決の裁定（固定研究基準の対応表の停止コード）",
+   "mechanisms": [
+    "command_rejection"
+   ],
+   "reachability": "static_only",
+   "whole_game": false,
+   "whole_game_basis": null,
+   "secret_dependency": "public_only",
    "ruling_ids": [
     "RS1"
    ],
@@ -13542,7 +13597,11 @@
     "docs/trainers-v0.2b.md"
    ],
    "candidate": "PC-USE-WITHOUT-TARGET",
-   "coverage": "unverified"
+   "coverage": "unverified",
+   "adopted_convention": [
+    "PC-SWITCH-WITHOUT-BENCH",
+    1
+   ]
   },
   {
    "id": "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT",
@@ -15140,174 +15199,6 @@
    "candidate": null
   },
   {
-   "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_AFTER_COIN",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_EFFECT",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_FORM",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_TEST_PREFLIGHT",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
-   "id": "UNRESOLVED_X",
-   "parent": null,
-   "code": null,
-   "entry_kind": "test_tool_only_code",
-   "family": null,
-   "ledger_classification": "E",
-   "plan_class": "E",
-   "class_reason": "テスト・道具だけのコード（エンジンでは投げない）",
-   "mechanisms": [
-    "not_raised"
-   ],
-   "reachability": "test_only_mutation",
-   "whole_game": false,
-   "whole_game_basis": null,
-   "secret_dependency": null,
-   "ruling_ids": [],
-   "kyuura_issue": null,
-   "ruling_documents": [],
-   "candidate": null
-  },
-  {
    "id": "RESEARCH:ko_prevention_self_effect",
    "parent": null,
    "code": null,
@@ -15849,27 +15740,27 @@
  ],
  "internal_guard_sites": 619,
  "counts": {
-  "scenes": 399,
-  "stop_code_scenes": 368,
+  "scenes": 392,
+  "stop_code_scenes": 369,
   "stop_codes": 357,
   "by_plan_class": {
-   "A": 327,
+   "A": 328,
    "B": 33,
    "C": 14,
    "D": 6,
-   "E": 19
+   "E": 11
   },
-  "a_scenes": 327,
-  "a_scenes_with_candidate": 171,
+  "a_scenes": 328,
+  "a_scenes_with_candidate": 172,
   "a_scenes_individual": 156,
   "candidates": 27,
-  "candidate_scenes_with_duplicates": 171,
-  "candidate_scenes_unique": 171,
+  "candidate_scenes_with_duplicates": 172,
+  "candidate_scenes_unique": 172,
   "candidate_codes_with_duplicates": 166,
   "candidate_codes_unique": 163,
   "coverage": {
    "full": 3,
-   "needs_implementation": 22,
+   "needs_implementation": 23,
    "needs_secret_review": 15,
    "partial": 1,
    "question_resolved_other_stops_possible": 4,
@@ -15877,7 +15768,7 @@
   },
   "fully_continuable_scenes": 3,
   "partially_continuable_scenes": 5,
-  "scenes_needing_other_work": 37,
+  "scenes_needing_other_work": 38,
   "unverified_scenes": 126,
   "scenes_per_candidate": {
    "PC-CHECK-DOUBLE-KNOCKOUT": 1,
@@ -15892,7 +15783,7 @@
    "PC-NON-ATTACK-DAMAGE-MODIFIERS": 10,
    "PC-NON-DAMAGE-HP-KNOCKOUT": 3,
    "PC-NULLIFIED-ELEMENT-COIN": 5,
-   "PC-ONCE-PER-TURN-IDENTITY": 5,
+   "PC-ONCE-PER-TURN-IDENTITY": 6,
    "PC-ORDER-ATTACK-PRECHECK": 7,
    "PC-ORDER-OVERLAP": 10,
    "PC-REACTION-DOUBLE-KNOCKOUT": 3,

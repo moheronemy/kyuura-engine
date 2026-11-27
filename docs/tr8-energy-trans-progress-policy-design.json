@@ -1,0 +1,610 @@
+{
+ "status": "design_done",
+ "doc": "docs/tr8-energy-trans-progress-policy-design.md",
+ "date": "2026-11-26",
+ "base": "61cca98b674c02dbab64fcd4894cf0286b6ae527",
+ "branch": "claude/tr8-energy-trans-progress-design",
+ "execution_commit": "24c572877b5e6bc391bccba0eac28472a105beb9",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 18,
+  "conventions": "CS-KYUURA-PLAY-TR8@1"
+ },
+ "proposal": {
+  "name": "rules-v8 (provisional)",
+  "default": false,
+  "base": "rules-v7",
+  "changes_only": "input choice of an Energy Trans candidate already chosen by the existing ranks",
+  "kept": [
+   "candidate ranks (attack 4, retreat / powers 5, end_turn 6, demoted 7)",
+   "rules-v7 unpayable retreat deferral",
+   "rules-v6 ET return deferral (applied first)",
+   "Damage Swap cap 6",
+   "tie draws (policy RNG)",
+   "input API",
+   "engine",
+   "conventions",
+   "judge",
+   "single-game limits"
+  ],
+  "order": [
+   "1. remove the rules-v6 deferred moves (existing restriction)",
+   "2. tier 1: moves after which an unmet goal (active's attack or retreat) is met",
+   "3. tier 2: moves that reduce the deficit of a goal confirmed reachable",
+   "4. tier 3: otherwise (or not evaluable) the existing stage-wise uniform choice"
+  ],
+  "draw": "within the chosen tier, the existing stage-wise uniform choice restricted to that tier (build_choices restriction = moves outside the tier); no new attack / retreat priority",
+  "implementation_reuse": [
+   "actions.transfer_moves (move set)",
+   "actions.build_choices restriction (3-stage) for the tier set",
+   "unit assignment identical to kyuura_engine.cards.can_pay_with_units (re-implemented in the tool; the tool does not import the engine)",
+   "retreat payment: same subset-sum rule as actions._choose_by_units (total_units range, cards not split)"
+  ]
+ },
+ "progress_calculation": {
+  "units": "own active energy_units from the view (one entry per unit, colours already include colour-changing effects); a moved basic energy card gives the units of its type",
+  "attack": "can_pay_with_units(cost, units): colour symbols assigned one unit each (bipartite), colourless paid by the rest; colourless units never pay colour symbols",
+  "retreat": "some subset of the active's cards has unit sum within total_units [min, max] (2-unit cards are not split)",
+  "deficit": "smallest number of movable cards (own energy cards with an Energy Trans move to the active in the unrestricted move set of the current inputs) whose addition meets the goal; none -> unreachable",
+  "tier2_condition": "deficit after the move < deficit before, and the goal is reachable",
+  "cost_met_vs_operable": "cost met is computed; operable is not assumed: attack goals only when the active is not asleep / paralysed and the attack has no problem / payer / provider in the view; retreat goals only when the retreat candidate is presented now; actual operability is confirmed by the next candidates"
+ },
+ "information": {
+  "observation_and_inputs": [
+   "own active energy units, special conditions, markers, persistent effects, trainers (view)",
+   "attacks the active has now: printed card id and index (view)",
+   "Energy Trans move set and energy card ids (inputs)",
+   "presence of retreat / attack candidates (candidates)",
+   "retreat total_units with modifiers only in retreat inputs (fetched in the same view, or the rules-v7 failure record at the same payment key)",
+   "attack printed cost only in the attack candidate's inputs, i.e. only after the attack is declarable"
+  ],
+  "not_available": [
+   "printed attack cost of an attack not yet declarable (not in view / candidates / ET inputs)",
+   "retreat cost modifiers without retreat inputs (printed cost alone is not the effective cost)",
+   "per-card units of special energy already attached (view units are flattened)",
+   "colour readings when energy_units_determined is false (CE1 / CE2)",
+   "attack prohibitions not visible in the view (engine check_use_attack)",
+   "opponent hidden information (not used)"
+  ],
+  "decisions_before_implementation": [
+   {
+    "id": "D1",
+    "what": "retreat goal source",
+    "options": [
+     "read-only fetch of retreat inputs in the same view when Energy Trans is chosen (runner change, extra request)",
+     "use only the rules-v7 failure record / inputs already fetched in the episode",
+     "drop the retreat goal"
+    ]
+   },
+   {
+    "id": "D2",
+    "what": "attack cost source",
+    "options": [
+     "API: printed cost in the view's attack entries (engine / contract change, separate unit)",
+     "tool-side printed card data (public data, but outside the API responses the policies use today)",
+     "drop the attack goal (retreat-only design)"
+    ]
+   },
+   {
+    "id": "D3",
+    "what": "draw within a tier",
+    "options": [
+     "stage-wise uniform restricted to the tier (reuses restriction)",
+     "uniform over tier moves (new tuple draw)"
+    ]
+   },
+   {
+    "id": "D4",
+    "what": "goal already met (retreat payable, attack unreachable)",
+    "note": "tier 3 fallback may move energy off the active (9056 n193-type); protecting met goals is a separate decision"
+   },
+   {
+    "id": "D5",
+    "what": "special energy on the active",
+    "note": "evaluate only with retreat inputs (per-card units) or fall back"
+   }
+  ]
+ },
+ "replay": {
+  "note": "re-scored saved attempts only (same view and fetched inputs); later trajectories are not predicted; costs from card data as the verifier (see information)",
+  "9056_v7_turn_0_23": {
+   "actor": 1,
+   "turn": [
+    0,
+    23
+   ],
+   "et_attempts_with_inputs": 81,
+   "accepted": 81,
+   "tier_of_attempts": {
+    "tier2": 59,
+    "tier1": 22
+   },
+   "accepted_chosen_class": {
+    "tier2:other": 51,
+    "tier2:p2": 8,
+    "tier1:other": 18,
+    "tier1:p1": 4
+   },
+   "accepted_choice_would_change": 69,
+   "accepted_choice_already_in_set": 12,
+   "accepted_fallback": 0,
+   "typical_sets": [
+    {
+     "tier": 2,
+     "set": 7,
+     "moves": 35,
+     "rows": 47
+    },
+    {
+     "tier": 1,
+     "set": 6,
+     "moves": 35,
+     "rows": 10
+    },
+    {
+     "tier": 2,
+     "set": 4,
+     "moves": 20,
+     "rows": 9
+    },
+    {
+     "tier": 1,
+     "set": 5,
+     "moves": 25,
+     "rows": 8
+    }
+   ],
+   "retreat_cost_source": {
+    "retreat_inputs_same_episode": 8,
+    "static_printed": 73
+   },
+   "states": {
+    "reachable": 81
+   },
+   "unevaluable": {},
+   "first_tier1": {
+    "n": 129,
+    "position": 95,
+    "active": "PMCG1-011",
+    "active_units": 1,
+    "moves": 35,
+    "p1": 6,
+    "chosen": [
+     4,
+     106,
+     11
+    ],
+    "chosen_class": "other"
+   }
+  },
+  "9056_v6_turn_0_23": {
+   "actor": 1,
+   "turn": [
+    0,
+    23
+   ],
+   "et_attempts_with_inputs": 26,
+   "accepted": 26,
+   "tier_of_attempts": {
+    "tier2": 16,
+    "tier1": 10
+   },
+   "accepted_chosen_class": {
+    "tier2:other": 12,
+    "tier2:p2": 4,
+    "tier1:other": 9,
+    "tier1:p1": 1
+   },
+   "accepted_choice_would_change": 21,
+   "accepted_choice_already_in_set": 5,
+   "accepted_fallback": 0,
+   "typical_sets": [
+    {
+     "tier": 2,
+     "set": 7,
+     "moves": 35,
+     "rows": 15
+    },
+    {
+     "tier": 1,
+     "set": 6,
+     "moves": 35,
+     "rows": 10
+    },
+    {
+     "tier": 2,
+     "set": 6,
+     "moves": 34,
+     "rows": 1
+    }
+   ],
+   "retreat_cost_source": {
+    "retreat_inputs_same_episode": 15,
+    "static_printed": 11
+   },
+   "states": {
+    "reachable": 26
+   },
+   "unevaluable": {},
+   "first_tier1": {
+    "n": 131,
+    "position": 95,
+    "active": "PMCG1-011",
+    "active_units": 1,
+    "moves": 35,
+    "p1": 6,
+    "chosen": [
+     4,
+     109,
+     10
+    ],
+    "chosen_class": "other"
+   }
+  },
+  "9045_v6_turn_0_36": {
+   "actor": 1,
+   "turn": [
+    0,
+    36
+   ],
+   "et_attempts_with_inputs": 146,
+   "accepted": 139,
+   "tier_of_attempts": {
+    "tier1": 42,
+    "tier2": 96,
+    "tier3": 8
+   },
+   "accepted_chosen_class": {
+    "tier1:other": 36,
+    "tier2:other": 72,
+    "tier2:p2": 18,
+    "tier1:p1": 5,
+    "tier3:other": 8
+   },
+   "accepted_choice_would_change": 108,
+   "accepted_choice_already_in_set": 23,
+   "accepted_fallback": 8,
+   "typical_sets": [
+    {
+     "tier": 2,
+     "set": 2,
+     "moves": 10,
+     "rows": 25
+    },
+    {
+     "tier": 2,
+     "set": 2,
+     "moves": 9,
+     "rows": 22
+    },
+    {
+     "tier": 1,
+     "set": 3,
+     "moves": 20,
+     "rows": 11
+    },
+    {
+     "tier": 2,
+     "set": 4,
+     "moves": 20,
+     "rows": 11
+    }
+   ],
+   "retreat_cost_source": {
+    "retreat_inputs_same_episode": 52,
+    "static_printed": 94
+   },
+   "states": {
+    "goal_already_met": 4,
+    "reachable": 142
+   },
+   "unevaluable": {},
+   "first_tier1": {
+    "n": 168,
+    "position": 140,
+    "active": "PMCG1-011",
+    "active_units": 1,
+    "moves": 20,
+    "p1": 3,
+    "chosen": [
+     15,
+     110,
+     9
+    ],
+    "chosen_class": "other"
+   }
+  },
+  "9045_v5_turn_0_36": {
+   "actor": 1,
+   "turn": [
+    0,
+    36
+   ],
+   "et_attempts_with_inputs": 184,
+   "accepted": 159,
+   "tier_of_attempts": {
+    "tier1": 50,
+    "tier2": 132,
+    "tier3": 2
+   },
+   "accepted_chosen_class": {
+    "tier1:other": 41,
+    "tier2:other": 92,
+    "tier2:p2": 22,
+    "tier1:p1": 2,
+    "tier3:other": 2
+   },
+   "accepted_choice_would_change": 133,
+   "accepted_choice_already_in_set": 24,
+   "accepted_fallback": 2,
+   "typical_sets": [
+    {
+     "tier": 2,
+     "set": 2,
+     "moves": 10,
+     "rows": 121
+    },
+    {
+     "tier": 1,
+     "set": 1,
+     "moves": 10,
+     "rows": 38
+    },
+    {
+     "tier": 1,
+     "set": 3,
+     "moves": 20,
+     "rows": 12
+    },
+    {
+     "tier": 2,
+     "set": 4,
+     "moves": 20,
+     "rows": 11
+    }
+   ],
+   "retreat_cost_source": {
+    "retreat_inputs_same_episode": 75,
+    "static_printed": 109
+   },
+   "states": {
+    "goal_already_met": 2,
+    "reachable": 182
+   },
+   "unevaluable": {},
+   "first_tier1": {
+    "n": 168,
+    "position": 140,
+    "active": "PMCG1-011",
+    "active_units": 1,
+    "moves": 20,
+    "p1": 3,
+    "chosen": [
+     15,
+     110,
+     9
+    ],
+    "chosen_class": "other"
+   }
+  },
+  "examples": {
+   "E1_n124_v7": {
+    "n": 124,
+    "position": 91,
+    "active": "PMCG1-011",
+    "active_units": 0,
+    "moves": 35,
+    "excluded_by_v6": 0,
+    "p1": 0,
+    "p2": 7,
+    "tier": 2,
+    "chosen": [
+     9,
+     115,
+     11
+    ],
+    "chosen_class": "other",
+    "goals": [
+     {
+      "kind": "retreat",
+      "met": false,
+      "deficit": 2,
+      "source": "static_printed"
+     },
+     {
+      "kind": "attack",
+      "met": false,
+      "deficit": 4,
+      "source": "printed_card_data (not in API until declarable)"
+     }
+    ]
+   },
+   "E1_n124_same_view_v6_n125": {
+    "n": 125,
+    "position": 91,
+    "active": "PMCG1-011",
+    "active_units": 0,
+    "moves": 35,
+    "excluded_by_v6": 0,
+    "p1": 0,
+    "p2": 7,
+    "tier": 2,
+    "chosen": [
+     10,
+     108,
+     3
+    ],
+    "chosen_class": "other",
+    "goals": [
+     {
+      "kind": "retreat",
+      "met": false,
+      "deficit": 2,
+      "source": "retreat_inputs_same_episode"
+     },
+     {
+      "kind": "attack",
+      "met": false,
+      "deficit": 4,
+      "source": "printed_card_data (not in API until declarable)"
+     }
+    ]
+   },
+   "9056_v7_n187": {
+    "n": 187,
+    "position": 149,
+    "active": "PMCG1-011",
+    "active_units": 2,
+    "moves": 35,
+    "excluded_by_v6": 0,
+    "p1": 0,
+    "p2": 5,
+    "tier": 2,
+    "chosen": [
+     10,
+     101,
+     4
+    ],
+    "chosen_class": "p2",
+    "goals": [
+     {
+      "kind": "retreat",
+      "met": true,
+      "deficit": 0,
+      "source": "static_printed"
+     },
+     {
+      "kind": "attack",
+      "met": false,
+      "deficit": 2,
+      "source": "printed_card_data (not in API until declarable)"
+     }
+    ]
+   },
+   "9056_v7_n193": {
+    "n": 193,
+    "position": 154,
+    "active": "PMCG1-001",
+    "active_units": 1,
+    "moves": 25,
+    "excluded_by_v6": 0,
+    "p1": 4,
+    "p2": 0,
+    "tier": 1,
+    "chosen": [
+     3,
+     106,
+     12
+    ],
+    "chosen_class": "other",
+    "goals": [
+     {
+      "kind": "retreat",
+      "met": true,
+      "deficit": 0,
+      "source": "static_printed"
+     },
+     {
+      "kind": "attack",
+      "met": false,
+      "deficit": 1,
+      "source": "printed_card_data (not in API until declarable)"
+     }
+    ]
+   }
+  }
+ },
+ "boards": [
+  {
+   "id": "E1",
+   "board": "9056 n124 type: active Venusaur 0 energy (retreat 2, Solarbeam GGGG); bench Bulbasaur 3 grass, Parasect 3, Tangela 1, Bulbasaur, Tangela",
+   "expected": "same view and inputs: 35 moves -> tier 2 set of 7 (moves onto the active); retreat / attack ranks unchanged",
+   "pass": "chosen move in the tier set; unpayable retreat re-selection 0; record moves until retreat cost met and until attack"
+  },
+  {
+   "id": "E2",
+   "board": "active Venusaur 0; bench Ivysaur 1 grass, Bulbasaur 1 grass",
+   "expected": "move 1 tier 2, move 2 tier 1 (retreat); attack unreachable",
+   "pass": "retreat payable after 2 ET in every seed; retreat accepted in >= 1 seed (tie with ET unchanged); no re-selection of unpayable retreat"
+  },
+  {
+   "id": "E3",
+   "board": "active Tangela 0 (Bind G+C); bench Venusaur 2 grass",
+   "expected": "tier 2 then tier 1; attack presented and chosen (rank 4)",
+   "pass": "attack accepted in every seed after exactly 2 ET"
+  },
+  {
+   "id": "E4",
+   "board": "active Venusaur 0; bench Venusaur 4 grass",
+   "expected": "tiers 2, 2, 2, 1; retreat becomes payable after 2 (tie with ET unchanged)",
+   "pass": "Solarbeam reachable with 4 ET in >= 1 seed; no seed blocked by the proposal (no count limit); a cap below 4 would fail"
+  },
+  {
+   "id": "E5",
+   "board": "active Venusaur 0; bench Bulbasaur 1 grass, Tangela (grass 1 < retreat 2; no attack payable)",
+   "expected": "both goals unreachable -> tier 3 (existing choice); no fewer operations expected",
+   "pass": "unreachable judged from the move set and costs; choices identical to rules-v7 for the same RNG state"
+  },
+  {
+   "id": "C1",
+   "board": "active needing a colour ET cannot supply (e.g. fighting + colourless) with grass on the bench",
+   "expected": "grass may pay colourless only; colour symbol unreachable -> not tier 2",
+   "pass": "no move scored as progress for that attack"
+  },
+  {
+   "id": "C2",
+   "board": "active with a Double Colorless Energy (2 units) and retreat 3",
+   "expected": "evaluated only with retreat inputs (per-card units); else fallback",
+   "pass": "no tier from flattened units alone"
+  },
+  {
+   "id": "C3",
+   "board": "colour readings undetermined (CE1 / CE2) or view missing",
+   "expected": "fallback",
+   "pass": "choices identical to rules-v7"
+  },
+  {
+   "id": "C4",
+   "board": "active asleep or paralysed",
+   "expected": "attack / retreat goals not operable -> fallback",
+   "pass": "no tier"
+  }
+ ],
+ "comparison_plan_not_run": {
+  "setup": "0.198.0, TR8@1, C2 fixed decks v2, deep; rules-v7 vs rules-v8 only; same seats / limits / observation / prestop as the saved plans",
+  "games": [
+   "9056 (main)",
+   "9045 (long Energy Trans control)"
+  ],
+  "measures": [
+   "ET until a goal cost is first met (per goal)",
+   "accepted retreat and attack",
+   "total operations",
+   "returns / detections",
+   "termination"
+  ],
+  "rules": [
+   "compare only the first divergence point as the same state; later boards are separate paths",
+   "no retries or seed substitutions"
+  ]
+ },
+ "e5_remaining": "unreachable states are identifiable when costs are known, but the proposal only ranks inputs; ET still outranks end_turn, so operation counts are not expected to fall. Demoting the whole power candidate or a count limit remains a separate decision (E4 is the control for any limit)",
+ "not_done": [
+  "implementation",
+  "board / game runs",
+  "default / limits changes",
+  "candidate-level demotion or count limits",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8d-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "first replay judged reachability on the move set after the rules-v6 exclusion (9045: 22 false unreachable); fixed to the unrestricted set and re-run",
+   "kept": "raw/F1/"
+  }
+ ]
+}

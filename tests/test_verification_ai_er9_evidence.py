@@ -87,8 +87,8 @@ class RecordedConditionTest(unittest.TestCase):
         """evidence を渡さない呼び出し（単局の runner の判定）は規則 5 と同じ: undetermined。"""
         self.assertEqual(J.judge_normal(candidate(), [], rejected(), stages=stages()),
                          (J.UNDETERMINED, [f"stop_condition_not_evidenced:{ER9}"]))
-        self.assertEqual(J.JUDGE_RULES_VERSION, 8)  # 規則 8 は LOST_TARGET の P3s だけを足した。規則 7 は LOST_TARGET の P1 だけを足した（ER9 の条件・この判定は変えていない）
-        self.assertEqual(B.TOOL_VERSION, 10)  # 10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2。7: 到達目的の方策 reach（6: 明示的なデッキリスト・方式 boundary。5: 主体別の観測の記録）
+        self.assertEqual(J.JUDGE_RULES_VERSION, 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9 は LOST_TARGET の P2-min だけを足した（旧の期待は 8）。 規則 8 は LOST_TARGET の P3s だけを足した。規則 7 は LOST_TARGET の P1 だけを足した（ER9 の条件・この判定は変えていない）
+        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）。 16: rules-v5（旧の期待は 15）。 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。10: 判定の規則 8。9: 判定の規則 7。8: reach 版 2。7: 到達目的の方策 reach（6: 明示的なデッキリスト・方式 boundary。5: 主体別の観測の記録）
 
     def test_policy_and_input_generation_do_not_use_it(self):
         """方策・行動生成・runner は規則 6 の部品を直接使わない（判定は保存する trace にあとから当てるだけ。乱数・入力の作り方は変わらない）。規則 7 から、runner は
@@ -132,7 +132,7 @@ class SavedRecordTest(unittest.TestCase):
         self.assertEqual(new["accepted_content"], saved["accepted_content"])
         self.assertEqual([u for u in new["undetermined"]], [u for u in saved["undetermined"] if u["attempt"] != 35])
         self.assertEqual(new["known_stop"], [35])
-        self.assertEqual(new["rules_version"], 8)  # 規則 8（P3s）・規則 7（LOST_TARGET の P1）を足しても、この局で変わるのは ER9 の行だけ
+        self.assertEqual(new["rules_version"], 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9（P2-min）も、この局では変わらない。 規則 8（P3s）・規則 7（LOST_TARGET の P1）を足しても、この局で変わるのは ER9 の行だけ
 
     def test_b2_halt_is_still_undetermined(self):
         """99 局の seed 2025 の準備の停止（UNRESOLVED_MULLIGAN_COMPENSATION。受理のあとの停止）は、規則 6 では変わらない。"""

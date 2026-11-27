@@ -1,0 +1,942 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-22",
+ "doc": "docs/t19b-evaded-effect-coin-design.md",
+ "base": {
+  "branch": "claude/tr6a-main",
+  "commit": "e88c15504974a0bcfc4394224f173bf3920090fb",
+  "origin_equal": true
+ },
+ "game_code": {
+  "commit": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "version": "0.196.0",
+  "convention_set": {
+   "id": "CS-KYUURA-PLAY-TR6",
+   "digest": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",
+   "version": 1
+  }
+ },
+ "work_branch": "claude/t19b-evaded-effect-coin-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/t19b-evaded-effect-coin-design/",
+ "out_of_scope": [
+  "規約の採用",
+  "構築盤面の実行",
+  "コード・方策・judge・GUI・版の変更",
+  "新しい対戦",
+  "旧記録の judge・replay の再実行",
+  "TR6 の監査の残り 9 局",
+  "--acknowledge-stop",
+  "kyuura の変更"
+ ],
+ "game": {
+  "batch": "vai-batch-tr6a-m3",
+  "game": "g004-rules-v2-s9017",
+  "attempt": 1,
+  "condition": "C3",
+  "seed": 9017,
+  "turn": 44,
+  "actor": 1,
+  "position": 156,
+  "attempt_n": 168,
+  "operation_id": "g004-rules-v2-s9017-000157"
+ },
+ "pre_declaration_observation": {
+  "phase": "main",
+  "decision": null,
+  "stadium": null,
+  "trainer_effects": [],
+  "attacker_side": {
+   "active": {
+    "name_ja": "フーディン",
+    "card_id": "PMCG1-049",
+    "hp": 80,
+    "damage": 0,
+    "special_conditions": [],
+    "powers": [
+     "ダメージスワップ"
+    ],
+    "weakness": "psychic",
+    "resistance": null,
+    "evolution_stack": [
+     "PMCG1-043",
+     "PMCG1-046"
+    ],
+    "energy": 3
+   },
+   "bench": [
+    {
+     "name_ja": "エビワラー",
+     "card_id": "PMCG1-058",
+     "damage": 0
+    },
+    {
+     "name_ja": "エビワラー",
+     "card_id": "PMCG1-058",
+     "damage": 0
+    }
+   ],
+   "hand_count": 2,
+   "deck_count": 23,
+   "prizes": 2
+  },
+  "defender_side": {
+   "active": {
+    "name_ja": "ゴースト",
+    "card_id": "PMCG3-030",
+    "hp": 50,
+    "damage": 30,
+    "special_conditions": [],
+    "powers": [
+     "とうめい"
+    ],
+    "weakness": null,
+    "resistance": "fighting",
+    "evolution_stack": [
+     "PMCG3-029"
+    ],
+    "energy": 5
+   },
+   "bench": [
+    {
+     "name_ja": "ゴースト",
+     "card_id": "PMCG3-030",
+     "damage": 0
+    },
+    {
+     "name_ja": "ヤドラン",
+     "card_id": "PMCG3-028",
+     "damage": 0
+    }
+   ],
+   "hand_count": 3,
+   "deck_count": 25,
+   "prizes": 3
+  },
+  "chemical_gas_in_play": false,
+  "final_damage_from_observation": 30,
+  "note": "最終ダメージは観測からの計算（弱点なし・超の抵抗力なし・場の修正なし）。エンジンの先読みの値は記録にない"
+ },
+ "timeline": {
+  "candidates": [
+   "end_turn",
+   "retreat",
+   "use_attack",
+   "play_trainer"
+  ],
+  "coverage": {
+   "completeness": "partial",
+   "display_only_kinds": [
+    "check_face_up_deck"
+   ]
+  },
+  "choice": {
+   "candidate": "c3",
+   "choices": [
+    "o1"
+   ],
+   "picks": [
+    {
+     "index": 0,
+     "items": 1,
+     "purpose": "option",
+     "reason": "uniform:option",
+     "stage": 1
+    }
+   ],
+   "reason": "rule2:priority4:use_attack"
+  },
+  "attack_option": {
+   "attack_index": 0,
+   "card": 75,
+   "card_id": "PMCG1-049",
+   "cost": [
+    "psychic",
+    "psychic",
+    "psychic"
+   ],
+   "damage": "30",
+   "eligible": true,
+   "id": "o1",
+   "name_ja": "あやしいひかり",
+   "processability": "may_stop_later",
+   "reasons": [
+    "continuation_not_evaluated",
+    "preflight_not_evaluated"
+   ],
+   "route": "form",
+   "text_ja": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。"
+  },
+  "check": {
+   "refusal": null,
+   "valid": true
+  },
+  "submit": {
+   "outcome": "rejected",
+   "diagnostic_id": "UNRESOLVED_EVADED_EFFECT_COIN",
+   "category": "unresolved_ruling",
+   "continuable": true,
+   "case_status": "identified",
+   "next": [
+    {
+     "kind": "turn_action",
+     "player": 1
+    }
+   ],
+   "status": "in_progress"
+  },
+  "full_record": {
+   "op156": {
+    "command": {
+     "energy": 100,
+     "player": 1,
+     "target": 64,
+     "type": "attach_energy"
+    },
+    "check": {
+     "decision": null,
+     "halt": null,
+     "log_length": 439,
+     "rng": "83742b02e1e9cb3666fc99acf5b40dc2829b58dfae06d5e73f0e7306748b0196",
+     "segment": 0,
+     "state": "4158b6016a9e61857c5a7a1975f09bd2a3152a7fb4bc386f58fee4fdc316c0fe",
+     "status": "in_progress"
+    }
+   },
+   "op157": {
+    "actor": 1,
+    "command": {
+     "attack_index": 0,
+     "card": 75,
+     "player": 1,
+     "type": "use_attack"
+    },
+    "diagnostic": {
+     "category": "unresolved_ruling",
+     "diagnostic_id": "UNRESOLVED_EVADED_EFFECT_COIN",
+     "engine_code": "UNRESOLVED_EVADED_EFFECT_COIN"
+    },
+    "operation_id": "g004-rules-v2-s9017-000157",
+    "outcome": "rejected",
+    "segment": 0,
+    "seq": 157,
+    "status": "in_progress",
+    "submitter": 1
+   },
+   "final_check": {
+    "decision": null,
+    "halt": null,
+    "log_length": 439,
+    "rng": "83742b02e1e9cb3666fc99acf5b40dc2829b58dfae06d5e73f0e7306748b0196",
+    "segment": 0,
+    "state": "4158b6016a9e61857c5a7a1975f09bd2a3152a7fb4bc386f58fee4fdc316c0fe",
+    "status": "in_progress"
+   },
+   "state_and_rng_unchanged_after_rejection": true
+  },
+  "observe_row_157": {
+   "accepted_index": null,
+   "actor": 1,
+   "attempt": 168,
+   "engine_results": [
+    {
+     "actor": 1,
+     "outcome": "rejected",
+     "status": "in_progress"
+    }
+   ],
+   "kind": "submit",
+   "ok": true,
+   "operation_id": "g004-rules-v2-s9017-000157",
+   "outcome": "rejected",
+   "position": 156,
+   "problems": [],
+   "refusal": null,
+   "seq": 157,
+   "updates_counts": {
+    "0": 0,
+    "1": 0,
+    "host": 0,
+    "spectator": 0
+   },
+   "viewers": {
+    "0": {
+     "after": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "2bab89aa096dda618049ef6fd37f784b0f0edf9b480b40ab6489f075aac0127d"
+     },
+     "before": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "2bab89aa096dda618049ef6fd37f784b0f0edf9b480b40ab6489f075aac0127d"
+     },
+     "view_entry": null,
+     "view_kind": null
+    },
+    "1": {
+     "after": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "586381e8a3a878a5a3dcf6e047fab962aedaf5de43cdaa6e72959bb265d095c8"
+     },
+     "before": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "586381e8a3a878a5a3dcf6e047fab962aedaf5de43cdaa6e72959bb265d095c8"
+     },
+     "view_entry": 158,
+     "view_kind": "own_rejection"
+    },
+    "spectator": {
+     "after": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "f306219d4622693d8bb4f7398b7ec379ef3885e7ba36f2a953ce21d28b924389"
+     },
+     "before": {
+      "log": [
+       0,
+       439
+      ],
+      "observation_sha256": "f306219d4622693d8bb4f7398b7ec379ef3885e7ba36f2a953ce21d28b924389"
+     },
+     "view_entry": null,
+     "view_kind": null
+    }
+   }
+  },
+  "after_rejection": {
+   "lines": 63,
+   "types": {
+    "attempt": 63
+   },
+   "positions": [
+    156
+   ],
+   "with_submit": 0,
+   "with_check": 0,
+   "choices": {
+    "\"c3\"|[\"o1\"]|rule2:priority4:use_attack": 63
+   },
+   "candidate_kinds_each": {
+    "end_turn,retreat,use_attack,play_trainer": 63
+   },
+   "n_first_last": [
+    169,
+    231
+   ]
+  },
+  "trace_builds_position_156": {
+   "null": 1,
+   "ok": 1,
+   "ok_already_tried": 63
+  },
+  "result": {
+   "termination": {
+    "at": {
+     "accepted": 156,
+     "attempt": 231,
+     "operations": 157,
+     "position": 156,
+     "turns": 44
+    },
+    "class": "no_progress",
+    "detail": {
+     "actor": 1,
+     "draws": 64,
+     "reason": "draws_per_position",
+     "rejections": 1
+    }
+   },
+   "counters": {
+    "accepted": 156,
+    "attempts": 231,
+    "check_invalid": 0,
+    "deep_fallback_unverified": 0,
+    "failed": 0,
+    "operations": 157,
+    "policy_suppressed": 5,
+    "refused": 0,
+    "rejected": 1,
+    "retry_same_input": 63,
+    "turns": 44,
+    "unbuildable": 6,
+    "withheld": 0
+   },
+   "limits": {
+    "accepted": 1000,
+    "draws_per_position": 64,
+    "operations": 2000,
+    "rejections_per_position": 16,
+    "seconds": 120.0,
+    "turns": 200
+   },
+   "anomalies": []
+  },
+  "judge": {
+   "termination": {
+    "class": "no_progress",
+    "halt": null,
+    "reasons": [],
+    "verdict": "undetermined"
+   },
+   "undetermined": [
+    {
+     "attempt": 168,
+     "category": "evidence_missing_stop",
+     "kind": "use_attack",
+     "reasons": [
+      "stop_condition_not_evidenced:UNRESOLVED_EVADED_EFFECT_COIN"
+     ],
+     "source": "submit"
+    },
+    {
+     "attempt": null,
+     "category": "no_progress",
+     "kind": null,
+     "reasons": [],
+     "source": "termination"
+    }
+   ],
+   "known_stop": [],
+   "counts": {
+    "expected": 156,
+    "undetermined": 1
+   }
+  },
+  "verification": {
+   "correspondence_problems": [],
+   "replay_run": {
+    "end_verified": true,
+    "executed": true,
+    "expected": "succeeded",
+    "matches_expectation": true,
+    "mismatch": null,
+    "status": "succeeded",
+    "verified_accepted": 156,
+    "verified_seq": 157
+   }
+  },
+  "complete": [
+   "undetermined:no_progress:1"
+  ],
+  "m3_ledger_tail_events": [
+   "attempt_end",
+   "policy_stop",
+   "session_end"
+  ],
+  "main_run_call15": {
+   "batch_exit": 1,
+   "status": "stopped_policy",
+   "driver_exit": 12,
+   "calls_not_started": "16..24 (9 games)"
+  }
+ },
+ "five_events": [
+  {
+   "event": "T19b rejection sent",
+   "count": 1,
+   "where": "attempt n 168 / op 157",
+   "reanswered": 0
+  },
+  {
+   "event": "suppressed same input",
+   "count": 63,
+   "where": "attempt n 169..231",
+   "counter": "retry_same_input",
+   "check": 0,
+   "submit": 0
+  },
+  {
+   "event": "game no_progress",
+   "reason": "draws_per_position",
+   "draws": 64,
+   "limit": 64,
+   "rejections": 1,
+   "rejections_limit": 16
+  },
+  {
+   "event": "judge undetermined",
+   "reasons": [
+    "evidence_missing_stop:stop_condition_not_evidenced:UNRESOLVED_EVADED_EFFECT_COIN",
+    "termination no_progress"
+   ]
+  },
+  {
+   "event": "m3 stop policy",
+   "stop": "undetermined:no_progress:1",
+   "session": "stopped_policy",
+   "budget_shortage": false
+  }
+ ],
+ "other_candidates_offered_not_chosen": {
+  "kinds": [
+   "end_turn",
+   "retreat",
+   "play_trainer"
+  ],
+  "offered_times": 64,
+  "chosen": 0
+ },
+ "sources_main_key_note": "本実行の集計のキー rejected|UNRESOLVED_EVADED_EFFECT_COIN|attach_energy|None の 3 番目は直前の受理（操作 156）の種類。拒否されたコマンドは use_attack",
+ "controls_tr6_records": {
+  "games": 19,
+  "declarations": 62,
+  "summary": {
+   "ジャブ|vs_haunter|accepted|None": 1,
+   "スペシャルパンチ|vs_haunter|accepted|None": 1,
+   "あなをほる|vs_haunter|accepted|None": 7,
+   "ねんりき|other|accepted|None": 11,
+   "あやしいひかり|other|accepted|None": 3,
+   "どくのこな|other|accepted|None": 1,
+   "したでなめる|other|accepted|None": 37,
+   "あやしいひかり|vs_haunter|rejected|UNRESOLVED_EVADED_EFFECT_COIN": 1
+  },
+  "evade_check_events": {
+   "evade_check": 1
+  },
+  "evade_results": {
+   "\"tails\"": 1
+  }
+ },
+ "source_paths": {
+  "rejected_path": {
+   "file": "kyuura_engine/resolution/programs.py",
+   "lines": "2190-2194",
+   "element": "Status.run local_coin",
+   "program": "ConfuseOnHeads: (Damage(OPP, Printed()), Status(CONFUSION, local_coin=HEADS))"
+  },
+  "preflight": {
+   "default": "derived",
+   "function": "resolution.preflight.after_real_run",
+   "recorded_in_game": false
+  },
+  "legacy_check": "kyuura_engine/effects.py evaded_effect_coin_problem (PoisonOnHeads・ParalyzeOnHeads・ConfuseOnHeads の problem)",
+  "same_question_sites": {
+   "resolution/programs.py": 15,
+   "effects.py function": 1,
+   "effects.py problem callers": 3
+  },
+  "sites": [
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 1612,
+    "class": null,
+    "function": "def void_coin_question(run: AttackRun, decided: list[Element]) -> None:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 2193,
+    "class": "class Status(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 2228,
+    "class": null,
+    "function": "def effect_coin_questions(run: AttackRun, owner: int, target: PokemonInPlay) -> None:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 2326,
+    "class": "class ForceSwitch(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 3417,
+    "class": "class OpponentCannotAttack(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 3488,
+    "class": "class DiscardOpponentEnergy(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 3516,
+    "class": "class DiscardOpponentEnergy(Element):",
+    "function": "def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 4960,
+    "class": "class OpponentAttackCheck(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 5007,
+    "class": "class OpponentRetreatLock(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 5045,
+    "class": null,
+    "function": "def _opponent_lock(element, run: AttackRun, kind: type, element_kind: str) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 6097,
+    "class": "class ChosenStatus(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 6633,
+    "class": "class CountersToRemainingHp(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 8654,
+    "class": "class DiscardOpponentTrainers(Element):",
+    "function": "def run(self, run: AttackRun) -> bool:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 11417,
+    "class": "class TargetDamage(Element):",
+    "function": "def _coin_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:"
+   },
+   {
+    "file": "kyuura_engine/resolution/programs.py",
+    "line": 15912,
+    "class": "class DiscardChosenTypedEnergyUntilTails(DiscardOpponentEnergy):",
+    "function": "def choice_problem(self, run: AttackRun, owner: int, pokemon: PokemonInPlay) -> tuple[str, str] | None:"
+   },
+   {
+    "file": "kyuura_engine/effects.py",
+    "line": 880,
+    "class": null,
+    "function": "def evaded_effect_coin_problem(state: GameState, use: AttackUse) -> UnsupportedError | None:"
+   },
+   {
+    "file": "kyuura_engine/effects.py",
+    "line": 1269,
+    "class": "class PoisonOnHeads(AttackEffect):",
+    "function": "def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:"
+   },
+   {
+    "file": "kyuura_engine/effects.py",
+    "line": 1362,
+    "class": "class ParalyzeOnHeads(AttackEffect):",
+    "function": "def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:"
+   },
+   {
+    "file": "kyuura_engine/effects.py",
+    "line": 1501,
+    "class": "class ConfuseOnHeads(AttackEffect):",
+    "function": "def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:"
+   }
+  ],
+  "in_scope_of_limited_convention": [
+   "kyuura_engine/resolution/programs.py:2193"
+  ]
+ },
+ "nullification_paths": [
+  {
+   "path": "whole attack (transparency heads)",
+   "coin": "T19b undecided",
+   "board": "no damage, no confusion",
+   "turn": "ends"
+  },
+  {
+   "path": "damage only (cannot be damaged)",
+   "coin": "flip (source reading)",
+   "board": "no damage, confusion on heads",
+   "turn": "same"
+  },
+  {
+   "path": "effects too (barrier)",
+   "coin": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "board": "-",
+   "turn": "-"
+  },
+  {
+   "path": "status immunity",
+   "coin": "flip",
+   "board": "no confusion",
+   "turn": "same"
+  },
+  {
+   "path": "no nullification: transparency off (sleep/paralysis/confusion/gas)",
+   "coin": "attack coin only",
+   "board": "damage, confusion on heads",
+   "turn": "same"
+  },
+  {
+   "path": "no nullification: final damage 0",
+   "coin": "attack coin, then transparency coin on heads (T21/T19/T22)",
+   "board": "by transparency",
+   "turn": "same"
+  },
+  {
+   "path": "transparency tails, HP reached (this scene)",
+   "coin": "transparency coin only (target gone, p.309)",
+   "board": "30 damage, knocked out",
+   "turn": "KO, prize, promote"
+  },
+  {
+   "path": "transparency tails, HP not reached",
+   "coin": "transparency then attack coin",
+   "board": "damage, confusion on heads",
+   "turn": "same"
+  }
+ ],
+ "historical_sources": {
+  "card_texts": {
+   "PMCG1-049#0": "コインを投げて「おもて」なら、相手を「こんらん」状態にする。",
+   "PMCG3-030@power0_latest": "このカードがワザによってダメージや効果を受けるとき、コインを投げて「おもて」なら、このカードはそのダメージと効果を受けない。このカードが「ねむり・マヒ・こんらん」状態のとき、この力は消える。",
+   "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d"
+  },
+  "rulings_used": [
+   "T2",
+   "T4",
+   "T5",
+   "T6",
+   "T9-T16",
+   "T17",
+   "T18",
+   "T19",
+   "T19b",
+   "T20",
+   "T21",
+   "T22",
+   "T33"
+  ],
+  "decided_by_sources": [
+   "heads: no damage and no confusion; attack is used; turn ends",
+   "tails: 30 damage reaches HP; confusion element has no target, no attack coin"
+  ],
+  "undecided": "heads branch: whether the attacker flips the confusion coin (T19b, UQ-COIN-IN-NULLIFIED-ELEMENT, official_material none_found)",
+  "decided_by_convention": "only the coin flip (RNG consumption and the public coin event); board result is the same",
+  "neighbour_readings": [
+   "CR-STICKY-VS-PREVENTED (M6)",
+   "CR-GAMBLE-VS-PREVENTED (L10)"
+  ],
+  "guidebook_reread": false
+ },
+ "existing_draft": {
+  "id": "PC-NULLIFIED-ELEMENT-COIN",
+  "decision": "DEC-NULLIFIED-COINS (proposal)",
+  "draft_text": "投げる。結果はその要素に使わない。ほかの要素の処理は変えない",
+  "covers_this_scene": true,
+  "codes": 5,
+  "codes_verified_in_this_unit": "T19b の Status の経路だけ",
+  "missing_in_draft": [
+   "log form",
+   "convention_applied record",
+   "judge classification"
+  ]
+ },
+ "options": [
+  {
+   "id": "A",
+   "name": "現状維持",
+   "this_scene": "rejected"
+  },
+  {
+   "id": "B",
+   "name": "限定の規約（採用候補）",
+   "this_scene": "accepted; heads: no damage/confusion, turn ends; tails: KO"
+  },
+  {
+   "id": "C",
+   "name": "追加の検証を先に",
+   "this_scene": "rejected"
+  }
+ ],
+ "recommendation": {
+  "option": "B",
+  "applies_when": [
+   "effect registration type in ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads (no card ID branching)",
+   "element Status, target OPP, local_coin HEADS, no otherwise",
+   "reception of the target is False (transparency heads in this attack)",
+   "target has not reached HP",
+   "convention set is the new set"
+  ],
+  "nullified": [
+   "damage to the target",
+   "the special condition"
+  ],
+  "remaining": [
+   "attack is used (energy stays)",
+   "after-attack processing",
+   "turn end"
+  ],
+  "coin": "attacker flips 1 coin (coin_flip, source attack, public); result unused",
+  "log": "current element form (attack_evaded on heads) + convention_applied",
+  "rng": "one more draw than the strict stop point in the heads branch",
+  "set": {
+   "new": "CS-KYUURA-PLAY-TR7@1 (provisional)",
+   "members": "CS-KYUURA-PLAY-TR6@1 25 + 1",
+   "not_used": "TR5 (ER10 design)",
+   "unchanged": [
+    "CS-KYUURA-PLAY-TR6@1 and all existing sets",
+    "default set",
+    "strict side"
+   ]
+  },
+  "kept_stopped": [
+   "other 14 sites",
+   "other Status types",
+   "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "UNRESOLVED_DISCARD_PROTECTED_COIN",
+   "UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"
+  ]
+ },
+ "separate_records": {
+  "policy_reselection": "63 same choices; demote_after 2 in header; cause not investigated",
+  "judge_known_stop_table": "no entry for UNRESOLVED_EVADED_EFFECT_COIN -> evidence_missing_stop"
+ },
+ "decisions_for_adoption": [
+  {
+   "id": "D1",
+   "question": "flip the nullified element's coin",
+   "recommended": "flip",
+   "alternative": "do not flip"
+  },
+  {
+   "id": "D2",
+   "question": "scope",
+   "recommended": "3 T19b types, Status path",
+   "alternative": [
+    "ConfuseOnHeads only",
+    "all Status local_coin",
+    "whole family"
+   ]
+  },
+  {
+   "id": "D3",
+   "question": "log",
+   "recommended": "current form + convention_applied",
+   "alternative": "always write a nullified event"
+  },
+  {
+   "id": "D4",
+   "question": "names",
+   "recommended": "PC-EVADED-STATUS-COIN@1 (provisional) / CS-KYUURA-PLAY-TR7@1",
+   "alternative": "PC-NULLIFIED-ELEMENT-COIN@1 with limited applies_when"
+  },
+  {
+   "id": "D5",
+   "question": "judge classification",
+   "recommended": "separate unit, like ER9/H4",
+   "alternative": "unchanged"
+  },
+  {
+   "id": "D6",
+   "question": "policy reselection",
+   "recommended": "separate unit",
+   "alternative": "together with adoption"
+  }
+ ],
+ "acceptance_boards": {
+  "observe": [
+   "coin order and RNG consumption",
+   "damage and special conditions",
+   "public log and viewer updates",
+   "decisions and turn progression"
+  ],
+  "boards": [
+   "S1 strict rejection and rollback",
+   "S2 convention heads",
+   "S3 convention tails HP reached",
+   "S4 convention tails HP not reached",
+   "S5 no-nullification controls (both sets)",
+   "S6 PoisonOnHeads and ParalyzeOnHeads",
+   "S7 out-of-scope paths keep stopping",
+   "S8 existing sets unchanged",
+   "S9 replay of S2/S3 records"
+  ],
+  "executed": 0
+ },
+ "unconfirmed": [
+  "whether this game and m3 complete when accepted",
+  "actual transparency coin of the real-run branch (not recorded)",
+  "preflight mode (not recorded; source default derived)",
+  "internal state/RNG contents (hashes only)",
+  "other 14 sites",
+  "other 4 codes",
+  "no construct board executed"
+ ],
+ "not_done": [
+  "adoption",
+  "code change",
+  "construct boards",
+  "new games",
+  "judge/replay re-run",
+  "remaining 9 TR6 games",
+  "--acknowledge-stop",
+  "guidebook reread"
+ ],
+ "adoption": {
+  "on": "2026-11-22",
+  "by": "user",
+  "option": "B",
+  "version": "0.197.0",
+  "doc": "docs/play-convention-tr7-v0.197.md",
+  "convention": [
+   "PC-T19B-NULLIFIED-STATUS-COIN",
+   1
+  ],
+  "set": [
+   "CS-KYUURA-PLAY-TR7",
+   1
+  ],
+  "set_members": "CS-KYUURA-PLAY-TR6@1 25 + 1",
+  "commits": {
+   "implementation": "7f04644",
+   "generated": "70572ec",
+   "version_pin": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c"
+  },
+  "decisions": {
+   "D1": "flip once; result unused",
+   "D2": "Status T19b branch; ConfuseOnHeads, PoisonOnHeads, ParalyzeOnHeads (S6 confirmed)",
+   "D3": "current element form + convention_applied (player, target_owner, pokemon_id, element) before the attack coin",
+   "D4": "PC-T19B-NULLIFIED-STATUS-COIN@1 / CS-KYUURA-PLAY-TR7@1 (family PC-NULLIFIED-ELEMENT-COIN stays proposal)",
+   "D5": "judge unchanged; TR7 acceptance expected; strict rejection stays evidence_missing_stop",
+   "D6": "policy unchanged"
+  },
+  "applied_types": [
+   "ConfuseOnHeads",
+   "PoisonOnHeads",
+   "ParalyzeOnHeads"
+  ],
+  "held": [
+   "other Status types (otherwise etc.)",
+   "the other 14 T19b sites",
+   "copy / transform paths",
+   "other codes of the family"
+  ],
+  "boards_measured": {
+   "S1": "strict rejected on all 4 coin scripts incl. transparency tails; state/RNG/log/views unchanged",
+   "S2": "2 coins (power then attack), 1 convention_applied, no damage/status, turn ends; attack coin heads and tails",
+   "S3": "1 coin, no record, knock out, take_prize",
+   "S4": "unchanged",
+   "S5": "same as strict",
+   "S6": "same as S2",
+   "S7": "T19b kept",
+   "S8": "existing sets unchanged",
+   "S9": "API/views/audit ok, judge expected; replay of constructed records not applicable"
+  },
+  "normal_games": "not confirmed"
+ }
+}

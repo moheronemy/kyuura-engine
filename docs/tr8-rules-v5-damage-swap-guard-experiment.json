@@ -1,0 +1,884 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-rules-v5-damage-swap-guard-experiment.md",
+ "date": "2026-11-25",
+ "base": "60fb6fb5bc37803cceee8c5de319ce7df6f243e5",
+ "implementation_commit": "2a76d577212b76240dee28ae3506ce586730397c",
+ "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+ "engine_version": "0.198.0",
+ "tool_version": 16,
+ "branch": "claude/tr8-rules-v5-damage-swap-guard",
+ "policy": {
+  "mode": "rules-v5",
+  "rules_version": 5,
+  "class": "SwapCapRulePolicy",
+  "distribution": "rules-v5-candidate+uniform-stage",
+  "cap": 6,
+  "base": "rules-v4",
+  "count": "own accepted Damage Swaps in the own (segment, turn), all holders summed; rejected / unbuildable / suppressed / deferred-all not counted; other accepted operations do not reset; reset at turn change",
+  "effect": "after 6 accepted: rank 7 (after end_turn) for the rest of the turn; candidate kept; rules-v4 restriction and rules-v2 suppression unchanged",
+  "default": false
+ },
+ "answers": {
+  "s5_k2_k4_kept": {
+   "s5": 4,
+   "k2_fourth": 4,
+   "k4_fourth": 4,
+   "of": 4
+  },
+  "first_rank_change_9022": {
+   "position": 127,
+   "turn": [
+    0,
+    30
+   ],
+   "attempts": [
+    {
+     "n": 149,
+     "actor": 0,
+     "position": 127,
+     "turn": [
+      0,
+      30
+     ],
+     "kind": "retreat",
+     "holder": null,
+     "reason": "rule5:priority5:retreat:swap_cap1",
+     "move": null,
+     "restriction": null,
+     "sent": false,
+     "outcome": "unbuildable"
+    },
+    {
+     "n": 150,
+     "actor": 0,
+     "position": 127,
+     "turn": [
+      0,
+      30
+     ],
+     "kind": "end_turn",
+     "holder": null,
+     "reason": "rule5:priority6:end_turn:swap_cap1",
+     "move": null,
+     "restriction": null,
+     "sent": true,
+     "outcome": "accepted"
+    }
+   ],
+   "rules_v4_same_position": {
+    "n": 149,
+    "actor": 0,
+    "position": 127,
+    "turn": [
+     0,
+     30
+    ],
+    "kind": "use_power",
+    "holder": 9,
+    "reason": "rule4:priority5:use_power:tie2",
+    "move": [
+     1,
+     9
+    ],
+    "restriction": null,
+    "sent": false,
+    "outcome": "suppressed_by_policy"
+   },
+   "first_accepted_divergence": {
+    "accepted_index": 129,
+    "v4": {
+     "n": 154,
+     "actor": 0,
+     "position": 129,
+     "turn": [
+      0,
+      32
+     ],
+     "kind": "attach_energy",
+     "holder": null,
+     "reason": "rule4:priority3:attach_energy",
+     "move": null,
+     "restriction": null,
+     "sent": true,
+     "outcome": "accepted"
+    },
+    "v5": {
+     "n": 152,
+     "actor": 0,
+     "position": 129,
+     "turn": [
+      0,
+      32
+     ],
+     "kind": "attach_energy",
+     "holder": null,
+     "reason": "rule5:priority3:attach_energy",
+     "move": null,
+     "restriction": null,
+     "sent": true,
+     "outcome": "accepted"
+    }
+   },
+   "estimate_in_guard_doc": {
+    "position": 136,
+    "why_different": "the estimate counted accepted swaps only; the 7th choice in turn 30 (position 127) was a rules-v2-suppressed attempt in rules-v4"
+   }
+  },
+  "max_and_completion_9022": {
+   "max_per_turn": [
+    17,
+    6
+   ],
+   "swaps": [
+    46,
+    6
+   ],
+   "turns": [
+    38,
+    32
+   ],
+   "termination": [
+    "game_over",
+    "game_over"
+   ],
+   "turn36_like_position_appeared": false
+  },
+  "regression": {
+   "old_v4_equals_new_v4": {
+    "9022": true,
+    "9023": true,
+    "9024": true
+   },
+   "v5_equals_v4_9023_9024": {
+    "9023": true,
+    "9024": true
+   },
+   "rules_v2_v4_sequences_equal_base": true,
+   "rules_v5_equals_rules_v4_reference": true
+  },
+  "return_point_reconciliation": {
+   "return_points_total": 9,
+   "breakdown": "7（番 32） + 1（番 34） + 1（番 36）",
+   "missing_in_report": [
+    34
+   ],
+   "ops_in_return_segments_total": 16,
+   "note": "9 = 復帰点（戻った地点）、16 = 往復区間（直後の逆操作 10 + 3 手以上の周期 6）に入った操作の数。前回の内訳は番 34 の復帰点 1 を落としていた"
+  }
+ },
+ "reconciliation_9022_old_v4": [
+  {
+   "turn": 30,
+   "swaps": 6,
+   "return_points": 0,
+   "view_return_points": 0,
+   "detections": 0,
+   "return_point_ordinals": [],
+   "ops_in_return_segments": 0,
+   "ops_reversal": 0,
+   "ops_cycle": 0,
+   "ops_net": 6,
+   "run_length_v4cmp": 6
+  },
+  {
+   "turn": 32,
+   "swaps": 12,
+   "return_points": 7,
+   "view_return_points": 7,
+   "detections": 7,
+   "return_point_ordinals": [
+    3,
+    6,
+    8,
+    9,
+    10,
+    11,
+    12
+   ],
+   "ops_in_return_segments": 12,
+   "ops_reversal": 6,
+   "ops_cycle": 6,
+   "ops_net": 0,
+   "run_length_v4cmp": 12
+  },
+  {
+   "turn": 34,
+   "swaps": 9,
+   "return_points": 1,
+   "view_return_points": 1,
+   "detections": 1,
+   "return_point_ordinals": [
+    4
+   ],
+   "ops_in_return_segments": 2,
+   "ops_reversal": 2,
+   "ops_cycle": 0,
+   "ops_net": 7,
+   "run_length_v4cmp": 9
+  },
+  {
+   "turn": 36,
+   "swaps": 17,
+   "return_points": 1,
+   "view_return_points": 1,
+   "detections": 1,
+   "return_point_ordinals": [
+    6
+   ],
+   "ops_in_return_segments": 2,
+   "ops_reversal": 2,
+   "ops_cycle": 0,
+   "ops_net": 15,
+   "run_length_v4cmp": 17
+  },
+  {
+   "turn": 38,
+   "swaps": 2,
+   "return_points": 0,
+   "view_return_points": 0,
+   "detections": 0,
+   "return_point_ordinals": [],
+   "ops_in_return_segments": 0,
+   "ops_reversal": 0,
+   "ops_cycle": 0,
+   "ops_net": 2,
+   "run_length_v4cmp": 2
+  }
+ ],
+ "boards": {
+  "runs": 80,
+  "gate": {
+   "ok": true,
+   "parts": {
+    "s5": true,
+    "fourth_move": true,
+    "same_as_v4": true,
+    "cap": true
+   },
+   "s5_passed": 4,
+   "fourth_move_passed": {
+    "K2_cycle3": 4,
+    "K4_same_move_other_view": 4
+   },
+   "cap_passed": {
+    "C0_five": 4,
+    "C1_cap6": 4,
+    "C2_two_holders": 4,
+    "C3_intervening": 4
+   }
+  },
+  "same_as_v4_until_first_cap": {
+   "S5_gate": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      6,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      12,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      6,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      10,
+      6
+     ],
+     "first_capped_position_v5": 6
+    }
+   ],
+   "K1_reverse": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      4,
+      4
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      4,
+      4
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      4,
+      4
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      9,
+      6
+     ],
+     "first_capped_position_v5": 6
+    }
+   ],
+   "K2_cycle3": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      8,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      10,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      6,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      9,
+      6
+     ],
+     "first_capped_position_v5": 6
+    }
+   ],
+   "K3_two_holders": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      24,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      23,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      17,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      23,
+      6
+     ],
+     "first_capped_position_v5": 6
+    }
+   ],
+   "K4_same_move_other_view": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      8,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      8,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      6,
+      6
+     ],
+     "first_capped_position_v5": 6
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      5,
+      5
+     ],
+     "first_capped_position_v5": null
+    }
+   ],
+   "K5_all_deferred": [
+    {
+     "seed": 1,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      2,
+      2
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 2,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      2,
+      2
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 3,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      2,
+      2
+     ],
+     "first_capped_position_v5": null
+    },
+    {
+     "seed": 4,
+     "ok": true,
+     "swaps_accepted_in_turn": [
+      2,
+      2
+     ],
+     "first_capped_position_v5": null
+    }
+   ]
+  }
+ },
+ "games": [
+  {
+   "seed": 9022,
+   "policy": "rules-v4 (saved, tool 15)",
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 38,
+   "accepted": 183,
+   "rejected": 0,
+   "policy_suppressed": 19,
+   "swaps_accepted": 46,
+   "max_swaps_accepted_in_a_turn": 17,
+   "return_points": 9,
+   "ops_in_return_segments": 16,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      30
+     ],
+     "swaps": 6,
+     "return_points": 0
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      32
+     ],
+     "swaps": 12,
+     "return_points": 7
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      34
+     ],
+     "swaps": 9,
+     "return_points": 1
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      36
+     ],
+     "swaps": 17,
+     "return_points": 1
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      38
+     ],
+     "swaps": 2,
+     "return_points": 0
+    }
+   ]
+  },
+  {
+   "seed": 9022,
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 38,
+   "accepted": 183,
+   "rejected": 0,
+   "policy_suppressed": 19,
+   "swaps_accepted": 46,
+   "max_swaps_accepted_in_a_turn": 17,
+   "return_points": 9,
+   "ops_in_return_segments": 16,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      30
+     ],
+     "swaps": 6,
+     "return_points": 0
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      32
+     ],
+     "swaps": 12,
+     "return_points": 7
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      34
+     ],
+     "swaps": 9,
+     "return_points": 1
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      36
+     ],
+     "swaps": 17,
+     "return_points": 1
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      38
+     ],
+     "swaps": 2,
+     "return_points": 0
+    }
+   ]
+  },
+  {
+   "seed": 9022,
+   "policy": "rules-v5",
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 32,
+   "accepted": 133,
+   "rejected": 0,
+   "policy_suppressed": 4,
+   "swaps_accepted": 6,
+   "max_swaps_accepted_in_a_turn": 6,
+   "return_points": 0,
+   "ops_in_return_segments": 0,
+   "choices_with_swap_cap": 2,
+   "swap_turns": [
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      30
+     ],
+     "swaps": 6,
+     "return_points": 0
+    }
+   ]
+  },
+  {
+   "seed": 9023,
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 41,
+   "accepted": 161,
+   "rejected": 0,
+   "policy_suppressed": 4,
+   "swaps_accepted": 12,
+   "max_swaps_accepted_in_a_turn": 4,
+   "return_points": 5,
+   "ops_in_return_segments": 10,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      19
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      21
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      23
+     ],
+     "swaps": 1,
+     "return_points": 0
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      29
+     ],
+     "swaps": 2,
+     "return_points": 1
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      35
+     ],
+     "swaps": 1,
+     "return_points": 0
+    }
+   ]
+  },
+  {
+   "seed": 9023,
+   "policy": "rules-v5",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 41,
+   "accepted": 161,
+   "rejected": 0,
+   "policy_suppressed": 4,
+   "swaps_accepted": 12,
+   "max_swaps_accepted_in_a_turn": 4,
+   "return_points": 5,
+   "ops_in_return_segments": 10,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      19
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      21
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      23
+     ],
+     "swaps": 1,
+     "return_points": 0
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      29
+     ],
+     "swaps": 2,
+     "return_points": 1
+    },
+    {
+     "actor": 1,
+     "turn": [
+      0,
+      35
+     ],
+     "swaps": 1,
+     "return_points": 0
+    }
+   ]
+  },
+  {
+   "seed": 9024,
+   "policy": "rules-v4",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 36,
+   "accepted": 124,
+   "rejected": 0,
+   "policy_suppressed": 0,
+   "swaps_accepted": 6,
+   "max_swaps_accepted_in_a_turn": 4,
+   "return_points": 3,
+   "ops_in_return_segments": 6,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      19
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      27
+     ],
+     "swaps": 2,
+     "return_points": 1
+    }
+   ]
+  },
+  {
+   "seed": 9024,
+   "policy": "rules-v5",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 36,
+   "accepted": 124,
+   "rejected": 0,
+   "policy_suppressed": 0,
+   "swaps_accepted": 6,
+   "max_swaps_accepted_in_a_turn": 4,
+   "return_points": 3,
+   "ops_in_return_segments": 6,
+   "choices_with_swap_cap": 0,
+   "swap_turns": [
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      19
+     ],
+     "swaps": 4,
+     "return_points": 2
+    },
+    {
+     "actor": 0,
+     "turn": [
+      0,
+      27
+     ],
+     "swaps": 2,
+     "return_points": 1
+    }
+   ]
+  }
+ ],
+ "budget_used": {
+  "tool_seconds": 30.75,
+  "outer_seconds": 123.353,
+  "evidence_bytes": 57213588,
+  "limits": {
+   "tool_seconds": 1800.0,
+   "outer_seconds": 3600.0,
+   "evidence_bytes": 2147483648
+  }
+ },
+ "judgement": {
+  "s5_k2_k4": "kept",
+  "long_runs": "shortened in 9022 (max 17 -> 6, swaps 46 -> 6); also the game diverged at turn 32",
+  "completion": "unchanged (all game_over)",
+  "default": "not decided from 3 seeds"
+ },
+ "remaining": [
+  "only one capped turn in 3 seeds; no long-run turn (turn 32 / 36 type) met by rules-v5",
+  "different attempt counts shift the policy rng; comparison with old records holds only until the first rank change",
+  "cap estimates must count suppressed choices, not only accepted swaps",
+  "N = 6 from 5 boards and 3 C1 seeds",
+  "strategic value of moves not evaluated"
+ ],
+ "tests": {
+  "verification_ai_modules": 28,
+  "ok": 27,
+  "known_flaky": "tests.test_verification_ai_prestop (811 vs 813 bytes; alone: base 1/3, implementation 2/3 failed)"
+ },
+ "not_done": [
+  "default change",
+  "engine / TR8 / judge / game limit change",
+  "retries / seed changes / extra games",
+  "kyuura",
+  "push to main / PR / merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v5-run/ (plans vai-batch-tr8v5-v4, vai-batch-tr8v5-v5)"
+}

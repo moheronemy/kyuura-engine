@@ -10,6 +10,8 @@
 - v0.145 の経過: この設計案の候補ではない別の仕様案（docs/poison-mist-play-policy-spec.md）の続行規約 3 件（``SPEC_ADOPTIONS``）を、利用者が採用し、開発用の集合
   CS-KYUURA-PLAY-PO@1 に登録した。場面の行に採用した規約の印（``adopted_convention``）を付けるだけで、候補の状態は変えない。台帳が PO3 を事例（#source-left・#power-lost）に
   分けたので、場面の ID だけを事例に合わせた（PC-LASTING-SOURCE-CHANGE の対象・経路の一覧）。
+- v0.198 の経過: 台帳が RS1（UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT）を事例（#lucky-once-stated-replacement・#other）に分けたので、PC-ONCE-PER-TURN-IDENTITY の対象の
+  場面の ID だけを事例に合わせた。#lucky-once-stated-replacement は TR8 の続行規約（``SPEC_ADOPTIONS``）の場面で、案そのものは proposal のまま。
 - v0.146 の経過: PSP-NJ1-NINJA-GYM-ORACLE を両モード共通の不具合として直した（``NEW_FINDINGS`` の status を fixed、``DEFECT_COUPLING`` から外し、PC-USE-WITHOUT-TARGET の
   NJ1 の対象を blocked_by_defect から needs_secret_review にした。候補の対象の組・状態は変えない）。
 - v0.147 の経過（docs/deck-content-prechecks-v0.147.md）: PSP-INCREASE-ENTRY-PW3-ORACLE・PSP-COCOON-DV2-ORACLE・PSP-DECK-CONTENT-PRECHECKS（と同じ横断の PSP-POWER-PRECHECK-DECK-ORACLE）を直した。
@@ -85,6 +87,63 @@ SPEC_ADOPTIONS = {
                                    "related_candidate": "PC-LASTING-SOURCE-CHANGE",
                                    "note": "PC-LASTING-SOURCE-CHANGE（proposal のまま）と同じ原則の［ポイズンミスト］の記録だけの規約。案そのものは採用していない"},
 }
+# v0.186（docs/play-convention-tr3-v0.186.md）: 判断一覧（docs/play-convention-three-trainers.md）の 3 条件の続行規約の採用（候補ではない。PC-USE-WITHOUT-TARGET の対象の 3 場面だけ。
+# 案そのものは proposal のまま）
+_TR3_ADOPTION = {"on": "2026-11-15", "by": "user", "version": "0.186.0", "set": ["CS-KYUURA-PLAY-TR3", 1], "document": "docs/play-convention-tr3-v0.186.md",
+                 "spec": "docs/play-convention-three-trainers.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+_TR3_NOTE = "PC-USE-WITHOUT-TARGET（proposal のまま）の対象のうち、この場面だけの規約（使えない・カードを消費しない）。案そのもの・ほかの対象は採用していない"
+SPEC_ADOPTIONS.update({
+    "PC-GUST-WITHOUT-OPPONENT-BENCH": {**_TR3_ADOPTION, "convention": ["PC-GUST-WITHOUT-OPPONENT-BENCH", 1], "scenes": ["UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH"],
+                                       "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+    "PC-SWITCH-WITHOUT-BENCH": {**_TR3_ADOPTION, "convention": ["PC-SWITCH-WITHOUT-BENCH", 1], "scenes": ["UNRESOLVED_SWITCH_WITHOUT_BENCH"],
+                                "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+    "PC-POTION-WITHOUT-DAMAGE": {**_TR3_ADOPTION, "convention": ["PC-POTION-WITHOUT-DAMAGE", 1], "scenes": ["UNRESOLVED_POTION_WITHOUT_DAMAGE"],
+                                 "related_candidate": "PC-USE-WITHOUT-TARGET", "note": _TR3_NOTE},
+})
+# v0.195（docs/play-convention-tr4-v0.195.md）: 設計（docs/er9-energy-retrieval-zero-design.md）の案 B の採用（候補ではない。PC-UP-TO-ZERO の対象の 1 場面の、手札からの通常の使用だけ。
+# 案そのものは proposal のまま）
+_TR4_ADOPTION = {"on": "2026-11-21", "by": "user", "version": "0.195.0", "set": ["CS-KYUURA-PLAY-TR4", 1], "document": "docs/play-convention-tr4-v0.195.md",
+                 "spec": "docs/er9-energy-retrieval-zero-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-ENERGY-RETRIEVAL-ZERO": {**_TR4_ADOPTION, "convention": ["PC-ENERGY-RETRIEVAL-ZERO", 1], "scenes": ["UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE"],
+                                 "related_candidate": "PC-UP-TO-ZERO",
+                                 "note": ("PC-UP-TO-ZERO（proposal のまま）の対象のうち、この場面の手札からの通常の使用だけの規約（0 枚を受理して使い終える）。案そのもの・ほかの対象"
+                                          "（SR2・H4 をふくむ）・錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用は採用していない")},
+})
+# v0.196（docs/play-convention-tr6-v0.196.md）: 設計（docs/h4-recover-zero-design.md）の案 B の採用（候補ではない。PC-UP-TO-ZERO の対象の 1 場面の、元のワザとゆびをふるの経路だけ。
+# 案そのものは proposal のまま）
+_TR6_ADOPTION = {"on": "2026-11-21", "by": "user", "version": "0.196.0", "set": ["CS-KYUURA-PLAY-TR6", 1], "document": "docs/play-convention-tr6-v0.196.md",
+                 "spec": "docs/h4-recover-zero-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-ENERGY-CONVERSION-ZERO": {**_TR6_ADOPTION, "convention": ["PC-ENERGY-CONVERSION-ZERO", 1], "scenes": ["UNRESOLVED_RECOVER_ZERO_ENERGY"],
+                                  "related_candidate": "PC-UP-TO-ZERO",
+                                  "note": ("PC-UP-TO-ZERO（proposal のまま）の対象のうち、この場面（H4）の、ゴース自身のエナジーへんかんと、ピッピ・ピクシーのゆびをふるで相手のゴース自身の"
+                                           "エナジーへんかんを使う経路だけの規約（0 枚を受理して自分へのダメージへ進む）。案そのもの・ほかの対象（SR2 をふくむ）・メタモンの［へんしん］の経路は"
+                                           "採用していない")},
+})
+# v0.197（docs/play-convention-tr7-v0.197.md）: 設計（docs/t19b-evaded-effect-coin-design.md）の案 B の採用（候補ではない。PC-NULLIFIED-ELEMENT-COIN の対象の 1 場面の、特殊状態の
+# 要素の経路だけ。案そのものは proposal のまま）
+_TR7_ADOPTION = {"on": "2026-11-22", "by": "user", "version": "0.197.0", "set": ["CS-KYUURA-PLAY-TR7", 1], "document": "docs/play-convention-tr7-v0.197.md",
+                 "spec": "docs/t19b-evaded-effect-coin-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-T19B-NULLIFIED-STATUS-COIN": {**_TR7_ADOPTION, "convention": ["PC-T19B-NULLIFIED-STATUS-COIN", 1], "scenes": ["UNRESOLVED_EVADED_EFFECT_COIN"],
+                                      "related_candidate": "PC-NULLIFIED-ELEMENT-COIN",
+                                      "note": ("PC-NULLIFIED-ELEMENT-COIN（proposal のまま）の対象のうち、この場面（T19b）の、特殊状態の要素（ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の"
+                                               "元のワザ）の経路だけの規約（ワザのコインを 1 回投げ、結果を使わずに続ける）。案そのもの・T19b のほかの箇所・ほかの対象"
+                                               "（UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN など）は採用していない")},
+})
+# v0.198（docs/play-convention-tr8-v0.198.md）: 設計（docs/rs1-lucky-stadium-replacement-design.md 12 章）の規約の採用（候補ではない。PC-ONCE-PER-TURN-IDENTITY の対象の RS1 の
+# 1 事例だけ。案そのものは proposal のまま）
+_TR8_ADOPTION = {"on": "2026-11-23", "by": "user", "version": "0.198.0", "set": ["CS-KYUURA-PLAY-TR8", 1], "document": "docs/play-convention-tr8-v0.198.md",
+                 "spec": "docs/rs1-lucky-stadium-replacement-design.md", "not_recorded_as": "公式の裁定・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用）"}
+SPEC_ADOPTIONS.update({
+    "PC-LUCKY-STADIUM-REPLACEMENT": {**_TR8_ADOPTION, "convention": ["PC-LUCKY-STADIUM-REPLACEMENT", 1],
+                                     "scenes": ["UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"],
+                                     "related_candidate": "PC-ONCE-PER-TURN-IDENTITY",
+                                     "note": ("PC-ONCE-PER-TURN-IDENTITY（proposal のまま。案の文は「同じ名前のカードに記録が続く・使い直せない」）の対象のうち、RS1 の "
+                                              "#lucky-once-stated-replacement の 1 事例だけを、案と反対の読み方（カードの個体で数えて 1 回使える）で採用した規約。案そのもの・RS1 の #other・"
+                                              "SX2・FG1・ほかの対象は採用していない")},
+})
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # 区分（利用者の依頼の A〜E。台帳の classification とは別の軸）
@@ -703,7 +762,9 @@ CANDIDATES = [
         "question": "スタジアムを入れかえた・トラッシュからもどした、ポケモンが退化したなど、カード・ポケモンが入れかわったとき、同じ番の「1 回」「その番に〜した」の記録は続くか",
         "statement": "「自分の番に 1 回」の使用の記録と「その番に〜した」の記録は、同じ番のうちは、同じ名前のカード・同じポケモン（進化・退化を含む）に続く。入れかえ・もどりで使い直せない",
         "applies_when": "同じ番の中で、記録のあるカード・ポケモンが入れかわった・もどった・退化した場面（対象の一覧のコード）",
-        "targets": [_t("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"), _t("UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"), _t("UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"),
+        # v0.198: 台帳が RS1 を事例（#lucky-once-stated-replacement・#other）に分けたので、場面の ID だけを事例に合わせた（案の対象の組・状態は変えない）
+        "targets": [_t("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"), _t("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other"),
+                    _t("UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"), _t("UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"),
                     _t("UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION"),
                     _t("UNRESOLVED_EVOLVE_AFTER_DEVOLUTION", "needs_secret_review",
                        "［うか］の漏れ（PSP-COCOON-DV2-ORACLE）は v0.147 で、ワザの宣言の前の先読みの漏れ（PSP-ATTACK-DECK-EVOLUTION-PREFLIGHT-ORACLE）は v0.148 で直した"

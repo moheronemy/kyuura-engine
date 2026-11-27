@@ -1,0 +1,1667 @@
+{
+ "status": "design_only",
+ "not_adopted": true,
+ "not_implemented": true,
+ "date": "2026-11-19",
+ "doc": "docs/play-convention-potion-target.md",
+ "base": {
+  "branch": "claude/vai-batch-tr3u1",
+  "commit": "3853c5cf63d9a92e2d3cd4c263517db249ef3800",
+  "engine_version": "0.194.0"
+ },
+ "work_branch": "claude/potion-undamaged-design",
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/potion-undamaged-design/",
+ "scene": {
+  "stop_code": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+  "code_class": "static",
+  "measured_in_saved_responses": 0,
+  "effect_type": "RemoveDamageCounters",
+  "cards": [
+   "PMCG1-071",
+   "GD1-016（再録）",
+   "GD2-019（再録）"
+  ],
+  "decision_kind": "select_pokemon",
+  "static_basis": [
+   "kyuura_engine/effects.py RemoveDamageCounters.resolve（unresolved_choices = ダメージ 0 の自分の場のポケモン・unresolved_code はこの 1 つ）",
+   "kyuura_engine/decisions.py push_trainer_decision（LB1 の選択を加える）・check_choices（UnsupportedError）",
+   "kyuura_engine/legal_actions.py 決定の入力（processability）・_input_problem（CANDIDATE_NOT_EXECUTABLE）",
+   "kyuura_engine/conventions.py PC-POTION-WITHOUT-DAMAGE@1 の unchanged（受理のあとの未裁定は停止のまま）"
+  ]
+ },
+ "boundary_with_tr3": [
+  {
+   "scene": "UNRESOLVED_POTION_WITHOUT_DAMAGE",
+   "time": "使う宣言の前（check_playable）",
+   "tr3": "PC-POTION-WITHOUT-DAMAGE@1（NO_DAMAGE_COUNTERS）",
+   "this_design": "変えない"
+  },
+  {
+   "scene": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+   "time": "使用の受理のあとの対象の決定",
+   "tr3": "対象外（停止のまま）",
+   "this_design": "B の集合でだけ規約による使用不可"
+  }
+ ],
+ "paths": [
+  {
+   "path": "手札から使う",
+   "route": "_continue_trainer_use → _start_trainer_use → _resolve_trainer → resolve",
+   "same_decision": true,
+   "in_saved_records": 13
+  },
+  {
+   "path": "錯乱ジムで相手がかわりに使う",
+   "route": "_resume_trainer(chaos) → require_borrow_playable → _resolve_trainer(借りる人)",
+   "same_decision": true,
+   "in_saved_records": 0
+  },
+  {
+   "path": "サイキックコントロール",
+   "route": "_start_nested_trainer → _start_trainer_use → _resolve_trainer",
+   "same_decision": true,
+   "in_saved_records": 0
+  },
+  {
+   "path": "リムーブ禁止ジムの追加の条件のあと",
+   "route": "_resume_trainer(stadium_cost) → _resolve_trainer",
+   "same_decision": true,
+   "in_saved_records": 0
+  },
+  {
+   "path": "再録の版",
+   "route": "Reprint(PMCG1-071) で同じ効果の型",
+   "same_decision": true,
+   "in_saved_records": 0
+  }
+ ],
+ "options": {
+  "A": "現状（厳密側・TR3@1 と同じ。未裁定の停止）",
+  "B": "明示して選んだ集合でだけ、ダメージ 0 の対象を規約による使用不可にする（推奨）"
+ },
+ "recommended": {
+  "convention": {
+   "id": "PC-POTION-UNDAMAGED-TARGET",
+   "version": 1,
+   "layer": "continuation",
+   "scene": "UNRESOLVED_POTION_UNDAMAGED_TARGET",
+   "name_status": "案",
+   "rejection_code": "TARGET_WITHOUT_DAMAGE（案。診断のカタログに足す）",
+   "requires": []
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR4",
+   "version": 1,
+   "usage": "development",
+   "members": "CS-KYUURA-PLAY-TR3@1 の 23 規約 + 1",
+   "completeness": "halts_at_undecided",
+   "name_status": "案"
+  },
+  "unchanged_sets": [
+   "CS-KYUURA-CURRENT@1",
+   "CS-KYUURA-PLAY-TR3@1（sha256:a7b800cf…）",
+   "既定の集合"
+  ],
+  "stages": {
+   "decision_push": "continuation_for で照会し、あればダメージ 0（LB1 を除く）を規約で選べない選択として決定の続きの情報に書く（案 convention_excluded）",
+   "candidate": "今と同じ",
+   "inputs": "eligible 偽・convention ID@版・processability を書かない",
+   "check": "CANDIDATE_NOT_EXECUTABLE（今と同じ）",
+   "submit": "IllegalActionError（TARGET_WITHOUT_DAMAGE・属性 convention）。決定は待ったまま・状態・乱数・ログを変えない・convention_applied なし",
+   "invariant": "除外 ⊆ 選べるもの・選ぶと止める選択と重ならない・決定を出した時点のダメージ 0（LB1 を除く）と同じ・答えに要る数が残る"
+  },
+  "zero_valid_targets": "ダメージのあるポケモンがすべて LB1 のときは規約を当てない（今と同じ決定）",
+  "unchanged": [
+   "UNRESOLVED_POTION_WITHOUT_DAMAGE（PC-POTION-WITHOUT-DAMAGE@1 のまま）",
+   "LB1 の選択",
+   "SP1・MK1・GL2 などほかのカード",
+   "ダメージのある対象の処理",
+   "厳密側・既存の集合の停止",
+   "FD1・ER9・ER10"
+  ]
+ },
+ "reducible": {
+  "unresolved_option_display": {
+   "positions": 13,
+   "options": 37,
+   "games": 8,
+   "reduced_by_B": true
+  },
+  "unbuildable_inputs": {
+   "count": 0,
+   "reduced_by_B": false
+  },
+  "rejections": {
+   "count": 0,
+   "reduced_by_B": "not_observed"
+  },
+  "game_end": {
+   "count": 0,
+   "reduced_by_B": "not_observed"
+  },
+  "usable_targets": {
+   "policy_pool_equals_valid_remaining": 13,
+   "increase_evaluated": false
+  }
+ },
+ "decisions_for_adoption": [
+  {
+   "id": "D1",
+   "item": "この場面にプレイ用の規約を置くか",
+   "recommended": "置く（B。表示の区分だけが変わる前提）",
+   "alternative": "置かない（A）"
+  },
+  {
+   "id": "D2",
+   "item": "扱い",
+   "recommended": "選べない（規約による不正な操作・答え直せる）",
+   "alternative": "選べて何もしない（推奨しない）"
+  },
+  {
+   "id": "D3",
+   "item": "組み込み先",
+   "recommended": "CS-KYUURA-PLAY-TR4@1",
+   "alternative": "CS-KYUURA-PLAY-TR3@2"
+  },
+  {
+   "id": "D4",
+   "item": "拒否のコード",
+   "recommended": "TARGET_WITHOUT_DAMAGE（新しい）",
+   "alternative": "NO_DAMAGE_COUNTERS（推奨しない）"
+  },
+  {
+   "id": "D5",
+   "item": "有効な対象 0 件",
+   "recommended": "規約を当てない"
+  },
+  {
+   "id": "D6",
+   "item": "経路",
+   "recommended": "4 経路と再録の版",
+   "alternative": "手札からの使用だけ"
+  }
+ ],
+ "measure_after_adoption": [
+  "規約で選べない選択肢の延べ・局面・局と、選択肢の階層の未裁定の減り",
+  "規約で選べない選択肢の選択・check・送信と拒否・答え直し",
+  "錯乱ジム・サイキックコントロールの経路での到達",
+  "終わり方・時間・量が A と変わらないか"
+ ],
+ "expected_tests": [
+  "T1 厳密側（CURRENT・TR3@1）: unresolved_ruling・CANDIDATE_NOT_EXECUTABLE・拒否 UNRESOLVED_POTION_UNDAMAGED_TARGET・決定は待ったまま",
+  "T2 規約有効（TR4@1）: eligible 偽・convention・processability なし・CANDIDATE_NOT_EXECUTABLE・IllegalActionError TARGET_WITHOUT_DAMAGE・convention_applied なし",
+  "T3 ダメージのある対照: A・B とも受理・同じ処理",
+  "T4 無効な回答からの答え直し: 同じ決定で受理・拒否の前後の状態が同じ",
+  "T5 経路: 錯乱ジム・サイキックコントロール・リムーブ禁止ジム・再録の版で T2 と同じ",
+  "T6 LB1: LB1 の停止のまま",
+  "T7 有効な対象 0 件: 規約を当てない",
+  "T8 対象外: PC-POTION-WITHOUT-DAMAGE@1 のまま",
+  "T9 対象外: SP1・MK1・GL2 のまま",
+  "T10 既存の記録: TR3@1・CURRENT の照合値・replay が変わらない",
+  "T11 集合: 24 規約・validate の問題 0・TR3@1 の照合値は不変"
+ ],
+ "unconfirmed": [
+  "錯乱ジム・サイキックコントロール・リムーブ禁止ジムの経路での到達（ソースだけ）",
+  "LB1 が混ざる決定と有効な対象 0 件の今の挙動",
+  "名前（規約・集合・拒否のコード・続きの情報）と観測・リプレイの形式への影響",
+  "規約による拒否を送ったときの方策・GUI の扱い"
+ ],
+ "not_done": [
+  "規約・コードの変更",
+  "新しい対戦",
+  "judge・replay",
+  "ほかの回復カード",
+  "FD1・ER9・ER10"
+ ],
+ "check": {
+  "positions": [
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "game": "g002-rules-v2-s9008",
+     "condition": "C2",
+     "actor": 1,
+     "position": 127,
+     "attempt_n": 156,
+     "operation_id": "g002-rules-v2-s9008-000129"
+    },
+    "previous_accepted": {
+     "seq": 128,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 19,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 129,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 2,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 3,
+      "damage": 40,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 4,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 11,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 12,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 5,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      3
+     ],
+     "chosen_damage": [
+      40
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 3,
+       "counters": 2,
+       "total_damage": 20
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g002-rules-v2-s9008",
+     "condition": "C3",
+     "actor": 0,
+     "position": 116,
+     "attempt_n": 119,
+     "operation_id": "g002-rules-v2-s9008-000117"
+    },
+    "previous_accepted": {
+     "seq": 116,
+     "type": "play_trainer",
+     "card": 23
+    },
+    "decision": {
+     "id": 20,
+     "kind": "select_pokemon",
+     "player": 0
+    },
+    "choice_view": {
+     "view_entry": 117,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 0,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 11,
+      "damage": 40,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 7,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 12,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      11
+     ],
+     "chosen_damage": [
+      40
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 11,
+       "counters": 2,
+       "total_damage": 20
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g002-rules-v2-s9008",
+     "condition": "C3",
+     "actor": 1,
+     "position": 143,
+     "attempt_n": 148,
+     "operation_id": "g002-rules-v2-s9008-000144"
+    },
+    "previous_accepted": {
+     "seq": 143,
+     "type": "play_trainer",
+     "card": 85
+    },
+    "decision": {
+     "id": 28,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 144,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 2,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 13,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      13
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 13,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g003-rules-v2-s9009",
+     "condition": "C3",
+     "actor": 0,
+     "position": 65,
+     "attempt_n": 73,
+     "operation_id": "g003-rules-v2-s9009-000066"
+    },
+    "previous_accepted": {
+     "seq": 65,
+     "type": "play_trainer",
+     "card": 24
+    },
+    "decision": {
+     "id": 10,
+     "kind": "select_pokemon",
+     "player": 0
+    },
+    "choice_view": {
+     "view_entry": 66,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 0,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 7,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 6,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 8,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 9,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 3,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      7
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 7,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g003-rules-v2-s9009",
+     "condition": "C3",
+     "actor": 1,
+     "position": 78,
+     "attempt_n": 88,
+     "operation_id": "g003-rules-v2-s9009-000079"
+    },
+    "previous_accepted": {
+     "seq": 78,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 13,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 79,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 4,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 1,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      4
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 4,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "game": "g004-rules-v2-s9010",
+     "condition": "C1",
+     "actor": 0,
+     "position": 31,
+     "attempt_n": 40,
+     "operation_id": "g004-rules-v2-s9010-000032"
+    },
+    "previous_accepted": {
+     "seq": 31,
+     "type": "play_trainer",
+     "card": 26
+    },
+    "decision": {
+     "id": 5,
+     "kind": "select_pokemon",
+     "player": 0
+    },
+    "choice_view": {
+     "view_entry": 32,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 0,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 1,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 2,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 5,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      1
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 1,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "game": "g005-rules-v2-s9011",
+     "condition": "C1",
+     "actor": 0,
+     "position": 33,
+     "attempt_n": 43,
+     "operation_id": "g005-rules-v2-s9011-000034"
+    },
+    "previous_accepted": {
+     "seq": 33,
+     "type": "play_trainer",
+     "card": 26
+    },
+    "decision": {
+     "id": 2,
+     "kind": "select_pokemon",
+     "player": 0
+    },
+    "choice_view": {
+     "view_entry": 34,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 0,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 1,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 1,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      1
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 1,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g005-rules-v2-s9011",
+     "condition": "C3",
+     "actor": 1,
+     "position": 257,
+     "attempt_n": 299,
+     "operation_id": "g005-rules-v2-s9011-000258"
+    },
+    "previous_accepted": {
+     "seq": 257,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 25,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 258,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 18,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 9,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 12,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 7,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 5,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 3,
+    "valid_remaining": 3,
+    "policy_option_pool": 3,
+    "after": {
+     "chosen": [
+      9
+     ],
+     "chosen_damage": [
+      10
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 9,
+       "counters": 1,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g005-rules-v2-s9011",
+     "condition": "C3",
+     "actor": 1,
+     "position": 262,
+     "attempt_n": 304,
+     "operation_id": "g005-rules-v2-s9011-000263"
+    },
+    "previous_accepted": {
+     "seq": 262,
+     "type": "play_trainer",
+     "card": 85
+    },
+    "decision": {
+     "id": 26,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 263,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 18,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 9,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 12,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 7,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 5,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 4,
+    "valid_remaining": 2,
+    "policy_option_pool": 2,
+    "after": {
+     "chosen": [
+      12
+     ],
+     "chosen_damage": [
+      10
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 12,
+       "counters": 1,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "game": "g006-rules-v2-s9012",
+     "condition": "C1",
+     "actor": 1,
+     "position": 61,
+     "attempt_n": 80,
+     "operation_id": "g006-rules-v2-s9012-000062"
+    },
+    "previous_accepted": {
+     "seq": 61,
+     "type": "play_trainer",
+     "card": 85
+    },
+    "decision": {
+     "id": 3,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 62,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 4,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 2,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 8,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 9,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 5,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      4
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 4,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m1",
+     "game": "g006-rules-v2-s9012",
+     "condition": "C1",
+     "actor": 1,
+     "position": 68,
+     "attempt_n": 89,
+     "operation_id": "g006-rules-v2-s9012-000069"
+    },
+    "previous_accepted": {
+     "seq": 68,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 4,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 69,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 4,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 2,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 8,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 9,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 5,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      4
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 4,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g006-rules-v2-s9012",
+     "condition": "C3",
+     "actor": 1,
+     "position": 16,
+     "attempt_n": 18,
+     "operation_id": "g006-rules-v2-s9012-000017"
+    },
+    "previous_accepted": {
+     "seq": 16,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 1,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 17,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 2,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 4,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      2
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 2,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m3",
+     "game": "g006-rules-v2-s9012",
+     "condition": "C3",
+     "actor": 1,
+     "position": 78,
+     "attempt_n": 86,
+     "operation_id": "g006-rules-v2-s9012-000079"
+    },
+    "previous_accepted": {
+     "seq": 78,
+     "type": "play_trainer",
+     "card": 85
+    },
+    "decision": {
+     "id": 2,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 79,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 2,
+      "damage": 50,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 4,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 9,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 11,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 3,
+    "policy_option_pool": 3,
+    "after": {
+     "chosen": [
+      4
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 4,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   }
+  ],
+  "controls": [
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "game": "g001-rules-v2-s9007",
+     "condition": "C2",
+     "actor": 1,
+     "position": 64,
+     "attempt_n": 75,
+     "operation_id": "g001-rules-v2-s9007-000065"
+    },
+    "previous_accepted": {
+     "seq": 64,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 13,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 65,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 2,
+      "damage": 40,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 3,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     }
+    ],
+    "unresolved_options": 0,
+    "valid_remaining": 2,
+    "policy_option_pool": 2,
+    "after": {
+     "chosen": [
+      2
+     ],
+     "chosen_damage": [
+      40
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 2,
+       "counters": 2,
+       "total_damage": 20
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-m2",
+     "game": "g005-rules-v2-s9011",
+     "condition": "C2",
+     "actor": 1,
+     "position": 27,
+     "attempt_n": 29,
+     "operation_id": "g005-rules-v2-s9011-000028"
+    },
+    "previous_accepted": {
+     "seq": 27,
+     "type": "play_trainer",
+     "card": 87
+    },
+    "decision": {
+     "id": 6,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 28,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 3,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     }
+    ],
+    "unresolved_options": 0,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      3
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 3,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   }
+  ],
+  "pilot_reference": [
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-p3",
+     "game": "g001-rules-v2-s9006",
+     "condition": "C3",
+     "actor": 0,
+     "position": 81,
+     "attempt_n": 96,
+     "operation_id": "g001-rules-v2-s9006-000083"
+    },
+    "previous_accepted": {
+     "seq": 82,
+     "type": "play_trainer",
+     "card": 24
+    },
+    "decision": {
+     "id": 11,
+     "kind": "select_pokemon",
+     "player": 0
+    },
+    "choice_view": {
+     "view_entry": 83,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 0,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 9,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 11,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 10,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 2,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      9
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 9,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-p3",
+     "game": "g001-rules-v2-s9006",
+     "condition": "C3",
+     "actor": 1,
+     "position": 144,
+     "attempt_n": 166,
+     "operation_id": "g001-rules-v2-s9006-000149"
+    },
+    "previous_accepted": {
+     "seq": 148,
+     "type": "play_trainer",
+     "card": 85
+    },
+    "decision": {
+     "id": 27,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 145,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 7,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 4,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 3,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 8,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 6,
+      "damage": 20,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 12,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 4,
+    "valid_remaining": 2,
+    "policy_option_pool": 2,
+    "after": {
+     "chosen": [
+      6
+     ],
+     "chosen_damage": [
+      20
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 6,
+       "counters": 2,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   },
+   {
+    "ref": {
+     "batch": "vai-batch-tr3u1-p3",
+     "game": "g001-rules-v2-s9006",
+     "condition": "C3",
+     "actor": 1,
+     "position": 174,
+     "attempt_n": 197,
+     "operation_id": "g001-rules-v2-s9006-000179"
+    },
+    "previous_accepted": {
+     "seq": 178,
+     "type": "play_trainer",
+     "card": 86
+    },
+    "decision": {
+     "id": 33,
+     "kind": "select_pokemon",
+     "player": 1
+    },
+    "choice_view": {
+     "view_entry": 175,
+     "trainer_in_use_card_id": "PMCG1-071",
+     "play_trainer_event_trainer": "きずぐすり",
+     "user": 1,
+     "via": null
+    },
+    "options": [
+     {
+      "value": 16,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 4,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 8,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 7,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "value": 12,
+      "damage": 10,
+      "own_field": true,
+      "processability": "may_stop_later"
+     },
+     {
+      "value": 17,
+      "damage": 0,
+      "own_field": true,
+      "processability": "unresolved_ruling"
+     }
+    ],
+    "unresolved_options": 5,
+    "valid_remaining": 1,
+    "policy_option_pool": 1,
+    "after": {
+     "chosen": [
+      12
+     ],
+     "chosen_damage": [
+      10
+     ],
+     "chosen_unresolved": false,
+     "submit_outcome": "accepted",
+     "removed": [
+      {
+       "pokemon_id": 12,
+       "counters": 1,
+       "total_damage": 0
+      }
+     ]
+    },
+    "measured_code": false,
+    "problems": []
+   }
+  ],
+  "totals": {
+   "main": {
+    "target_positions_from_sources": 13,
+    "target_rows_from_sources": 13,
+    "positions_matched": 13,
+    "positions_found": 13,
+    "attempt_rows_found": 13,
+    "retakes": 0,
+    "missing": 0,
+    "extra": 0,
+    "games": 8,
+    "conditions": [
+     "C1",
+     "C2",
+     "C3"
+    ],
+    "positions_without_problems": 13,
+    "unresolved_options": 37,
+    "unresolved_options_undamaged_own": 37,
+    "valid_remaining_min": 1,
+    "chosen_unresolved": 0,
+    "submit_outcomes": {
+     "accepted": 13
+    },
+    "trace_scope_in_scope": {
+     "1/1": 10,
+     "1/3": 2,
+     "1/2": 1
+    },
+    "measured_code_rows": 0,
+    "controls_positions": 2,
+    "controls_without_problems": 2,
+    "controls_games": 2,
+    "policy_pool_equals_valid_remaining": 13,
+    "positions_with_trainer_user_other_than_owner": 0,
+    "positions_via_outer_trainer": 0
+   },
+   "pilot_reference": {
+    "target_positions_from_sources": 3,
+    "target_rows_from_sources": 3,
+    "positions_matched": 3,
+    "positions_found": 3,
+    "attempt_rows_found": 3,
+    "retakes": 0,
+    "missing": 0,
+    "extra": 0,
+    "games": 1,
+    "conditions": [
+     "C3"
+    ],
+    "positions_without_problems": 3,
+    "unresolved_options": 11,
+    "unresolved_options_undamaged_own": 11,
+    "valid_remaining_min": 1,
+    "chosen_unresolved": 0,
+    "submit_outcomes": {
+     "accepted": 3
+    },
+    "trace_scope_in_scope": {
+     "1/1": 2,
+     "1/2": 1
+    },
+    "measured_code_rows": 0,
+    "controls_positions": 0,
+    "controls_without_problems": 0,
+    "controls_games": 0,
+    "policy_pool_equals_valid_remaining": 3
+   }
+  }
+ }
+}

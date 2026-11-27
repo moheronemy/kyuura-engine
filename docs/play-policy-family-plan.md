@@ -85,24 +85,24 @@ A の場面でも、続けるのに実装・秘密への非依存の確かめ・
 <!-- generated:plan-counts begin（scripts/build_play_policy_family_plan.py --write が書く。手で直さない） -->
 | 対象 | 件数 |
 |---|---:|
-| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 399 |
-| うち停止コードの場面 | 368 |
+| 場面（台帳の現在有効な項目。事例のあるコードは事例） | 392 |
+| うち停止コードの場面 | 369 |
 | 停止コード（重複を除く） | 357 |
-| 区分 A（研究上の未決場面） | 327 |
+| 区分 A（研究上の未決場面） | 328 |
 | 区分 B（機能不足） | 33 |
 | 区分 C（技術的な制限） | 14 |
 | 区分 D（共通の不具合） | 6 |
-| 区分 E（そのほか） | 19 |
-| A のうち規約案の対象 | 171 |
+| 区分 E（そのほか） | 11 |
+| A のうち規約案の対象 | 172 |
 | A のうち個別（共通化しない） | 156 |
 | 規約案 | 27 |
-| 規約案の対象の場面（重複を含む） | 171 |
-| 規約案の対象の場面（重複を除く） | 171 |
+| 規約案の対象の場面（重複を含む） | 172 |
+| 規約案の対象の場面（重複を除く） | 172 |
 | 関連する停止コード（重複を含む） | 166 |
 | 関連する停止コード（重複を除く） | 163 |
 | 規約だけで続けられる場面（full） | 3 |
 | 一部だけ扱える場面 | 5 |
-| 追加の実装・秘密の確かめ・不具合の修正が要る場面 | 37 |
+| 追加の実装・秘密の確かめ・不具合の修正が要る場面 | 38 |
 | 続けられるか未確認の場面（unverified） | 126 |
 | 対戦全体を止める場面（静的な止め方と、経路の一覧の場面） | 29 |
 | うち静的な Halt・途中停止の定数で止める | 17 |
@@ -130,7 +130,6 @@ A 以外の場面の内訳（理由ごと）:
 | D | 代わりの処理の安全性の見直し（未確認） | 2 |
 | D | 代替回答探索の fail-open（未探索を受け付ける側に倒す。安全境界 SB-NO-FAIL-OPEN-SEARCH の候補） | 1 |
 | D | この調査で見つけた情報漏れ（v0.146 で修正し、停止の方針の台帳に fixed で加えた） | 1 |
-| E | テスト・道具だけのコード（エンジンでは投げない） | 8 |
 | E | コードのない研究の問い。エンジンが止める場面かは確かめていない（到達可能性 unknown） | 5 |
 | E | 汎用の UNRESOLVED_RULING。どの問いか分からない（名前が UNRESOLVED でも A にしない。到達可能性・問いは unknown） | 1 |
 | E | デッキの検査（不正入力。SB-INPUT-VALIDATION） | 1 |
@@ -253,7 +252,7 @@ A 以外の場面の内訳（理由ごと）:
 | `PC-REACTION-DOUBLE-KNOCKOUT` | ワザのダメージと反応のダメージによる両方のきぜつ | knockout |  | 3 | 3 | unverified 3 | 同時のきぜつ | DEC-KNOCKOUT-READINGS |
 | `PC-TARGET-LOST-MID-EFFECT` | 効果の途中で対象・発生源がいなくなったとき | target |  | 4 | 4 | needs_implementation 4 | そのポケモンに関する残りを行わない | DEC-REACTION-READINGS・DEC-COPY-SCOPE |
 | `PC-LASTING-SOURCE-CHANGE` | 持続する効果の発生源が進化・退化・場をはなれたとき | lasting | ○ | 6 | 6 | needs_implementation 6 | 場をはなれたら終わる・進化・退化では続く | DEC-LASTING-READINGS |
-| `PC-ONCE-PER-TURN-IDENTITY` | 「番に 1 回」「その番に〜した」の記録は、入れかわり・もどりで続くか | lasting |  | 5 | 5 | needs_implementation 4・needs_secret_review 1 | 続く（使い直せない） | DEC-LASTING-READINGS |
+| `PC-ONCE-PER-TURN-IDENTITY` | 「番に 1 回」「その番に〜した」の記録は、入れかわり・もどりで続くか | lasting |  | 6 | 5 | needs_implementation 5・needs_secret_review 1 | 続く（使い直せない） | DEC-LASTING-READINGS |
 | `PC-COPIED-ATTACK-AS-OWN` | 写したワザは、写したポケモンのワザとして説明のすべてを処理するか | copy |  | 7 | 7 | needs_implementation 7 | 写したポケモンのワザとして説明のすべてを処理 | DEC-COPY-SCOPE |
 | `PC-FACE-UP-DECK` | フラッシュでおもてになった山札のカード | hidden | ○ | 7 | 5 | needs_secret_review 7 | おもてのまま・移る時点の公開だけを残す | DEC-FACE-UP-DECK |
 <!-- generated:plan-candidates end -->
@@ -735,7 +734,7 @@ A 以外の場面の内訳（理由ごと）:
 - **問い**: スタジアムを入れかえた・トラッシュからもどした、ポケモンが退化したなど、カード・ポケモンが入れかわったとき、同じ番の「1 回」「その番に〜した」の記録は続くか
 - **規約の文（案）**: 「自分の番に 1 回」の使用の記録と「その番に〜した」の記録は、同じ番のうちは、同じ名前のカード・同じポケモン（進化・退化を含む）に続く。入れかえ・もどりで使い直せない
 - **適用条件**: 同じ番の中で、記録のあるカード・ポケモンが入れかわった・もどった・退化した場面（対象の一覧のコード）
-- **対象の場面（続けられ方）**: `UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_STADIUM_REUSE_AFTER_RETURN`（needs_implementation）、`UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION`（needs_implementation）、`UNRESOLVED_EVOLVE_AFTER_DEVOLUTION`（needs_secret_review）
+- **対象の場面（続けられ方）**: `UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement`（needs_implementation）、`UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other`（needs_implementation）、`UNRESOLVED_STADIUM_REUSE_AFTER_RETURN`（needs_implementation）、`UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT`（needs_implementation）、`UNRESOLVED_POWER_REUSE_AFTER_DEVOLUTION`（needs_implementation）、`UNRESOLVED_EVOLVE_AFTER_DEVOLUTION`（needs_secret_review）
 - **除外・対象外の隣の場面**: ラッキースタジアムの「くりかえし」（LK1。個別）／エネルギーをつける回数（R13・BL1。個別）
 - **依存・関係・競合**: 依存 なし／関係 なし／競合 なし
 - **厳密モードとの差**: 厳密は今のまま拒否。プレイ用は記録を続けて拒否する（使い直せない）
@@ -956,9 +955,9 @@ PSP-COCOON-DV2-ORACLE（DV2）・PSP-DECK-CONTENT-PRECHECKS の残り（GV1・EV
 | S3 | `PC-SPECIAL-ENERGY-CARD-WORDING` |  | 9 | 9 | 0 | 111・39 | — | 中 | 小 | 9 |
 | S3 | `PC-USE-WITHOUT-EFFECT` |  | 7 | 7 | 0 | 0・0 | PC-CHOOSE-TARGET-WITHOUT-EFFECT | 小 | 小 | 7 |
 | S3 | `PC-ORDER-ATTACK-PRECHECK` |  | 7 | 7 | 0 | 77・18 | — | 中（順番の決定の部品） | 中（乱数の割り当て・決定の増加） | 7 |
+| S3 | `PC-ONCE-PER-TURN-IDENTITY` |  | 6 | 5 | 0＊ | 58・26＊ | — | 小 | 小 | 6 |
 | S3 | `PC-CHOOSE-TARGET-WITHOUT-EFFECT` |  | 5 | 5 | 0 | 0・0 | — | 小 | 小（候補を黙って減らさない記録） | 5 |
 | S3 | `PC-NULLIFIED-ELEMENT-COIN` |  | 5 | 5 | 0 | 611・206 | — | 小 | 中（乱数の列） | 5 |
-| S3 | `PC-ONCE-PER-TURN-IDENTITY` |  | 5 | 5 | 0 | 58・26 | — | 小 | 小 | 5 |
 | S3 | `PC-SUPPRESSION-LATER-POKEMON` |  | 3 | 3 | 0 | 13・8 | — | 小 | 小 | 3 |
 | S3 | `PC-REACTION-DOUBLE-KNOCKOUT` |  | 3 | 3 | 0 | 264・50 | — | 中 | 中（勝ち負け） | 3 |
 | S3 | `PC-UNSTATED-WEAKNESS-RESISTANCE` |  | 2 | 2 | 0 | 63・24 | — | 小 | 小 | 2 |

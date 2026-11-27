@@ -95,6 +95,8 @@ from .decisions import (
 from .heights import card_height  # v0.129: 公式図鑑の種族の身長の参照値（クイズで置いてよいカード）
 from .effects import (
     retreat_guards,
+    stadium_reuse_continuation,  # v0.198: RS1 の続行規約（PC-LUCKY-STADIUM-REPLACEMENT）の照会
+    stadium_reuse_used_cards,
     ATTACK_HAND_TRAINER_LOCK,
     BALLOON_BERRY_FAILED_RETREAT_CODE,
     AttachEnergyFromHand,
@@ -155,6 +157,7 @@ from .effects import (
     copied_declared_power_problem,
     copied_source_use_problem,
     freeze_forms,
+    freeze_revealed_form,
     revert_ko_drop_check,
     release_frozen_forms,
     settle_super_transforms,
@@ -1099,6 +1102,10 @@ def _reveal_for_action(state: GameState, command, context: resolution.Context) -
         if reveal_face_down(state, command.player, subject, cause=kind) is None:
             resolution.after_power(state, context, knock_outs=False)
             return True
+        if isinstance(command, UseAttack):
+            # v0.194（C-TF2。docs/r2-transform-frozen-reveal-design.md 5.2 節）: 入口の固定は公開の前なので、おもてにした使い手の今の姿を、ワザの使用の確かめ・先読み・コスト・
+            # コイン・効果の前に、既存の固定へ足す（ほかの項目は変えない。CR-TRANSFORM-FROZEN-DURING-ACTION）。宣言する特殊能力・進化・にげるの公開（SF3-P など）は対象外
+            freeze_revealed_form(state, subject)
     if isinstance(command, UsePokemonPower):
         for pid in (command.source, command.target):
             located = state.find_pokemon(pid) if type(pid) is int else None
@@ -2619,7 +2626,14 @@ def _use_stadium(state: GameState, cmd: UseStadium, context: resolution.Context)
     v0.170（U7-5d）: 使う前の確かめを ``check_use_stadium`` に移した（同じ順番・同じコード・同じ文。動きは同じ）。
     """
     stadium, effect = check_use_stadium(state, cmd)
+    # v0.198（docs/play-convention-tr8-v0.198.md）: 確かめを通ったあと・使った記録を足す前の状態で、RS1 の続行規約を当てるかを決める（確かめと同じ条件・同じ照会）
+    reuse = stadium_reuse_continuation(state, cmd.player, stadium)
+    used_card_ids = tuple(state.cards[card].card_id for card in stadium_reuse_used_cards(state, cmd.player, stadium)) if reuse is not None else ()
     state.add_event("stadium_used", player=cmd.player, card=stadium.card, owner=stadium.owner)
+    if reuse is not None:
+        # 公開の値だけ: 新しいカード（場に表で出ている uid）と、この番に使った同じ名前のカードの版（使ったときに場に表で出ていた card_id。uid は書かない。今は手札・山札に
+        # あるかもしれないカードの uid を新しいログに書かない）
+        record_application(state, reuse, player=cmd.player, card=stadium.card, used_cards=used_card_ids)
     if effect.records_uses:  # v0.74: 「自分の番ごとに1回」と、同じ番の再使用を確かめる効果（PRN-027 のラッキースタジアム）
         state.stadium_uses_this_turn = state.stadium_uses_this_turn + ((cmd.player, stadium.card),)
     effect.activate(state, cmd.player, cmd.energy, stadium)

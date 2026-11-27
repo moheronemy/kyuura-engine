@@ -131,8 +131,8 @@ POSITIVE_REASONS = [D.UNSUPPORTED, CODE, "continuation_not_evaluated", "evidence
 
 class RegistrationTest(unittest.TestCase):
     def test_versions_key_and_code(self):
-        self.assertEqual((J.JUDGE_RULES_VERSION, B.TOOL_VERSION), (8, 10))
-        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6"))
+        self.assertEqual((J.JUDGE_RULES_VERSION, B.TOOL_VERSION), (10, 20))  # 20: rules-v9（旧の期待は (10, 19)）。 19: rules-v8（旧の期待は (10, 18)）。 18: rules-v7（旧の期待は (10, 17)）。 17: rules-v6（旧の期待は (10, 16)）。 16: rules-v5（旧の期待は (10, 15)）。 15: rules-v4（旧の期待は (10, 14)）。 14: rules-v3（旧の期待は (10, 13)）。 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）・13（旧の期待は (9, 12)）。 規則 9・12（旧の期待は (8, 11)）。 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は (8, 10)
+        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 旧の期待は形式 6
         self.assertEqual(KEY, "UNSUPPORTED_SECRET_PLAN_LOST_TARGET#P3")
         self.assertNotEqual(KEY, CODE)  # 根拠の鍵（経路の名前）と生の診断コードは別
         self.assertEqual(J.KNOWN_STOP_EVIDENCE[KEY]["code"], CODE)
@@ -343,7 +343,7 @@ class NegativeTest(unittest.TestCase):
         self.assertEqual([r["verdict"] for r in judged["rows"]], [J.KNOWN_STOP, J.UNDETERMINED])
         self.assertEqual(judged["rows"][0]["reasons"], POSITIVE_REASONS)
         self.assertEqual(judged["rows"][0]["engine_code"], CODE)  # 行の生の診断コードは元のまま（鍵に書き換えない）
-        self.assertEqual(judged["rules_version"], 8)
+        self.assertEqual(judged["rules_version"], 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9（旧の期待は 8）
         text = json.dumps([judged["rows"], B.judge_summary(judged), judged["undetermined"]], ensure_ascii=False)
         for secret in (PSYCHIC, DEFENDER, HITMONCHAN, "real", "pokemon_id", "face_down\"", "#P3"):
             self.assertNotIn(secret, text)

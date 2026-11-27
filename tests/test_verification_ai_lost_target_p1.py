@@ -120,9 +120,9 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis=None):
 
 class VersionTest(unittest.TestCase):
     def test_versions_and_registration(self):
-        self.assertEqual(J.JUDGE_RULES_VERSION, 8)  # 規則 8（P3s）を足した。P1 の条件・理由・basis は規則 7 のまま
-        self.assertEqual(B.TOOL_VERSION, 10)
-        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/6", "kyuura-vai-batch-complete/6"))
+        self.assertEqual(J.JUDGE_RULES_VERSION, 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9（P2-min）を足した（旧の期待は 8）。 規則 8（P3s）を足した。P1 の条件・理由・basis は規則 7 のまま
+        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）。 16: rules-v5（旧の期待は 15）。 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）。 13: 規則 10（旧の期待は 12）。 12: 規則 9（旧の期待は 11）。 11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は 10
+        self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))  # 旧の期待は形式 6
         self.assertEqual(J.LOST_TARGET_CODE, Z.SECRET_PLAN_LOST_TARGET_CODE)
         self.assertIn(CODE, J.KNOWN_STOP_EVIDENCE)
         self.assertNotIn(CODE, J.RECORDED_STOP_CONDITIONS)  # 規則 6 の仕組み（送信の値だけ）には入れない
@@ -366,7 +366,7 @@ class NegativeTest(unittest.TestCase):
         self.assertEqual(judged["rows"][0]["reasons"], [D.UNSUPPORTED, CODE, "face_down_reveal_not_evaluated", "evidence:" + J.KNOWN_STOP_EVIDENCE[CODE]["condition"]])
         self.assertEqual(judged["rows"][1]["reasons"], UNDET[1])
         self.assertEqual(judged["known_stop"], [N])
-        self.assertEqual(judged["rules_version"], 8)
+        self.assertEqual(judged["rules_version"], 10)  # 規則 10（UNRESOLVED_RECOVER_ZERO_ENERGY）を足した（旧の期待は 9）。 規則 9（旧の期待は 8）
 
     def test_n16_stop_policy_unchanged(self):
         """N16: 根拠が成り立たないときの undetermined の分類と停止方針は規則 6 と同じ（evidence_missing_stop は続ける）。known_stop も続ける。"""

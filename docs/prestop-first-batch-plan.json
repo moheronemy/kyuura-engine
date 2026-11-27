@@ -1,0 +1,143 @@
+{
+ "status": "draft",
+ "not_a_confirmed_plan": true,
+ "doc": "docs/prestop-first-batch-plan.md",
+ "base": {
+  "branch": "claude/prestop-record-impl",
+  "commit": "5188f68",
+  "implementation_commit": "fa992b3"
+ },
+ "expected_identity": {
+  "engine_version": "0.185.0",
+  "behavior_digest_prefix": "a3b65dbe",
+  "instrumentation_digest_prefix": "d3436748",
+  "tool_version": 11,
+  "tool_digest_prefix": "6e0616cc",
+  "judge_rules_version": 8,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "p1_basis_prefix": "06ec1daf",
+  "p3_basis_prefix": "6a8287f9"
+ },
+ "plan": {
+  "batch_id": "vai-batch-x1",
+  "decks": {
+   "0": "L67-U",
+   "1": "L67-U",
+   "file": "verifier/runs/vai-batch-d/decklists/decklist-L67-U.json",
+   "file_sha256_prefix": "097b7db9621cc28e",
+   "content_sha256": "72690ceea38984aadb80d52be05e1e0ab5db544478387ab40ec7807a7e330e67"
+  },
+  "modes": [
+   "rules-v2",
+   "boundary"
+  ],
+  "conventions": "default (CS-KYUURA-CURRENT@1)",
+  "seeds": [
+   {
+    "seed": 6001,
+    "kind": "regression",
+    "note": "chosen after seeing t1 results (0.181.0). Same progress at 0.185.0 is not guaranteed"
+   },
+   {
+    "seed": 9001,
+    "kind": "new",
+    "note": "unused in 329 saved plan.json/header.json files; not selected by play"
+   }
+  ],
+  "order": [
+   "g001-rules-v2-s6001",
+   "g002-boundary-s6001",
+   "g003-rules-v2-s9001",
+   "g004-boundary-s9001"
+  ],
+  "games": 4,
+  "game_limits": "default runner.Limits (operations 2000, accepted 1000, turns 200, seconds 120)",
+  "batch_limits": {
+   "max_games": 4,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "game_reserve_seconds": 150,
+   "evidence_reserve_mb": 64
+  },
+  "observation": true,
+  "prestop_inputs": {
+   "enabled": true,
+   "limits": {
+    "max_fetches_per_game": 256,
+    "max_response_bytes": 16384,
+    "max_rows_bytes": 1048576
+   }
+  },
+  "undetermined_evidence_missing": "continue",
+  "negative": false,
+  "cli": "python -B -m tools.verification_ai.batch plan --out C:\\dev\\kyuura-engine-verification-vai --batch vai-batch-x1 --engine-commit <HEAD> --tool-commit <HEAD> --seeds 6001 9001 --modes rules-v2 boundary --decklist0 <L67-U> --decklist1 <L67-U> --max-games 4 --budget-seconds 300 --evidence-max-mb 512 --observation --prestop-inputs --undetermined-evidence-missing continue"
+ },
+ "s1_cache": {
+  "dir_pattern": "C:\\dev\\kyuura-engine-pyc-cache\\ba3b65db-t6e0616c-cpython-314-<HEAD7>-x1",
+  "prepare_script": "vai-batch-w-run/scripts/prepare_pyc_cache.py",
+  "recommended_fix": "add tools.verification_ai.prestop to ENTRY_MODULES",
+  "run_script": "vai-batch-w-run/scripts/run_seq_pyc_u.py (as is)",
+  "dry_run_required": true,
+  "capacity_rule": "max(128 MiB, largest saved complete attempt x 1.5) for both remaining and disk free"
+ },
+ "acceptance": [
+  "R1 plan prestop_inputs fixed in plan.sha256",
+  "R2 prestop files in required, table, disk",
+  "R3 offered_by_kind == result.json excluded unresolved_ruling",
+  "R4 reconcile empty",
+  "R5 rows_bytes == file length, line count == rows",
+  "R6 aggregate counts == sum of per-game summaries"
+ ],
+ "stop_policy": {
+  "prestop_failed": "stop after saving the game",
+  "prestop_capped": "note and continue",
+  "prestop_inconsistent_or_missing": "stop",
+  "critical_exceptions": "not absorbed (incomplete attempt)",
+  "acknowledge_stop_and_unlock": "never automatic"
+ },
+ "post_run": {
+  "analysis_script": "analyze_prestop.py (to be written in the run unit, read only)",
+  "tables": [
+   "by kind",
+   "unresolved option card_id",
+   "unidentifiable (face_down, reference only, no stages, not fetched)",
+   "candidate-level vs option-level",
+   "occurrences / games / states"
+  ],
+  "old_13_batches": "separate table; not filled from new results"
+ },
+ "unverified_before_run": {
+  "run_commit": null,
+  "code_diff_vs_fa992b3": null,
+  "identity_matches": null,
+  "deck_problems_at_0185": null,
+  "plan_sha256": null,
+  "cache_prepare_record": null,
+  "dry_run_use_cache": null,
+  "disk_free_bytes": null
+ },
+ "expected_not_guaranteed": {
+  "seconds_total_upper_guess": 60,
+  "evidence_mb_upper_guess": 100,
+  "basis": "t1/u1 max 7.35 s and 19.9 MB per game with observation (0.181.0)"
+ },
+ "execution": {
+  "status": "executed",
+  "chapter": 9,
+  "run_commit": "6ac3d3d883ecbb02a297c9e3efd1180ebe743247",
+  "plan_sha256": "20e679da51cb627acbdd5f5fdeae4be8de5d449328eb4c7ee182275c2599b71e",
+  "games": {
+   "planned": 4,
+   "complete": 4,
+   "complete_with_stop": 0,
+   "not_started": 0
+  },
+  "accounted_seconds": 36.187,
+  "prestop_seconds": 0.006229,
+  "game_evidence_bytes": 47182086,
+  "prestop_bytes": 88804,
+  "r1_r6": "all hold",
+  "evidence": "verifier/runs/vai-batch-x1-run/"
+ }
+}

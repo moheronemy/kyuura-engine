@@ -341,8 +341,240 @@ SETS = MappingProxyType({
                                                "だけを続け、ほかの未決の場面（#power-lost をふくむ）では今の停止コードで止める（完成したプレイ用の集合ではない）")),
 })
 
+# ---------------------------------------------------------------- v0.186: 突風・ポケモンいれかえ・きずぐすりの続行規約（docs/play-convention-tr3-v0.186.md）
+#
+# 利用者の採用（2026-11-15。設計 docs/play-convention-three-trainers.md の推奨値）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（GW5 など厳密側の
+# 停止コードは active のまま）。今の挙動の集合・S2a・PO の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1 だけに入れる。処理はどれも、受理の前の確かめ
+# （``check_playable``。手札から使う・錯乱ジムでかわりに使う・サイキックコントロールで使う、の同じ関数）で、未裁定の停止の代わりに規約による不正な操作として拒否する
+
+TR3_SET_ID = "CS-KYUURA-PLAY-TR3"
+TR3_ADOPTION = ("利用者の採用（2026-11-15。3 条件とも使えない・カードを消費しない。通常の使用と代用の使用に同じ条件）。プレイ用の取り決めで、公式の裁定・エラッタ・"
+                "kyuura の研究上の解決ではない")
+TR3_REFERENCES = ("docs/play-convention-tr3-v0.186.md", "docs/play-convention-three-trainers.md")
+
+GUST_WITHOUT_OPPONENT_BENCH_ID = "PC-GUST-WITHOUT-OPPONENT-BENCH"
+SWITCH_WITHOUT_BENCH_ID = "PC-SWITCH-WITHOUT-BENCH"
+POTION_WITHOUT_DAMAGE_ID = "PC-POTION-WITHOUT-DAMAGE"
+
+_TR3_PATHS = "手札から使う（PlayTrainer）・錯乱ジムの「うら」でかわりに使う・サイキックコントロールで使う（同じ check_playable。使う人から見た条件）"
+_TR3_UNCHANGED_COMMON = ["受理のあとに対象がいなくなった場合（v0.67 の ends_on_lost_target など。今の処理のまま）", "対象がいる場合の処理",
+                         "ほかの未裁定（AL2・SG1・MH1・MH2・TK1・MG1 など。今の停止のまま）", "ほかのカード（同じ形の問いのほかのカード）", "厳密側・既存の集合の停止"]
+_TR3_CONVENTIONS = (
+    Convention(GUST_WITHOUT_OPPONENT_BENCH_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "突風（登録の型 SwitchOpponentWithBench）は、使う人の相手のベンチが空なら使えない（規約による不正な操作として拒否する。カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人の相手のベンチ（公開の値）が空",
+                        "identification": "効果の登録の型 SwitchOpponentWithBench（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_OPPONENT_BENCH", "unchanged": _TR3_UNCHANGED_COMMON},
+               scenes=("UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",), references=TR3_REFERENCES),
+    Convention(SWITCH_WITHOUT_BENCH_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "ポケモンいれかえ（登録の型 SwitchWithBench）は、使う人のベンチが空なら使えない（規約による不正な操作として拒否する。カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人のベンチ（公開の値）が空",
+                        "identification": "効果の登録の型 SwitchWithBench（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_BENCH", "unchanged": _TR3_UNCHANGED_COMMON},
+               scenes=("UNRESOLVED_SWITCH_WITHOUT_BENCH",), references=TR3_REFERENCES),
+    Convention(POTION_WITHOUT_DAMAGE_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "きずぐすり（登録の型 RemoveDamageCounters）は、使う人の場（バトル場とベンチ）にダメージのあるポケモンがいなければ使えない（規約による不正な操作として拒否する。"
+               "カードは手札のまま・状態・乱数・ログを変えない）",
+               content={"adoption": TR3_ADOPTION, "applies_when": "受理の前（check_playable）に、使う人の場のどのポケモンもダメージ（公開の値）が 0",
+                        "identification": "効果の登録の型 RemoveDamageCounters（再録の版をふくむ）。カード ID では分けない", "paths": _TR3_PATHS,
+                        "rejection_code": "NO_DAMAGE_COUNTERS",
+                        "unchanged": _TR3_UNCHANGED_COMMON + ["ダメージのないポケモンを選んだとき（UNRESOLVED_POTION_UNDAMAGED_TARGET。受理のあとの未裁定）"]},
+               scenes=("UNRESOLVED_POTION_WITHOUT_DAMAGE",), references=TR3_REFERENCES),
+)
+TR3_MEMBERS = tuple((c.id, c.version) for c in _TR3_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR3_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR3_SET_ID, 1): ConventionSet(TR3_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS,
+                                   description=("v0.186 の開発用の部分的な集合: CS-KYUURA-PLAY-PO@1 の 20 規約と、突風・ポケモンいれかえ・きずぐすりの続行規約 3 件。11 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
+# ---------------------------------------------------------------- v0.195: エネルギー回収の 0 枚の答えの続行規約（docs/play-convention-tr4-v0.195.md）
+#
+# 利用者の採用（2026-11-21。設計 docs/er9-energy-retrieval-zero-design.md の案 B）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（ER9 の停止コードは
+# 厳密側・既存の集合・初回の範囲の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1 だけに入れる。
+# 処理は受理のあとの答えの確かめ（``DiscardFromHandThenRetrieveEnergy.resume`` の空の答えの分岐）で、未裁定の停止の代わりに受理して使い終える（``convention_applied`` を書く）
+
+TR4_SET_ID = "CS-KYUURA-PLAY-TR4"
+TR4_ADOPTION = ("利用者の採用（2026-11-21。案 B: 0 枚を受理して、エネルギー回収の使用を終える。手札から通常に使ったエネルギー回収だけ・明示的に選んだ新しいプレイ用の集合だけで"
+                "有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR4_REFERENCES = ("docs/play-convention-tr4-v0.195.md", "docs/er9-energy-retrieval-zero-design.md")
+
+ENERGY_RETRIEVAL_ZERO_ID = "PC-ENERGY-RETRIEVAL-ZERO"
+
+_TR4_CONVENTIONS = (
+    Convention(ENERGY_RETRIEVAL_ZERO_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "エネルギー回収（登録の型 DiscardFromHandThenRetrieveEnergy）の基本エネルギーカードの選択で、選べるカードがあっても 0 枚を選べる。0 枚を選んだら、手札に加えずに"
+               "このカードを使い終える（使うためにトラッシュしたカードはもどさない。使用の取り消しではない）",
+               content={"adoption": TR4_ADOPTION,
+                        "applies_when": "回収の決定（retrieve_energy）の答えが空で、使用が手札からの通常の使用（受理のあとの答えの確かめ。状態の値で決める）",
+                        "identification": ("効果の登録の型 DiscardFromHandThenRetrieveEnergy（再録の版をふくむ。カード ID では分けない）。超エネルギー回収（SuperEnergyRetrieval）は"
+                                           "別の停止コード（UNRESOLVED_SUPER_ENERGY_RETRIEVAL_ZERO_CHOICE）なので当たらない"),
+                        "path": ("手札からの通常の使用: 状態の使用中の記録（TrainerInUse）の user・via が None・外側の使用（trainer_stack）がない、かつ、このカードの最後の "
+                                 "play_trainer（手札から。via・source_zone がない）のあとに、錯乱ジムのコイン（chaos_check）・かわりに使うかの答え（chaos_answered）・"
+                                 "［ちえくらべ］の答え（trainer_reaction_answered）・スタジアムの追加の条件のトラッシュ（discard_from_hand の stadium_card）がない"),
+                        "not_applied_paths": ["錯乱ジムのコインが「おもて」で持ち主が使う", "錯乱ジムの「うら」で相手がかわりに使う", "サイキックコントロールで相手のトラッシュから使う",
+                                              "［ちえくらべ］を使うかを聞いたあとの使用（ER9 の停止のまま）"],
+                        "on_zero": {"cost": "もどさない（トラッシュのまま）", "retrieve": "なし（手札に加えない）", "trainer": "持ち主のトラッシュ（discard_trainer）",
+                                    "decision": "終わり", "next": "同じ番の MAIN"},
+                        "record": ["player", "available"],
+                        "unchanged": ["1 枚以上の答え", "選ぶ数の上限・選べるもの（費用にしたカードを除く）", "費用の決定", "使う前の確かめ（ER10・ポケモンタワー）",
+                                      "超エネルギー回収（SR1・SR2）", "ワザの UNRESOLVED_RECOVER_ZERO_ENERGY", "ほかの「最大 N 枚」の場面", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE",), references=TR4_REFERENCES),
+)
+TR4_MEMBERS = tuple((c.id, c.version) for c in _TR4_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR4_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR4_SET_ID, 1): ConventionSet(TR4_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS,
+                                   description=("v0.195 の開発用の部分的な集合: CS-KYUURA-PLAY-TR3@1 の 23 規約と、エネルギー回収の 0 枚の答えの続行規約 1 件。12 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
+# ---------------------------------------------------------------- v0.196: エナジーへんかんの 0 枚の答えの続行規約（docs/play-convention-tr6-v0.196.md）
+#
+# 利用者の採用（2026-11-21。設計 docs/h4-recover-zero-design.md の案 B）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（H4 の停止コードは
+# 厳密側・既存の集合・対象の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3・TR4 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1 だけに入れる
+# （TR5 は ER10 の設計の案で使った名前なので使わない）。処理はワザの途中の回収の決定の再開（``resolution.programs.RecoverEnergy.resume`` の空の答えの分岐）で、未裁定の停止の
+# 代わりに何も手札に加えずに次の要素へ進む（``convention_applied`` を書く）
+
+TR6_SET_ID = "CS-KYUURA-PLAY-TR6"
+TR6_ADOPTION = ("利用者の採用（2026-11-21。案 B: 0 枚を受理して、何も手札に加えずにワザの続き（自分へのダメージ）へ進む。ワザを使ったポケモン自身の印刷のエナジーへんかんと、"
+                "ピッピ・ピクシーのゆびをふるで相手のポケモン自身のエナジーへんかんを使う経路だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、"
+                "公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR6_REFERENCES = ("docs/play-convention-tr6-v0.196.md", "docs/h4-recover-zero-design.md")
+
+ENERGY_CONVERSION_ZERO_ID = "PC-ENERGY-CONVERSION-ZERO"
+
+_TR6_CONVENTIONS = (
+    Convention(ENERGY_CONVERSION_ZERO_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "エナジーへんかん（解決の基盤の要素 RecoverEnergy。自分のトラッシュのエネルギーカードを最大 2 枚手札に加える）の選択で、選べるカードがあっても 0 枚を選べる。"
+               "0 枚を選んだら、何も手札に加えずにワザの続き（自分へのダメージ）を処理する",
+               content={"adoption": TR6_ADOPTION,
+                        "applies_when": "ワザの途中の回収の決定（recover_energy。最小 0）の答えが空で、ワザの経路が下の 2 つのどちらか（決定の再開の時点の状態の値で決める）",
+                        "identification": ("解決の基盤の要素 RecoverEnergy（効果の登録の型 RecoverEnergyAndSelfDamage から作る。カード ID では分けない）。最小が 1 以上の回収の要素"
+                                           "（RecoverEnergyByHeads・RecoverSpecialEnergy）は H4 を投げないので当たらない"),
+                        "path": ("元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード。"
+                                 "ゆびをふる: 宣言したワザの効果の登録の型が CopyOpponentAttackEffect（ピッピ・ピクシー）で、ワザを使ったポケモンの印刷のカードが宣言したワザのカード、"
+                                 "処理しているワザ（copied）のカードが相手のバトル場のポケモンの印刷のカード"),
+                        "not_applied_paths": ["メタモンの［へんしん］で持つワザ（ワザを使ったポケモンの印刷のカードがワザのカードでない）",
+                                              "ゆびをふるのほかのワザのコピー（カスミのコダックのちょうのうりょく・思い出させるなど。効果の型が違う）",
+                                              "ゆびをふるで、相手の［へんしん］などで持つワザを選んだとき（相手の印刷のカードがワザのカードでない）"],
+                        "on_zero": {"cost": "変わらない（ワザの費用でエネルギーをトラッシュしない）", "recover": "なし（手札に加えない）",
+                                    "next": "次の要素（自分への 10 ダメージ。きぜつの確かめと番の進行は今の処理）", "decision": "終わり"},
+                        "record": ["player", "available"],
+                        "unchanged": ["1 枚以上の答え", "選ぶ数の上限・選べるもの", "トラッシュにエネルギーカードがないとき（H5。決定なし）",
+                                      "ポケモンタワー・［アレルギーほうし］（要素を処理しない）", "先読み（1 枚以上だけを試す）", "エネルギー回収（ER9・ER10）・超エネルギー回収（SR1・SR2）",
+                                      "ほかの「最大 N 枚」の場面", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_RECOVER_ZERO_ENERGY",), references=TR6_REFERENCES),
+)
+TR6_MEMBERS = tuple((c.id, c.version) for c in _TR6_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR6_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR6_SET_ID, 1): ConventionSet(TR6_SET_ID, 1, USAGE_DEVELOPMENT, _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS,
+                                   description=("v0.196 の開発用の部分的な集合: CS-KYUURA-PLAY-TR4@1 の 24 規約と、エナジーへんかんの 0 枚の答えの続行規約 1 件。13 規約の場面だけを"
+                                                "続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
+# ---------------------------------------------------------------- v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約（docs/play-convention-tr7-v0.197.md）
+#
+# 利用者の採用（2026-11-22。設計 docs/t19b-evaded-effect-coin-design.md の案 B。族の案 PC-NULLIFIED-ELEMENT-COIN のうち、T19b の特殊状態の要素の経路だけ）。プレイ用の
+# 取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない（T19b の停止コードは厳密側・既存の集合・対象の外の経路で active のまま）。今の挙動の集合・S2a・PO・TR3・
+# TR4・TR6 の集合には入れず、新しい開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1 だけに入れる。処理は特殊状態の要素のワザのコインの前（``resolution.programs.Status.run``
+# の T19b の分岐）で、未裁定の停止の代わりにワザを使った側がコインを 1 回投げ、結果を使わずに次へ進む（``convention_applied`` を書く）
+
+TR7_SET_ID = "CS-KYUURA-PLAY-TR7"
+TR7_ADOPTION = ("利用者の採用（2026-11-22。案 B: 「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと決まったあとの、特殊状態にするかを決めるワザのコインを、"
+                "ワザを使った側が説明どおり 1 回投げ、結果を使わずにワザの続きへ進む。効果の登録の型が ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザの、"
+                "相手の対戦ポケモンへの特殊状態の要素だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR7_REFERENCES = ("docs/play-convention-tr7-v0.197.md", "docs/t19b-evaded-effect-coin-design.md")
+
+T19B_NULLIFIED_STATUS_COIN_ID = "PC-T19B-NULLIFIED-STATUS-COIN"
+
+_TR7_CONVENTIONS = (
+    Convention(T19B_NULLIFIED_STATUS_COIN_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "相手の対戦ポケモンが、そのワザのダメージの要素で「とうめい」の「おもて」になり、そのワザのダメージと効果を受けないと決まっているとき、そのポケモンを特殊状態に"
+               "するかだけを決めるワザのコインを、ワザを使ったプレイヤーが説明どおり 1 回投げる。結果にかかわらず特殊状態にせず、ワザの続きを処理する",
+               content={"adoption": TR7_ADOPTION,
+                        "family": "PC-NULLIFIED-ELEMENT-COIN（族の案）のうち、T19b の特殊状態の要素の経路だけ",
+                        "applies_when": ("特殊状態の要素（解決の基盤の要素 Status。相手の対戦ポケモン・この要素のコインが「おもて」で特殊状態・「うら」の効果なし）のコインの前で、"
+                                         "対象がこのワザの「とうめい」で受けないと決まっていて（HP 以上ではない）、ワザの経路が元のワザのとき"),
+                        "identification": ("効果の登録の型が ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads（ダメージ → この要素のコイン → 特殊状態。カード ID では分けない）。"
+                                           "元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード"),
+                        "not_applied_paths": ["ほかの型の特殊状態の要素（「うら」の効果のある型・ダメージのない型・自分への特殊状態・ほかの要素と組む型）",
+                                              "特殊状態の要素でない T19b の箇所（入れ替え・禁止・エネルギーやトレーナーのトラッシュ・ダメージの量・ワザ全体のコインなど）",
+                                              "コピー・［へんしん］などで持つワザ（元のワザでない経路）",
+                                              "UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN・UNRESOLVED_DISCARD_PROTECTED_COIN・UNRESOLVED_KEEP_VOIDED_DISCARD_COIN"],
+                        "on_apply": {"coin": "ワザを使ったプレイヤーが 1 枚（公開のコインのログ。source attack）", "result": "使わない（特殊状態にしない）",
+                                     "log": "規約を当てた記録のあとにコイン。「おもて」なら受けない記録（attack_evaded）", "next": "ワザの続き（ワザのあとの処理・番の終わりは今の処理）"},
+                        "record": ["player", "target_owner", "pokemon_id", "element"],
+                        "unchanged": ["「とうめい」の「うら」（受ける。HP 以上ならワザのコインを投げない）", "「とうめい」がはたらかないとき・最終ダメージが 0 のとき",
+                                      "候補・入力・確かめの契約", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_EVADED_EFFECT_COIN",), references=TR7_REFERENCES),
+)
+TR7_MEMBERS = tuple((c.id, c.version) for c in _TR7_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR7_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR7_SET_ID, 1): ConventionSet(TR7_SET_ID, 1, USAGE_DEVELOPMENT,
+                                   _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS,
+                                   description=("v0.197 の開発用の部分的な集合: CS-KYUURA-PLAY-TR6@1 の 25 規約と、「とうめい」で受けないと決まったあとの特殊状態のワザのコインの"
+                                                "続行規約 1 件。14 規約の場面だけを続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
+# ---------------------------------------------------------------- v0.198: ラッキースタジアムの別の個体の同じ番の使用の続行規約（docs/play-convention-tr8-v0.198.md）
+#
+# 利用者の指示（2026-11-23。設計 docs/rs1-lucky-stadium-replacement-design.md 12 章の規約を TR8 に実装する）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の
+# 解決ではない（RS1 の停止コードは厳密側・既存の集合・事例 #other で active のまま）。今の挙動の集合・S2a・PO・TR3・TR4・TR6・TR7 の集合には入れず、新しい開発用の部分的な
+# 集合 CS-KYUURA-PLAY-TR8@1 だけに入れる。処理は回数の確かめ（``effects._check_stadium_use_count``）の RS1 の分岐で、事例 #lucky-once-stated-replacement の未裁定の停止の
+# 代わりに受け付け、受理の処理（``engine._use_stadium``）が ``convention_applied`` を書く
+
+TR8_SET_ID = "CS-KYUURA-PLAY-TR8"
+TR8_ADOPTION = ("利用者の指示（2026-11-23。設計 docs/rs1-lucky-stadium-replacement-design.md 12 章: 「自分の番ごとに1回」のラッキースタジアムをこの番に使ったあと、同じ番に"
+                "同じ名前の別の個体へ入れかわったとき、その個体を 1 回使える。回数はプレイヤー・自分の番・カードの個体。効果の登録の型 CoinDrawStadium で once_stated の版"
+                "だけ・明示的に選んだ新しいプレイ用の集合だけで有効）。プレイ用の取り決めで、公式の裁定・エラッタ・kyuura の研究上の解決ではない")
+TR8_REFERENCES = ("docs/play-convention-tr8-v0.198.md", "docs/rs1-lucky-stadium-replacement-design.md")
+
+LUCKY_STADIUM_REPLACEMENT_ID = "PC-LUCKY-STADIUM-REPLACEMENT"
+
+_TR8_CONVENTIONS = (
+    Convention(LUCKY_STADIUM_REPLACEMENT_ID, 1, LAYER_CONTINUATION, APPROVAL_USER_AGREED,
+               "「自分の番ごとに1回」と書かれたラッキースタジアムを、この番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を 1 回使える。"
+               "回数はプレイヤー・自分の番・カードの個体で数える",
+               content={"adoption": TR8_ADOPTION,
+                        "applies_when": ("回数の確かめの RS1 の分岐（このカードの記録がない・トレーナーの使用の禁止がない・この番にそのプレイヤーが同じ名前の別のカードを使った）で、"
+                                         "場のカードと、その同じ名前の記録のすべてのカードの効果の登録の型が CoinDrawStadium で once_stated が真のとき"),
+                        "identification": ("効果の登録の型 CoinDrawStadium・once_stated（カード ID では分けない）。記録のカードの版は CardInstance.card_id（対戦の中で変わらない。"
+                                           "場所は読まない）"),
+                        "not_applied_paths": ["同じ個体の 2 回目（STADIUM_ALREADY_USED）", "使った個体が同じ番に場にもどる（UNRESOLVED_STADIUM_REUSE_AFTER_RETURN）",
+                                              "トレーナーの使用の禁止（UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN）", "PRN-027（LK1。once_stated が偽）",
+                                              "PRN-027 を使った記録がある入れかえ（RS1 の事例 #other）", "セキチクシティジム（FG1）",
+                                              "エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの RS1（事例 #other）"],
+                        "on_apply": {"log": "stadium_used のあと・コインの前に規約を当てた記録", "coin": "使ったプレイヤーが 1 枚（今のラッキースタジアムの処理）",
+                                     "heads": "1 枚引く（山札 0 なら引かない・負けにしない）", "record": "(使ったプレイヤー, 新しい個体) を記録に足す"},
+                        "record": ["player", "card", "used_cards"],
+                        "unchanged": ["番の最初の使用", "名前の違うスタジアムの記録を数えないこと", "候補・入力・確かめの契約", "厳密側・既存の集合の停止"]},
+               scenes=("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",), references=TR8_REFERENCES),
+)
+TR8_MEMBERS = tuple((c.id, c.version) for c in _TR8_CONVENTIONS)
+
+CONVENTIONS = MappingProxyType({**CONVENTIONS, **{(c.id, c.version): c for c in _TR8_CONVENTIONS}})
+SETS = MappingProxyType({
+    **SETS,
+    (TR8_SET_ID, 1): ConventionSet(TR8_SET_ID, 1, USAGE_DEVELOPMENT,
+                                   _CURRENT_MEMBERS + S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS + TR8_MEMBERS,
+                                   description=("v0.198 の開発用の部分的な集合: CS-KYUURA-PLAY-TR7@1 の 26 規約と、ラッキースタジアムの別の個体の同じ番の使用の続行規約 1 件。"
+                                                "15 規約の場面だけを続け、ほかの未決の場面では今の停止コードで止める（完成したプレイ用の集合ではない）")),
+})
+
 # この版のエンジンが処理を持つ続行規約（``Registry.implemented_continuations``）
-IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS)
+IMPLEMENTED_CONTINUATIONS = frozenset(S2A_MEMBERS + PO_MEMBERS + TR3_MEMBERS + TR4_MEMBERS + TR6_MEMBERS + TR7_MEMBERS + TR8_MEMBERS)
 # 形式 34 までの書き出し（規約集合の項目がない）に書いてよい集合: 記録のない状態の意味（その版のエンジンの今の挙動）と同じ意味の集合だけ
 IMPLICIT_IN_OLD_FORMATS = frozenset({(CURRENT_SET_ID, 1), (LEGACY_SET_ID, 1)})
 
@@ -370,12 +602,29 @@ PINNED_CONVENTION_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("PC-POISON-AMOUNT-ORDER", 1): "sha256:daf99cffee744cb70043c21f67702ebe6bef5fde1911e3e82ffeb19d3535e5aa",
     ("PC-POISON-MIST-TARGETS", 1): "sha256:e5e48dd17d5af226ae38f3004a21ae3bf9fd2639b1454f00a1a09f30d6d021d5",
     ("PC-POISON-MIST-SOURCE-LEFT", 1): "sha256:dbf6b8e8bae49b5c884446e367abd9a861d71f701ec420cc8feedfaf8b4609e6",
+    # v0.186: 突風・ポケモンいれかえ・きずぐすりの続行規約（利用者の採用。2026-11-15）
+    ("PC-GUST-WITHOUT-OPPONENT-BENCH", 1): "sha256:1e6d415ed92b89f1f02cb913e88096bd69a1f8b84b9d3e26ea4bacd3ae4dab57",
+    ("PC-SWITCH-WITHOUT-BENCH", 1): "sha256:734c11c8869565c280b3c2384dd10a07b888060aeee7a7cd2ade84a520ebb48f",
+    ("PC-POTION-WITHOUT-DAMAGE", 1): "sha256:ed5f64a10954cd3561061e0fe7c8adc084283553024c876cf58f75008d9ffebe",
+    # v0.195: エネルギー回収の 0 枚の答えの続行規約（利用者の採用。2026-11-21）
+    ("PC-ENERGY-RETRIEVAL-ZERO", 1): "sha256:42427e752631572b425d391783f362c0b88982328fd9231b57da0c1455fdba01",
+    # v0.196: エナジーへんかんの 0 枚の答えの続行規約（利用者の採用。2026-11-21）
+    ("PC-ENERGY-CONVERSION-ZERO", 1): "sha256:6a35ebb8f6aa772e051d0ade7a8fd6d771537d2f1205365b4c039a19dea44594",
+    # v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約（利用者の採用。2026-11-22）
+    ("PC-T19B-NULLIFIED-STATUS-COIN", 1): "sha256:e4082ecb8e189e1a4b67fbf66fc9c2d6b580de050b2696c711d6ba7ea81bd3b8",
+    # v0.198: ラッキースタジアムの別の個体の同じ番の使用の続行規約（利用者の指示。2026-11-23）
+    ("PC-LUCKY-STADIUM-REPLACEMENT", 1): "sha256:5b5d1b4f7dfa52299cb1502957d9d47262c7e47e684e09147a0d9c886cc4a017",
 })
 PINNED_SET_DIGESTS: Mapping[tuple[str, int], str] = MappingProxyType({
     ("CS-KYUURA-CURRENT", 1): "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
     ("CS-KYUURA-LEGACY-UNRECORDED", 1): "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
     ("CS-KYUURA-PLAY-S2A", 1): "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",  # v0.143: 開発用の部分的な集合
     ("CS-KYUURA-PLAY-PO", 1): "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",  # v0.145: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR3", 1): "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",  # v0.186: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR4", 1): "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",  # v0.195: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR6", 1): "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",  # v0.196: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR7", 1): "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",  # v0.197: 開発用の部分的な集合
+    ("CS-KYUURA-PLAY-TR8", 1): "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",  # v0.198: 開発用の部分的な集合
 })
 
 
@@ -775,7 +1024,8 @@ def continuation_for(state, code: str, case: str | None = None) -> ContinuationL
 # 規約を当てた記録（ログ ``convention_applied``）に書ける項目（全員に見える値だけ。手札・山札などの秘密の情報は書かない）
 APPLIED_FIELDS = frozenset({"players", "player", "rounds_both", "rounds_single", "order", "pokemon_ids", "element", "heads", "available", "processed", "source",
                             "target_owner", "target",
-                            "pokemon_id", "amount", "poison_mists", "ended_mists"})  # v0.145: どくの量の規約（ポケモンの場の番号・受けるダメージ・［ポイズンミスト］の記録の発生源。公開）
+                            "pokemon_id", "amount", "poison_mists", "ended_mists",  # v0.145: どくの量の規約（ポケモンの場の番号・受けるダメージ・［ポイズンミスト］の記録の発生源。公開）
+                            "card", "used_cards"})  # v0.198: ラッキースタジアムの規約（場に表で出ている新しいカードの uid・この番に使った同じ名前のカードの版 card_id。uid は書かない）
 
 
 def record_application(state, lookup: ContinuationLookup, **detail) -> None:

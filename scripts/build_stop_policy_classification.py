@@ -137,7 +137,105 @@ CONTINUATION_AGREEMENTS += [
      "statement": "PC-POISON-MIST-SOURCE-LEFT@1: ［ポイズンミスト］を使ったポケモンが場をはなれたら、その発生源の記録の効果は終わる。発生源が場にいるまま力が消えた記録（#power-lost）は対象外。",
      "reading": "UNRESOLVED_POISON_MIST_SOURCE#source-left（effects.poison_check_amount）。#power-lost・ほかの特殊能力の発生源・効果の重複の細部は対象外"},
 ]
-AGREED_CONVENTION_STATUS = "user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
+# v0.186（docs/play-convention-tr3-v0.186.md）: 突風・ポケモンいれかえ・きずぐすりの続行規約 3 件の採用（2026-11-15 の利用者の指示。S2a・PO とは別の依頼なので項目ごとの出典 ``source``）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1 の 3 規約の中身だけ（厳密側・既存の集合・対象外の未裁定は変えない）。採用は 0.186.0 の時点のもので、この記録は台帳の生成の入力へ
+# 後から写したもの（docs/stop-ledger-drift-audit.md 8 章。新しい採用ではない）
+TR3_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-15",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/play-convention-tr3-impl の依頼の採用方針: 3 条件とも使用不可・カード消費なし・通常使用と代用使用に同じ条件・"
+                                  "明示的に選択した新しいプレイ用規約集合だけで有効。判断一覧は docs/play-convention-three-trainers.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR3-SET", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1（CS-KYUURA-PLAY-PO@1 の 20 規約と TR3 の 3 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-TR3@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1 は同じ ID・版・中身のまま。既定の集合は変えない"},
+    {"id": "AGR-PLAY-TR3-GUST", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-GUST-WITHOUT-OPPONENT-BENCH@1: 突風は、使う人の相手のベンチが空なら使えない（規約による不正な操作 NO_OPPONENT_BENCH。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH（effects.SwitchOpponentWithBench.check_playable）。厳密側の停止（GW5）は active のまま。AL2・SG1・MH1・MG1・受理のあとの対象の喪失は対象外"},
+    {"id": "AGR-PLAY-TR3-SWITCH", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-SWITCH-WITHOUT-BENCH@1: ポケモンいれかえは、使う人のベンチが空なら使えない（規約による不正な操作 NO_BENCH。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": "UNRESOLVED_SWITCH_WITHOUT_BENCH（effects.SwitchWithBench.check_playable）。厳密側の停止は active のまま。AL2・MH1・MG1 は対象外"},
+    {"id": "AGR-PLAY-TR3-POTION", "source": TR3_AGREEMENT_SOURCE,
+     "statement": "PC-POTION-WITHOUT-DAMAGE@1: きずぐすりは、使う人の場にダメージのあるポケモンがいなければ使えない（規約による不正な操作 NO_DAMAGE_COUNTERS。カードを消費しない）。通常の使用と代用の使用に同じ条件。",
+     "reading": ("UNRESOLVED_POTION_WITHOUT_DAMAGE（effects.RemoveDamageCounters.check_playable）。厳密側の停止は active のまま。"
+                 "ダメージのないポケモンを選んだとき（UNRESOLVED_POTION_UNDAMAGED_TARGET。受理のあとの未裁定）・MG1 は対象外")},
+]
+# v0.195（docs/play-convention-tr4-v0.195.md）: エネルギー回収の 0 枚の答えの続行規約の採用（2026-11-21 の利用者の指示。設計 docs/er9-energy-retrieval-zero-design.md の案 B）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの「最大N」の場面・初回の範囲の外の経路は変えない）。この記録は実装と同じ単位で入力へ
+TR4_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-21",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/er9-zero-choice-v0195 の依頼の採用方針: 案 B「0 枚を受理して、エネルギー回収の使用を終える」・手札から"
+                                  "通常に使ったエネルギー回収と再録の版だけ・明示的に選択した新しいプレイ用規約集合だけで有効。設計は docs/er9-energy-retrieval-zero-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR4-SET", "source": TR4_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1（CS-KYUURA-PLAY-TR3@1 の 23 規約と TR4 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": "conventions.SETS の CS-KYUURA-PLAY-TR4@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1 は同じ ID・版・中身のまま。既定の集合は変えない"},
+    {"id": "AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO", "source": TR4_AGREEMENT_SOURCE,
+     "statement": ("PC-ENERGY-RETRIEVAL-ZERO@1: 手札から通常に使ったエネルギー回収（再録の版をふくむ）の回収の決定で 0 枚と答えたら、受理して使い終える（費用はもどさない・手札に加えない・"
+                   "このカードは持ち主のトラッシュ・同じ番にもどる。使用の取り消しではない）。"),
+     "reading": ("UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（effects.DiscardFromHandThenRetrieveEnergy.resume の空の答え。経路は effects.retrieval_from_hand）。厳密側の停止（ER9）は active のまま。"
+                 "錯乱ジム・サイキックコントロール・［ちえくらべ］を聞いた使用・ER10・超エネルギー回収（SR2）・ワザの UNRESOLVED_RECOVER_ZERO_ENERGY・ほかの「最大N」の場面は対象外")},
+]
+# v0.196（docs/play-convention-tr6-v0.196.md）: エナジーへんかんの 0 枚の答えの続行規約の採用（2026-11-21 の利用者の指示。設計 docs/h4-recover-zero-design.md の案 B）。
+# 採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの「最大N」の場面・メタモンの［へんしん］の経路は変えない）。この記録は実装と同じ単位で入力へ
+TR6_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-21",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/h4-zero-v0196 の依頼の採用方針: 案 B「0 枚を受理して、自分への 10 ダメージへ進む」・ゴース（PMCG3-029）自身の"
+                                  "エナジーへんかんと、ピッピ・ピクシーのゆびをふるがそのワザを実行する経路だけ・メタモンの［へんしん］は対象外・明示的に選択した新しいプレイ用規約集合"
+                                  "CS-KYUURA-PLAY-TR6@1 だけで有効。設計は docs/h4-recover-zero-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR6-SET", "source": TR6_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1（CS-KYUURA-PLAY-TR4@1 の 24 規約と TR6 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR6@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1 は同じ ID・版・中身のまま。"
+                 "既定の集合は変えない。TR5 は ER10 の設計の案の名前なので使わない")},
+    {"id": "AGR-PLAY-TR6-ENERGY-CONVERSION-ZERO", "source": TR6_AGREEMENT_SOURCE,
+     "statement": ("PC-ENERGY-CONVERSION-ZERO@1: エナジーへんかんの回収の決定で 0 枚と答えたら、受理して何も手札に加えずにワザの続き（自分への 10 ダメージ）へ進む。ワザを使ったポケモン自身の"
+                   "印刷のエナジーへんかんと、ピッピ・ピクシーのゆびをふるで相手のポケモン自身のエナジーへんかんを使う経路だけ。"),
+     "reading": ("UNRESOLVED_RECOVER_ZERO_ENERGY（resolution.programs.RecoverEnergy.resume の空の答え。経路は RecoverEnergy._zero_convention_path）。厳密側の停止（H4）は active のまま。"
+                 "メタモンの［へんしん］・ほかのワザのコピー・トラッシュにエネルギーがないとき（H5）・ER9・ER10・SR2・ほかの「最大N」の場面は対象外")},
+]
+# v0.197（docs/play-convention-tr7-v0.197.md）: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約の採用（2026-11-22 の利用者の指示。設計
+# docs/t19b-evaded-effect-coin-design.md の案 B）。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1 の 1 規約の中身だけ（厳密側・既存の集合・ほかの T19b の箇所・
+# PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは変えない）。この記録は実装と同じ単位で入力へ
+TR7_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-22",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/t19b-status-coin-v0197 の依頼の採用方針: 案 B「「とうめい」の「おもて」でワザのダメージと特殊状態を受けないと"
+                                  "決まったら、ワザを使った側がコインを 1 回投げ、結果を効果に使わず、ワザの処理を続ける」・規約 PC-T19B-NULLIFIED-STATUS-COIN@1・特殊状態の要素の T19b の"
+                                  "分岐だけ・ConfuseOnHeads を対象とし、PoisonOnHeads・ParalyzeOnHeads は構築盤面とソースで同じ無効化の条件と再開先を確かめた型だけ・明示的に選択した"
+                                  "新しいプレイ用規約集合 CS-KYUURA-PLAY-TR7@1 だけで有効。設計は docs/t19b-evaded-effect-coin-design.md）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR7-SET", "source": TR7_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1（CS-KYUURA-PLAY-TR6@1 の 25 規約と TR7 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR7@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1・TR6@1 は同じ ID・版・"
+                 "中身のまま。既定の集合は変えない")},
+    {"id": "AGR-PLAY-TR7-NULLIFIED-STATUS-COIN", "source": TR7_AGREEMENT_SOURCE,
+     "statement": ("PC-T19B-NULLIFIED-STATUS-COIN@1: 相手の対戦ポケモンがワザのダメージの要素で「とうめい」の「おもて」になり、そのワザのダメージと効果を受けないと決まったら、特殊状態に"
+                   "するかだけを決めるワザのコインを、ワザを使った側が 1 回投げ、結果を使わずにワザの続きへ進む。効果の登録の型 ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の"
+                   "元のワザだけ。"),
+     "reading": ("UNRESOLVED_EVADED_EFFECT_COIN（resolution.programs.Status.run のこの要素のコインの前の T19b の分岐。経路は Status._nullified_coin_path）。厳密側の停止（T19b）は active の"
+                 "まま。ほかの T19b の箇所・ほかの型の特殊状態の要素・コピーや［へんしん］で持つワザ・PC-NULLIFIED-ELEMENT-COIN のほかの停止コードは対象外")},
+]
+# v0.198（docs/play-convention-tr8-v0.198.md）: ラッキースタジアムの別の個体の同じ番の使用の続行規約の採用（2026-11-23 の利用者の指示。設計
+# docs/rs1-lucky-stadium-replacement-design.md 12 章）。採用したのは開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1 の 1 規約の中身だけ（厳密側・既存の集合・RS1 の事例 #other・
+# PC-ONCE-PER-TURN-IDENTITY の案は変えない）。この記録は実装と同じ単位で入力へ
+TR8_AGREEMENT_SOURCE = {"by": "user", "on": "2026-11-23",
+                        "where": ("本会話の利用者の指示（作業ブランチ claude/rs1-lucky-convention-tr8 の依頼「RS1 の限定規約を TR8 に実装し、V1〜V13 で検証する」: 対象版のラッキースタジアムを"
+                                  "使ったあと、同じ番に対象版の別個体へ入れ替えた場合、その個体を 1 回使える。規約 PC-LUCKY-STADIUM-REPLACEMENT@1・集合 CS-KYUURA-PLAY-TR8@1（TR7@1 の"
+                                  "26 規約 + 1）・TR8 を明示選択した対戦だけで有効。設計は docs/rs1-lucky-stadium-replacement-design.md 12 章）"),
+                        "not_recorded_as": "公式の裁定・最新の説明・エラッタ・kyuura の研究上の解決（続行側の集合の規約の採用。厳密側の集合・ほかの未決の場面の判断ではない）"}
+CONTINUATION_AGREEMENTS += [
+    {"id": "AGR-PLAY-TR8-SET", "source": TR8_AGREEMENT_SOURCE,
+     "statement": "続行側として、開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1（CS-KYUURA-PLAY-TR7@1 の 26 規約と TR8 の 1 規約）を登録する。完成したプレイ用とは表示しない。",
+     "reading": ("conventions.SETS の CS-KYUURA-PLAY-TR8@1（usage development・completeness halts_at_undecided）。CS-KYUURA-CURRENT@1・S2A@1・PO@1・TR3@1・TR4@1・TR6@1・TR7@1 は同じ ID・"
+                 "版・中身のまま。既定の集合は変えない")},
+    {"id": "AGR-PLAY-TR8-LUCKY-STADIUM-REPLACEMENT", "source": TR8_AGREEMENT_SOURCE,
+     "statement": ("PC-LUCKY-STADIUM-REPLACEMENT@1: 「自分の番ごとに1回」と書かれたラッキースタジアムをこの番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を"
+                   "1 回使える。回数はプレイヤー・自分の番・カードの個体で数える。場のカードと、この番の同じ名前の記録のすべてのカードが、効果の登録の型 CoinDrawStadium で"
+                   "once_stated のときだけ。"),
+     "reading": ("UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement（effects._check_stadium_use_count の RS1 の分岐。事例は effects.stadium_reuse_case）。"
+                 "厳密側の停止（RS1）は active のまま。事例 #other（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとう・PRN-027 を使った記録がある入れかえ）・"
+                 "同じ個体の 2 回目・SX2・STB1・LK1・FG1 は対象外")},
+]
+AGREED_CONVENTION_STATUS ="user_agreed"  # 規約（conventions）だけが使える。合意 AGR-MODE-BASELINE-USER で基礎集合に入れた利用者指定。続行規約の採用ではない
 MODE_DEFINITIONS_HISTORY = {
     "STRICT-A": "厳密モードの定義としては採用しない（過去の検討案。AGR-MODE-STRICT・AGR-MODE-BASELINE-USER と合わない）。研究・照合の用途の集合として別に作るかは決めていない",
     "STRICT-B": "AGR-MODE-STRICT・AGR-MODE-BASELINE-USER に置きかえた。STRICT-B が含めていたエンジンの簡略化・実装上の仮定を基礎集合に入れるかは未決（DEC-BASELINE-NONUSER）",
@@ -185,9 +283,23 @@ DECISION_STATUS = {
                             "note": "v0.145: PO1（どくの量を変える効果の順番）だけを続行側の規約 PC-POISON-AMOUNT-ORDER@1 として採用。ほかのダメージの読み方・KA1・厳密側は未決のまま"},
     "DEC-TEXT-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-TARGETS"],
                           "note": "v0.145: PO2（［ポイズンミスト］の当てはまる相手）だけを続行側の規約 PC-POISON-MIST-TARGETS@1 として採用。ほかの文面の読み方・厳密側は未決のまま"},
-    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT"],
+    "DEC-LASTING-READINGS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-PO-MIST-SOURCE-LEFT", "AGR-PLAY-TR8-LUCKY-STADIUM-REPLACEMENT"],
                              "note": ("v0.145: PO3 の #source-left（発生源が場をはなれた［ポイズンミスト］の記録）だけを続行側の規約 PC-POISON-MIST-SOURCE-LEFT@1 として採用。#power-lost・"
-                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま")},
+                                      "ほかの持続する効果の発生源（PC-LASTING-SOURCE-CHANGE の候補）・厳密側は未決のまま。v0.198: RS1 の #lucky-once-stated-replacement（「自分の番ごとに1回」の"
+                                      "ラッキースタジアムの別の個体）だけを、続行側の集合 CS-KYUURA-PLAY-TR8@1 の規約（個体で数えて 1 回使える）として採用。RS1 の #other・SX2・FG1・"
+                                      "PC-ONCE-PER-TURN-IDENTITY の案・厳密側は未決のまま")},
+    "DEC-USE-WITHOUT-EFFECT": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR3-GUST", "AGR-PLAY-TR3-SWITCH", "AGR-PLAY-TR3-POTION"],
+                               "note": ("v0.186: GW5・UNRESOLVED_SWITCH_WITHOUT_BENCH・UNRESOLVED_POTION_WITHOUT_DAMAGE の 3 場面だけを、続行側の集合 CS-KYUURA-PLAY-TR3@1 の規約（使えない。"
+                                        "P-UWE-1 の形）として採用。ほかのコード（PF-USE-WITHOUT-EFFECT の残り）・PC-USE-WITHOUT-TARGET の案・厳密側は未決のまま")},
+    "DEC-UP-TO-ZERO": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR4-ENERGY-RETRIEVAL-ZERO", "AGR-PLAY-TR6-ENERGY-CONVERSION-ZERO"],
+                       "note": ("v0.195: UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE（ER9）の 1 場面の、手札からの通常の使用だけを、続行側の集合 CS-KYUURA-PLAY-TR4@1 の規約（0 枚を受理して使い終える。"
+                                "P-UTZ-2 の形）として採用。v0.196: UNRESOLVED_RECOVER_ZERO_ENERGY（H4）の 1 場面の、エナジーへんかん自身とゆびをふるの経路だけを、続行側の集合 "
+                                "CS-KYUURA-PLAY-TR6@1 の規約（0 枚を受理して自分へのダメージへ進む。P-UTZ-2 の形）として採用。ほかのコード（PF-UP-TO-ZERO の残り 11 件。SR2 をふくむ）・"
+                                "PC-UP-TO-ZERO の案・厳密側は未決のまま")},
+    "DEC-NULLIFIED-COINS": {"status": "partly_agreed", "agreements": ["AGR-PLAY-TR7-NULLIFIED-STATUS-COIN"],
+                            "note": ("v0.197: UNRESOLVED_EVADED_EFFECT_COIN（T19b）の 1 場面の、特殊状態の要素の経路（ConfuseOnHeads・PoisonOnHeads・ParalyzeOnHeads の元のワザ）だけを、"
+                                     "続行側の集合 CS-KYUURA-PLAY-TR7@1 の規約（ワザのコインを 1 回投げ、結果を使わずに続ける）として採用。T19b のほかの箇所・ほかのコード"
+                                     "（UNRESOLVED_PREVENTED_COIN_DAMAGE・UNRESOLVED_PREVENTED_EFFECT_COIN など）・PC-NULLIFIED-ELEMENT-COIN の案・厳密側は未決のまま")},
     "DEC-EXISTING-USER-SPECS": {"status": "partly_agreed", "agreements": ["AGR-MODE-BASELINE-USER"],
                                 "note": "利用者指定（12 件・USER-ID 9 つ）は基礎集合に入れる。エンジンの簡略化・実装上の仮定・データの訂正の扱いは DEC-BASELINE-NONUSER・DEC-CARD-DATA-CORRECTIONS で未決"},
 }
@@ -702,6 +814,21 @@ CASES = {
     "UNRESOLVED_SCRAM_TIMING": [
         {"case": "pokemon-check", "sites": ["kyuura_engine/procedures.py:312"], "condition": "ポケモンチェックの途中で残りHPが「10」を通る", "secret_dependency": "public_only", "note": "HALTED"},
         {"case": "command", "sites": [], "condition": "コマンドの処理の中（道具の対戦で拒否を観測）", "secret_dependency": "public_only", "note": "拒否"},
+    ],
+    # v0.198（docs/play-convention-tr8-v0.198.md）: RS1 を、「自分の番ごとに1回」のラッキースタジアムの別の個体（続行規約 PC-LUCKY-STADIUM-REPLACEMENT の場面）とそのほかに分ける。
+    # 停止コードと理由の文は同じ。事例は effects.stadium_reuse_case（効果の登録の型 CoinDrawStadium・once_stated。カード ID では分けない）
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT": [
+        {"case": "lucky-once-stated-replacement",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "lookup, case = _stadium_reuse_lookup(state, player, stadium)")],
+         "condition": ("場のカードと、この番にそのプレイヤーが使った同じ名前のカードのすべてが、「自分の番ごとに1回」のラッキースタジアム（CoinDrawStadium・once_stated）。"
+                       "このカードの記録がなく、トレーナーの使用の禁止がない"),
+         "secret_dependency": "public_only",
+         "note": ("記録のカードの版は CardInstance.card_id（使ったときに場に表で出ていた）で、場所は読まない。v0.198 で、記録のカードを手札・山札へ移した双子で、判定と公開の記録が"
+                  "所在・並びによらないことを確かめた（tests/test_play_convention_tr8_v0_198.py）")},
+        {"case": "other",
+         "sites": [lambda: _site_line("kyuura_engine/effects.py", "stop_without_continuation(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case)")],
+         "condition": "そのほかの RS1（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの入れかえ、PRN-027 を使った記録がある入れかえ）",
+         "secret_dependency": "public_only", "note": ""},
     ],
 }
 
@@ -1281,6 +1408,72 @@ UPDATES = [
      "new_entries": [],
      "unchanged": ("研究の停止コード（FC1・RB2 を含む）は active のまま。止めるコードは同じで、山札を見る前の止める条件が配分を読まない確かめになった（保守的に止める場合が増えた）。"
                    "族・規約・判断事項・合意の記録は変えていない")},
+    {"version": "0.186.0", "work": "突風・ポケモンいれかえ・きずぐすりの続行規約 3 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR3@1）",
+     "document": "docs/play-convention-tr3-v0.186.md",
+     "base": {"commit": "6df781fffb731d9eca2fb07126aaadd772f6baa5", "branch_of_base": "claude/play-convention-three-trainers（v0.185 と判断一覧を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR3-* の 4 項目（2026-11-15。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-USE-WITHOUT-EFFECT を partly_agreed（続行側の 3 場面だけ）にした。厳密側・既存の集合・対象外の未裁定は変えていない。"
+                  "この項目と採用の記録は、0.186.0 のあとの生成の道具の修正の単位（docs/stop-ledger-drift-audit.md 8 章）で入力に写した（台帳は 0.186.0 の時点では作り直していない）"),
+     "changed_entries": ["decision_status（DEC-USE-WITHOUT-EFFECT）",
+                         "3 つの停止コードの implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。PO の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR3-* の 4 項目。項目ごとの出典 source）"],
+     "unchanged": "研究の停止コードは active のまま（厳密側・S2a・PO の集合では今のまま止まる）。族・安全境界・規約（conventions）・方針の案は変えていない"},
+    {"version": "0.187.0", "work": "停止の方針の台帳・設計案・実行時の場面の索引の正式な同期（案 B: テスト・道具だけの語の役割と schema_version 2）",
+     "document": "docs/token-sync-v0.187.md",
+     "base": {"commit": "c2c50e86eff0fe335bad70bf250c74fbd4681bab", "branch_of_base": "claude/test-only-token-impl（生成の道具・分類の入力 d83f8f3 を含む。main には未取り込み）"},
+     "approval": ("利用者の採用は案 B（2026-11-16。台帳の分類の方針の採用で、ゲームの裁定・規約の採用ではない）と、その正式な同期と版上げの指示（2026-11-16）。"
+                  "新しい分類の方針は加えていない。0.186.0 のあとに入力へ写した蓄積の差の修正（docs/stop-ledger-drift-audit.md）と TR3 の採用の記録も、この同期で初めて正式な台帳に入った"),
+     "changed_entries": ["テスト・道具だけの 12 件の status・token_role・token_role_basis（fixture 9・mutation_operand 1・non_code_identifier 1 は test_only、historical_engine_code 1 は historical）",
+                         "蓄積の差（停止箇所の行番号・テストの参照・current_stop・implementation_sites・到達可能性。docs/stop-ledger-drift-audit.md の A〜D と F の修正）"],
+     "new_entries": ["token_classification（入力・役割の意味・状態・問題）", "counts.test_tool_only_by_role", "schema_version 2"],
+     "unchanged": ("研究の停止コード・事例・族・安全境界・規約（conventions）・方針の案は変えていない。停止コード → 場面の対応と current_behavior は同じで、"
+                   "実行時の場面の索引からテスト・道具だけの 8 件が消えた（新規 4 件は入らない）。ゲームの処理・裁定・規約の内容は変えていない")},
+    {"version": "0.195.0", "work": "エネルギー回収の 0 枚の答えの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR4@1）",
+     "document": "docs/play-convention-tr4-v0.195.md",
+     "base": {"commit": "a4863dc3097dd2f326d9b77d93070ca1ce1b487e", "branch_of_base": "claude/er9-zero-choice-design（0.194.0 と ER9 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR4-* の 2 項目（2026-11-21。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-UP-TO-ZERO を partly_agreed（続行側の 1 場面の手札からの通常の使用だけ）にした。厳密側・既存の集合・ほかの「最大N」の場面は変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-UP-TO-ZERO）",
+                         "UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。PO・TR3 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR4-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3 の集合と、初回の範囲の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
+    {"version": "0.196.0", "work": "エナジーへんかんの 0 枚の答えの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR6@1）",
+     "document": "docs/play-convention-tr6-v0.196.md",
+     "base": {"commit": "4caa8b1049af526dfa4e5b71c8b66d0077d8cb6f", "branch_of_base": "claude/h4-recover-zero-design（0.195.0 と H4 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR6-* の 2 項目（2026-11-21。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-UP-TO-ZERO の partly_agreed に H4 の 1 場面を加えた。厳密側・既存の集合・ほかの「最大N」の場面は変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-UP-TO-ZERO）",
+                         "UNRESOLVED_RECOVER_ZERO_ENERGY の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。TR4 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR6-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-UP-TO-ZERO は proposal のまま）は変えていない")},
+    {"version": "0.197.0", "work": "「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR7@1）",
+     "document": "docs/play-convention-tr7-v0.197.md",
+     "base": {"commit": "a90ef86f748876a1581e71f4e469834e6c7939be", "branch_of_base": "claude/t19b-evaded-effect-coin-design（0.196.0 と T19b の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR7-* の 2 項目（2026-11-22。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-NULLIFIED-COINS を partly_agreed にし、T19b の 1 場面の特殊状態の要素の経路を加えた。厳密側・既存の集合・ほかの T19b の箇所・ほかのコードは変えていない。"
+                  "採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-NULLIFIED-COINS）",
+                         "UNRESOLVED_EVADED_EFFECT_COIN の implementation_sites・current_stop（規約の場面の宣言 conventions.py の箇所が加わった。TR4・TR6 の前例と同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR7-* の 2 項目。項目ごとの出典 source）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6 の集合と、対象の外の経路では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-NULLIFIED-ELEMENT-COIN は proposal のまま）は変えていない")},
+    {"version": "0.198.0", "work": "ラッキースタジアムの別の個体の同じ番の使用の続行規約 1 件の採用・実装（開発用の部分的な集合 CS-KYUURA-PLAY-TR8@1）と、RS1 の事例の分割",
+     "document": "docs/play-convention-tr8-v0.198.md",
+     "base": {"commit": "a1bd346d50c55776c841a2ea21acf28417c91cfc", "branch_of_base": "claude/rs1-lucky-convention-design（0.197.0 と RS1 の設計。main には未取り込み）"},
+     "approval": ("利用者の採用は continuation_agreements の AGR-PLAY-TR8-* の 2 項目（2026-11-23。続行側の集合の規約の採用で、公式の裁定・kyuura の研究上の解決ではない）。"
+                  "DEC-LASTING-READINGS に RS1 の 1 事例を加えた。厳密側・既存の集合・RS1 の #other・ほかのコードは変えていない。採用の記録は実装と同じ単位で入力へ入れた"),
+     "changed_entries": ["decision_status（DEC-LASTING-READINGS）",
+                         "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT を 2 つの事例（#lucky-once-stated-replacement・#other）に分けた（停止コード・理由の文は同じ）",
+                         "停止箇所の行番号・テストの参照（エンジンの編集・新しいテストで動いただけ）"],
+     "new_entries": ["continuation_agreements（AGR-PLAY-TR8-* の 2 項目。項目ごとの出典 source）", "CASES の UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT（2 事例）"],
+     "unchanged": ("研究の停止コードは active のまま（厳密側・S2a・PO・TR3・TR4・TR6・TR7 の集合と、事例 #other では今のまま止まる）。族・安全境界・規約（conventions）・方針の案"
+                   "（PC-ONCE-PER-TURN-IDENTITY は proposal のまま）は変えていない")},
 ]
 # 分類の時点（基点 3e25ac5）の集計（counts）の写し。今の counts は現行コードから作り直した値
 COUNTS_AT_CLASSIFICATION = {"research_stop_codes": 316, "runtime_codes_outside_table": 40, "runtime_codes_outside_table_active": 39, "test_tool_only_codes": 8, "cases": 15, "codes_with_cases": 7, "problems_new": 4, "problems_from_inventory": 28, "conventions": 18, "internal_guard_sites_current": 602, "internal_guard_sites_matched_to_inventory": 600, "internal_guard_sites_new_since_inventory": ["kyuura_engine/engine.py:445", "kyuura_engine/resolution/programs.py:10739"], "safety_boundaries": 8, "families": 23, "decisions": 29, "by_reachability": {"constructed_board": 145, "legal_sequence": 25, "static_only": 185}, "by_family": {"PF-COPY-TRANSFORM": 34, "PF-DAMAGE-SCOPE": 22, "PF-EFFECT-TIMING": 13, "PF-ENERGY-TYPE": 21, "PF-ESP-REDO": 4, "PF-HIDDEN-INFORMATION": 8, "PF-HISTORY-LASTING": 20, "PF-KNOCKOUT-TIMING": 15, "PF-POWER-SUPPRESSION": 11, "PF-PROTECTED-TARGET-EFFECT": 12, "PF-REACTION-DURING-PROCESS": 10, "PF-RUNTIME-CONTINUATION": 15, "PF-RUNTIME-COPY-GAPS": 5, "PF-RUNTIME-DATA": 5, "PF-RUNTIME-GENERIC": 1, "PF-RUNTIME-REGISTRY": 7, "PF-RUNTIME-SEARCH-LIMIT": 6, "PF-SETUP-PLAY-AS-POKEMON": 5, "PF-SIMULTANEOUS-ORDER": 26, "PF-STATED-COUNT-SHORT": 11, "PF-TEXT-READING": 34, "PF-UP-TO-ZERO": 13, "PF-USE-WITHOUT-EFFECT": 57}, "by_play_group": {"1": 316, "2": 39, "3": 89, "4": 6, "5": 20, "6": 1}, "by_mechanism": {"answer_rejection": 13, "command_rejection": 339, "deck_validation": 1, "deferred_interruption": 2, "pokemon_check_halt": 10, "setup_halt": 2}, "by_status": {"active": 402, "fixed": 5, "historical": 2, "unverified": 1}, "note": "停止コード・事例・規約・内部ガードは別の数。事例はコードの下位で、コードの数に足さない。棚卸しと同じ項目は独立した不足として数えない"}
@@ -1554,6 +1747,125 @@ CODE_DECISION = {"UNRESOLVED_MULLIGAN_COMPENSATION": ["DEC-MULLIGAN-COMPENSATION
                  "UNRESOLVED_MIND_GAMES_CHAOS_GYM_ORDER": ["DEC-CHAOS-GYM-MIND-GAMES"], "UNRESOLVED_DRY_UP_WATER_ENERGY_SHORT": ["DEC-DEFERRED-RESUME"],
                  "UNRESOLVED_THOUGHT_WAVE_MACHINE_ENERGY_SHORT": ["DEC-DEFERRED-RESUME"], "UNRESOLVED_SEARCH_TRAINER_WITHOUT_TARGET": ["DEC-INFO-LEAK-FIXES"],
                  "UNRESOLVED_STATED_CARDS_SHORT": ["DEC-INFO-LEAK-FIXES"]}
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# テスト・道具だけの語の役割（案 B。2026-11-16 の利用者の採用。docs/test-only-token-design.md 3 章）。台帳には役割と根拠つきで残し、実際の停止と区別する。
+# 状態が active・unverified でないものは、場面の索引・設計案の場面に入らない（build_play_policy_family_plan.scenes_from_ledger の既存のフィルタ）
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+LEDGER_SCHEMA_VERSION = 2  # 2: テスト・道具だけの語の token_role・token_role_basis・状態 test_only、counts.test_tool_only_by_role、token_classification
+TOKEN_ROLES_INPUT = ROOT / "scripts" / "stop_policy_token_roles.json"  # 明示の登録（.py でないのでスキャナの走査の外。登録が出現の証拠にならない）
+TOKEN_ROLE_FIXTURE, TOKEN_ROLE_MUTATION, TOKEN_ROLE_HISTORICAL = "fixture", "mutation_operand", "historical_engine_code"
+TOKEN_ROLE_IDENTIFIER, TOKEN_ROLE_UNCLASSIFIED = "non_code_identifier", "unclassified"
+REGISTRABLE_TOKEN_ROLES = (TOKEN_ROLE_FIXTURE, TOKEN_ROLE_MUTATION, TOKEN_ROLE_HISTORICAL)
+TOKEN_STATUS = {TOKEN_ROLE_FIXTURE: "test_only", TOKEN_ROLE_MUTATION: "test_only", TOKEN_ROLE_IDENTIFIER: "test_only",
+                TOKEN_ROLE_HISTORICAL: "historical", TOKEN_ROLE_UNCLASSIFIED: "unverified"}  # 未分類は保守的に場面の索引に残す（実際の停止を落とさない）
+TOKEN_ROLE_MEANINGS = {
+    TOKEN_ROLE_FIXTURE: "テストが作った架空の値（エンジンでは投げない）",
+    TOKEN_ROLE_MUTATION: "変異の道具の値（実在のコードの名前を誤らせる置きかえ。エンジンでは投げない）",
+    TOKEN_ROLE_HISTORICAL: "過去にエンジンが投げた実在のコード（今はエンジンにない。外した版と文書を根拠に持つ。裁定の解決の記録ではない）",
+    TOKEN_ROLE_IDENTIFIER: "停止コードでない識別子（テスト・道具の識別子の名前としてだけ出る。自動の判定）",
+    TOKEN_ROLE_UNCLASSIFIED: "未分類（分類の入力の不足。--check が失敗する）",
+}
+# 診断の区分（--check の問題の先頭）。生成物の古さ（GENERATED_STALE）と分類の入力の不足・矛盾を分ける
+TAG_INPUT_MISSING, TAG_CONFLICT, TAG_REVIEW, TAG_STALE_REGISTRATION = "分類の入力の不足", "分類の矛盾", "分類の要確認", "分類の登録が古い"
+GENERATED_STALE = "生成物が古い"
+
+
+def load_token_roles(path: pathlib.Path = TOKEN_ROLES_INPUT) -> dict:
+    return load_json(path)["tokens"] if path.exists() else {}
+
+
+def real_stop_codes() -> set[str]:
+    """実在の停止コードの表（研究の対応表の stop_codes と、診断のカタログのコード）。棚卸しは使わない（v0.133 の棚卸しは架空の値も stop_code として載せている）。"""
+    catalog = ROOT / "kyuura_engine" / "data" / "diagnostic_catalog.json"
+    return set(load_json(RESEARCH)["stop_codes"]) | (set(load_json(catalog)["codes"]) if catalog.exists() else set())
+
+
+def classify_test_only_tokens(codes: dict, registry: dict, real_codes: set[str], root: pathlib.Path = ROOT) -> tuple[dict, list[str]]:
+    """エンジンに出ない語の役割を決め、矛盾・不足を問題にする（docs/test-only-token-design.md 3 章の判定の順）。``codes`` は ``stop_policy_scan.prefixed_codes`` の形。
+
+    1. エンジンの literal・name に出る語は停止コード（ここでは扱わない。登録があれば矛盾）
+    2. エンジンには comment・convention_note だけで出る語は要確認（止める箇所にも開発用にも自動ではしない）
+    3. エンジンに出ず、実在の停止コードの表にある語は矛盾（未分類のまま残す）
+    4. エンジンに出ず、テスト・道具では識別子（name）だけの語は non_code_identifier（自動）
+    5. エンジンに出ず、テスト・道具の文字列にある語は、明示の登録の役割。登録がなければ unclassified
+    返り値は (語 → {"role", "status", "basis"}, 問題の並び)。問題の文は TAG_* で始まる。"""
+    roles: dict[str, dict] = {}
+    problems: list[str] = []
+
+    def files(occ: dict, kinds=("literal", "comment", "name")) -> set[str]:
+        return {s.rsplit(":", 1)[0] for area in ("tests", "tools") for k in kinds for s in occ.get(area, {}).get(k, [])}
+
+    for code in sorted(codes):
+        engine = codes[code].get("engine", {})
+        if engine and not (engine.get("literal") or engine.get("name")):
+            problems.append(f"{TAG_REVIEW}: {code} はエンジンには説明（{'・'.join(sorted(engine))}）だけで出る。止める箇所か・開発用かを決めていない")
+    test_only = sorted(c for c, v in codes.items() if not v.get("engine") and (v.get("tests") or v.get("tools")))
+    for code in test_only:
+        occ = codes[code]
+        kinds = {k for area in ("tests", "tools") for k in occ.get(area, {})}
+        reg = registry.get(code)
+        if code in real_codes:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED],
+                           "basis": "実在の停止コードの表にあるのに、エンジンに出ない（停止コードが消えたか、名前の誤りの可能性）"}
+            problems.append(f"{TAG_CONFLICT}: {code} は実在の停止コードの表（研究の対応表・診断のカタログ）にあるのに、エンジンに出ない")
+            continue
+        if kinds <= {"name"}:
+            roles[code] = {"role": TOKEN_ROLE_IDENTIFIER, "status": TOKEN_STATUS[TOKEN_ROLE_IDENTIFIER],
+                           "basis": f"テスト・道具の識別子の名前としてだけ出る（{', '.join(sorted(files(occ, ('name',))))}）。停止コードの値として使われない（自動の判定）"}
+            if reg is not None:
+                problems.append(f"{TAG_CONFLICT}: {code} は識別子としてだけ出る（自動の判定 {TOKEN_ROLE_IDENTIFIER}）のに、{reg.get('role')} として登録されている")
+            continue
+        if reg is None:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED], "basis": "明示の登録がない"}
+            problems.append(f"{TAG_INPUT_MISSING}: {code} はエンジンに出ず、テスト・道具の文字列に出る（{', '.join(sorted(files(occ)))}）が、"
+                            f"{TOKEN_ROLES_INPUT.relative_to(ROOT).as_posix()} に役割の登録がない")
+            continue
+        role, ok = reg.get("role"), True
+        where = files(occ)
+        if role not in REGISTRABLE_TOKEN_ROLES:
+            problems.append(f"{TAG_CONFLICT}: {code} の登録の役割 {role} は登録できない（{'・'.join(REGISTRABLE_TOKEN_ROLES)} のどれか）")
+            ok = False
+        if not reg.get("basis"):
+            problems.append(f"{TAG_CONFLICT}: {code} の登録に根拠の文がない")
+            ok = False
+        evidence = reg.get("evidence") or []
+        if not evidence or not set(evidence) <= where:
+            problems.append(f"{TAG_CONFLICT}: {code} の登録の出現のファイル {evidence} が、スキャナの出現 {sorted(where)} にない")
+            ok = False
+        if role == TOKEN_ROLE_MUTATION:
+            if reg.get("paired_code") not in real_codes:
+                problems.append(f"{TAG_CONFLICT}: {code} の変異の対の実在のコード {reg.get('paired_code')} が、実在の停止コードの表にない")
+                ok = False
+            if "tools/mutants.py" not in evidence:
+                problems.append(f"{TAG_CONFLICT}: {code} は変異の値なのに、変異の道具（tools/mutants.py）に出ない")
+                ok = False
+        if role == TOKEN_ROLE_HISTORICAL:
+            documents = reg.get("documents") or []
+            if not reg.get("removed_in") or not documents:
+                problems.append(f"{TAG_CONFLICT}: {code} は過去の実在のコードなのに、外した版（removed_in）か文書（documents）がない")
+                ok = False
+            for doc in documents:
+                path = root / doc
+                if not path.exists() or code not in path.read_text(encoding="utf-8"):
+                    problems.append(f"{TAG_CONFLICT}: {code} の根拠の文書 {doc} に、その語がない")
+                    ok = False
+        elif reg.get("removed_in") or reg.get("documents"):
+            problems.append(f"{TAG_CONFLICT}: {code} は {role} なのに、過去の実在のコードの根拠（removed_in・documents）を持つ（区別できない）")
+            ok = False
+        if ok:
+            basis = reg["basis"] + (f"（外した版 {reg['removed_in']}。文書 {', '.join(reg['documents'])}）" if role == TOKEN_ROLE_HISTORICAL else "")
+            roles[code] = {"role": role, "status": TOKEN_STATUS[role], "basis": basis}
+        else:
+            roles[code] = {"role": TOKEN_ROLE_UNCLASSIFIED, "status": TOKEN_STATUS[TOKEN_ROLE_UNCLASSIFIED], "basis": "登録が条件を満たさない（--check の問題）"}
+    for code in sorted(set(registry) - set(test_only)):
+        engine = codes.get(code, {}).get("engine", {})
+        if engine.get("literal") or engine.get("name"):
+            problems.append(f"{TAG_CONFLICT}: 登録した {code} が、エンジンの止める箇所（literal・name）に出る（登録を外すか、停止コードとして扱う）")
+        elif code not in codes:
+            problems.append(f"{TAG_STALE_REGISTRATION}: 登録した {code} が、もうどこにも出ない")
+    return roles, problems
+
 
 # 道具の対戦の記録（初期状態からの合法な操作の列）。リポジトリの外の検証の証拠（v0.134〜v0.136 の検証の作業で保存）。ハッシュは --write の時点で計算して台帳に書く
 TOOL_EVIDENCE_ROOT = pathlib.Path("C:/dev/kyuura-engine-verification")
@@ -1833,10 +2145,12 @@ def build() -> dict:
             entry["mode_policy_status"] = "unconsidered"
             entry["policy_basis"] = "現行では投げない（v0.34 で解消）。現行の停止として数えない"
         entries.append(entry)
-    test_only = sorted(c for c, v in codes.items() if not v["engine"] and (v["tests"] or v["tools"]))
+    token_roles, token_problems = classify_test_only_tokens(codes, load_token_roles(), real_stop_codes())  # 案 B（schema 2）
+    test_only = sorted(token_roles)
     for code in test_only:
         inv = inv_entries.get(code)
-        entries.append({"id": code, "entry_kind": "test_tool_only_code", "inventory_ref": code if inv else None, "status": "active",
+        entries.append({"id": code, "entry_kind": "test_tool_only_code", "inventory_ref": code if inv else None, "status": token_roles[code]["status"],
+                        "token_role": token_roles[code]["role"], "token_role_basis": token_roles[code]["basis"],
                         "classification": inv["classification"] if inv else "E", "classification_basis": "テスト・道具の中だけのコード（合成した登録表・比べの印・文字列の断片）",
                         "family": None, "play_groups": ["6"], "decision_refs": [], "mode_policy_status": "unconsidered",
                         "reachability": {"status": "test_only_mutation", "evidence": (codes[code]["tests"].get("literal", []) + codes[code]["tools"].get("literal", []))[:3],
@@ -1909,6 +2223,7 @@ def build() -> dict:
         "runtime_codes_outside_table": len(runtime_codes),
         "runtime_codes_outside_table_active": sum(1 for e in runtime_codes if e["status"] == "active"),
         "test_tool_only_codes": sum(1 for e in entries if e["entry_kind"] == "test_tool_only_code"),
+        "test_tool_only_by_role": {r: n for r in TOKEN_STATUS if (n := sum(1 for e in entries if e.get("token_role") == r))},
         "cases": sum(1 for e in entries if e["entry_kind"] == "case"),
         "codes_with_cases": len(CASES),
         "problems_new": len(PROBLEMS),
@@ -1941,7 +2256,10 @@ def build() -> dict:
         counts[key] = dict(sorted(counts[key].items(), key=lambda kv: str(kv[0])))
 
     return {
-        "schema_version": 1,
+        "schema_version": LEDGER_SCHEMA_VERSION,
+        "token_classification": {"input": TOKEN_ROLES_INPUT.relative_to(ROOT).as_posix(), "roles": TOKEN_ROLE_MEANINGS, "statuses": TOKEN_STATUS,
+                                 "real_code_sources": ["kyuura_engine/data/research_links.json stop_codes", "kyuura_engine/data/diagnostic_catalog.json codes"],
+                                 "problems": token_problems},
         "title": "停止コードと未対応処理の分類（厳密モード・プレイ用モードの将来の導入に向けて）",
         "scope": ("調査・分類・設計の記録。モードの実装・既存の動作・裁定・保存形式は変えていない。利用者と合意したのはモードの定義の 6 項目（mode_agreements）だけで、"
                   "既存の利用者指定を基礎集合に入れること以外の方針の案（族の候補・個々の続行規約・規約集合の識別など）は承認を受けていない"),
@@ -2065,7 +2383,36 @@ def check(ledger: dict, fresh: dict) -> list[str]:
                 if sc not in SAFETY_CONDITIONS:
                     problems.append(f"族 {family} の {candidate.get('id')}: 安全条件 {sc} がない")
     if fresh is not None and stable(_without_tool(ledger)) != stable(_without_tool(fresh)):
-        problems.append("現行コードから作り直した台帳と、書き出した台帳が違う（--write で作り直して差を確かめる）")
+        problems.append(f"{GENERATED_STALE}: 現行コードから作り直した台帳と、書き出した台帳が違う（--write で作り直して差を確かめる）")
+    problems += token_classification_problems(ledger)
+    if fresh is not None:
+        problems += [p for p in token_classification_problems(fresh) if p not in problems]  # 書き出した台帳が古くても、今の分類の入力の不足・矛盾は知らせる
+    return problems
+
+
+def token_classification_problems(ledger: dict) -> list[str]:
+    """v0.186 の後（案 B）: schema 2 の台帳のテスト・道具だけの語の検査。schema 1 の台帳（旧形式）は旧形式として扱い、何も足さない。
+    未分類は、台帳に書いてあっても自動で承認しない（--write のあとの --check でも失敗する）。"""
+    if ledger.get("schema_version", 1) < 2:
+        return []
+    problems = list((ledger.get("token_classification") or {}).get("problems", []))
+    for e in ledger["entries"]:
+        if e["entry_kind"] != "test_tool_only_code":
+            continue
+        role = e.get("token_role")
+        if role not in TOKEN_STATUS:
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} の役割 {role} がない・知らない")
+        elif e["status"] != TOKEN_STATUS[role]:
+            problems.append(f"{TAG_CONFLICT}: {e['id']} の状態 {e['status']} が役割 {role} の状態 {TOKEN_STATUS[role]} と違う")
+        elif role == TOKEN_ROLE_UNCLASSIFIED and not any(e["id"] in p for p in problems):
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} は未分類（unclassified）")
+        if not e.get("token_role_basis"):
+            problems.append(f"{TAG_INPUT_MISSING}: {e['id']} に役割の根拠がない")
+    counts = ledger.get("counts", {})
+    if sum(counts.get("by_status", {}).values()) != len(ledger["entries"]):
+        problems.append("台帳の状態ごとの数の合計が、項目の数と違う")
+    if sum(counts.get("test_tool_only_by_role", {}).values()) != counts.get("test_tool_only_codes"):
+        problems.append("テスト・道具だけの語の役割ごとの数の合計が、test_tool_only_codes と違う")
     return problems
 
 
@@ -2278,9 +2625,11 @@ def main() -> int:
         RULESET_DESIGN_DOC.write_text(with_generated_blocks(text, fresh), encoding="utf-8", newline="\n")
         print(f"wrote generated blocks of {RULESET_DESIGN_DOC.relative_to(ROOT).as_posix()}")
     ledger = load_json(OUTPUT)
+    built = fresh
     if not TOOL_EVIDENCE_ROOT.exists():
         fresh = None  # 道具の証拠がない環境では、作り直した台帳との比べを省く（不変条件だけ確かめる）
     problems = check(ledger, fresh)
+    problems += [p for p in token_classification_problems(built) if p not in problems]  # 分類の入力の不足・矛盾は、道具の証拠の有無によらず知らせる
     for problem in problems:
         print("PROBLEM", problem)
     print(json.dumps(ledger["counts"], ensure_ascii=False, indent=1))

@@ -62,6 +62,8 @@ DYNAMIC_SITES = {
     ("kyuura_engine/effects.py", "check_playable", "*prevented"): ("from_function", "kyuura_engine/evolution.py", "evolution_prevented"),
     # evolution_block のタプルのうち DEVOLVED_THIS_TURN_CODE は、この呼び出しの直前で UnsupportedError として投げる（engine.check_evolve。v0.165 で engine._evolve_pokemon の前半を関数にした）ので、不正な操作のコードから除く
     ("kyuura_engine/engine.py", "check_evolve", "*block"): ("from_function", "kyuura_engine/evolution.py", "evolution_block", ("DEVOLVED_THIS_TURN_CODE",)),
+    # v0.186: 続行規約による不正な操作（突風・ポケモンいれかえ・きずぐすりの check_playable が渡すコード）
+    ("kyuura_engine/effects.py", "unresolved_or_convention_rejection", "illegal_code"): ("NO_OPPONENT_BENCH", "NO_BENCH", "NO_DAMAGE_COUNTERS"),
 }
 
 CATEGORY_TEXTS = {

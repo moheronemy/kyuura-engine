@@ -2143,7 +2143,8 @@
     "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN"
    ],
    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT": [
-    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+    "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other"
    ],
    "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN": [
     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
@@ -2980,11 +2981,6 @@
     ],
     "entry_kind": "research_stop_code",
     "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGE"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_EFFECT_AFTER_NO_DAMAGES"
    },
    {
     "codes": [
@@ -4401,11 +4397,6 @@
     "id": "UNRESOLVED_SECRET_PLAN_MINEFIELD"
    },
    {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_SELF_DAMAGE_WEAKNESS_RESISTANCE"
-   },
-   {
     "codes": [
      "UNRESOLVED_SELF_EXCLUDING_POWER_COPIES"
     ],
@@ -4501,7 +4492,14 @@
      "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
     ],
     "entry_kind": "research_stop_code",
-    "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+    "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"
+   },
+   {
+    "codes": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT"
+    ],
+    "entry_kind": "research_stop_code",
+    "id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other"
    },
    {
     "codes": [
@@ -4614,31 +4612,6 @@
     ],
     "entry_kind": "research_stop_code",
     "id": "UNRESOLVED_SWITCH_WITHOUT_BENCH"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_AFTER_COIN"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_EFFECT"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_FORM"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_TEST_PREFLIGHT"
    },
    {
     "codes": [
@@ -4835,11 +4808,6 @@
     ],
     "entry_kind": "research_stop_code",
     "id": "UNRESOLVED_WANT_WITHOUT_TARGET"
-   },
-   {
-    "codes": [],
-    "entry_kind": "test_tool_only_code",
-    "id": "UNRESOLVED_X"
    },
    {
     "codes": [

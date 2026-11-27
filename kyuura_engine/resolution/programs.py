@@ -2141,6 +2141,22 @@ class Status(Element):
             return False
         return True
 
+    # v0.197（docs/play-convention-tr7-v0.197.md）: 続行規約 PC-T19B-NULLIFIED-STATUS-COIN@1 を当てる効果の登録の型（ダメージ → この要素のコイン → 特殊状態）
+    NULLIFIED_COIN_EFFECTS: ClassVar[tuple[type, ...]] = (E.ConfuseOnHeads, E.PoisonOnHeads, E.ParalyzeOnHeads)
+
+    def _nullified_coin_path(self, run: AttackRun) -> bool:
+        """v0.197: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインの続行規約を当てる経路か（状態の値と要素の値だけで決める。状態を変えない。カード ID の定数で
+        分けない）。相手の対戦ポケモンへの、「おもて」で特殊状態・「うら」の効果のない要素で、ほかの条件（ワザ全体のコイン・前の結果・入れ替え・ダメージのあとの条件・特殊などく）
+        がなく、処理しているワザが元のワザ（宣言したワザと同じで、使ったポケモンの印刷のカードがそのワザのカード）で、効果の登録の型が ``NULLIFIED_COIN_EFFECTS`` のどれか。"""
+        if (self.target != OPP or self.local_coin is not HEADS or self.otherwise is not None or self.gate is not None or self.if_result is not None
+                or self.after_switch is not None or self.after_damage is not None or self.poison_damage is not None or self.poison_multiplier != 1):
+            return False
+        state, key = run.state, run.key
+        if run.declared != key or state.card_def(run.attacker().card).id != key.card_id:
+            return False
+        entry = state.effects.attack_entry(key.card_id, key.attack_index)
+        return entry is not None and type(entry.effect) in self.NULLIFIED_COIN_EFFECTS
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -2189,9 +2205,23 @@ class Status(Element):
                 raise run.res.question("special_poison_overwrite", f"ポケモン {target.pokemon_id}（{shown}）")
         if self.local_coin is not None:
             if run.fs.reception.get(target.pokemon_id) is False:
-                final = run.fs.evaded.get(target.pokemon_id)
-                raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
-                                       None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+                # v0.197: 状態の規約集合にこの場面（停止コード）の続行規約があり、対象の経路なら、ワザを使った側がコインを 1 回投げ、結果を使わずに戻る（特殊状態にしない。
+                # 「おもて」なら受けない記録は今の受ける判定が書く）。ほかは今までどおり止める（状態を変える前）
+                lookup = None
+                if self._nullified_coin_path(run):
+                    from ..conventions import continuation_for
+
+                    lookup = continuation_for(run.state, "UNRESOLVED_EVADED_EFFECT_COIN")
+                if lookup is None:
+                    final = run.fs.evaded.get(target.pokemon_id)
+                    raise run.res.question("evaded_effect_coin", f"ポケモン {target.pokemon_id}",
+                                           None if final is None else E.evaded_effect_coin_error(target.pokemon_id, final))
+                from ..conventions import record_application
+
+                record_application(run.state, lookup, player=run.player, target_owner=owner, pokemon_id=target.pokemon_id, element=self.condition)
+                if run.flip(1).results[0] is self.local_coin:
+                    reaches(run.res, run.fs, owner, target, self.condition)  # 受けないと決まっている（偽。ログ attack_evaded）
+                return False
             prevented_effect_coin(run, owner, target)  # v0.31: 「ワザをうけない」状態（バリアー）なら、効果だけを決めるコインを投げるか決まらない
             condition = self.condition
             if run.flip(1).results[0] is not self.local_coin:
@@ -2898,13 +2928,45 @@ class RecoverEnergy(Element):
                     max_choices=min(self.max_cards, len(candidates)))
         return True
 
+    @staticmethod
+    def _zero_convention_path(run: AttackRun) -> bool:
+        """v0.196（docs/play-convention-tr6-v0.196.md）: 0 枚の答えの続行規約を当てる経路か（決定の再開の時点の状態の値だけで決める。状態を変えない。カード ID の定数で分けない）。
+
+        - 元のワザ: 宣言したワザと処理しているワザが同じで、ワザを使ったポケモンの印刷のカードがそのワザのカード（メタモンの［へんしん］などで持つワザは、印刷のカードが違うので外れる）
+        - 相手のワザを自分のワザとして使う効果のうち、効果の登録の型が ``CopyOpponentAttackEffect`` のワザ（ピッピ・ピクシーの「ゆびをふる」）: ワザを使ったポケモンの印刷のカードが
+          宣言したワザのカードで、処理しているワザ（``copied``）のカードが相手のバトル場のポケモンの印刷のカード（相手が［へんしん］などで持つワザは外れる）
+        """
+        state = run.state
+        printed = state.card_def(run.attacker().card).id
+        key, declared = run.key, run.declared
+        if declared == key:
+            return printed == key.card_id
+        entry = state.effects.attack_entry(declared.card_id, declared.attack_index)
+        if entry is None or not isinstance(entry.effect, E.CopyOpponentAttackEffect) or printed != declared.card_id:
+            return False
+        source = state.players[1 - run.player].active
+        return source is not None and state.card_def(source.card).id == key.card_id
+
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
         if not choices:
-            raise UnsupportedError(
+            stop = UnsupportedError(
                 "UNRESOLVED_RECOVER_ZERO_ENERGY",
                 "トラッシュにエネルギーカードがあるときに 0 枚を選べるか（「最大2枚選び出し」が 0 枚を含むか）は『オフィシャルブック2000』"
                 "（p.158）から決められないので扱わない。1 枚以上を選ぶ",
             )
+            # v0.196: 状態の規約集合にこの場面（停止コード）の続行規約があり、対象の経路なら、受理して何も手札に加えずに戻る（次の要素の自分へのダメージは呼ぶ側の続きで処理する）。
+            # ほかは今までどおり止める（状態を変える前）
+            lookup = None
+            if self._zero_convention_path(run):
+                from ..conventions import continuation_for
+
+                lookup = continuation_for(run.state, stop.code)
+            if lookup is None:
+                raise stop
+            from ..conventions import record_application
+
+            record_application(run.state, lookup, player=run.player, available=len(decision.options))
+            return
         for uid in choices:
             if uid not in self._candidates(run):
                 raise RuntimeError(f"手札に加えるカード {uid} が、ワザを使ったプレイヤーのトラッシュのエネルギーカードではない（エンジンの不具合）")
@@ -14355,12 +14417,13 @@ class MoveOpponentFieldEnergy(Element):
     """相手の場のエネルギーカード（特殊エネルギー以外）を 1 枚選んではがす。その後、相手の場のポケモンを 1 匹選び、はがしたエネルギーをそのポケモンにつける（v0.116。ミュウツーの
     「エナジーコントロール」の、失敗のコインのあと。``effects.FailOnTailsMoveOpponentFieldEnergy``。docs 5 章）。
 
-    - 選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。``context`` の ``"stage"`` は ``"energy"``。``effects.opponent_field_energy_options``。場のレインボー
-      エネルギーは RB3 で選べるが選ぶと止める）→ はがす前に、そのカードのついているポケモンが効果の要素（``ENERGY_MOVE_ELEMENT``）を受けるかを ``reaches`` で決める（受けなければ何もしない）
+    - 選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。``context`` の ``"stage"`` は ``"energy"``。``effects.opponent_field_energy_options``。v0.199 から
+      基本エネルギーカードだけで、場のレインボーエネルギーは特殊エネルギーカードとして入らない（v0.198 までは RB3 で選べるが選ぶと止めた））→ はがす前に、そのカードのついているポケモンが
+      効果の要素（``ENERGY_MOVE_ELEMENT``）を受けるかを ``reaches`` で決める（受けなければ何もしない）
       → つけるポケモン（決定 ``SELECT_POKEMON``。``"stage"`` は ``"target"``。相手の場のポケモン。はがしたポケモン自身も選べる）。2 つの決定のあいだ、カードはついたまま
     - つけるポケモンが受けない（``ENERGY_ATTACH_ELEMENT``。「とうめい」）なら、はがしたカードは持ち主のトラッシュ（T36 と同じ読み方。KEEP でなくなる効果なら v0.101 の KP3）。手札からつける
       操作ではない（つけたときの特殊エネルギーの効果は起こらない）。ついたカードへの反応は ``attached_in_attack``（つけ替え）
-    - 相手の場にエネルギーカードがなければ処理の対象がない（p.309）"""
+    - 相手の場に選べる基本エネルギーカードがなければ処理の対象がない（p.309。決定を出さずにワザを終える）"""
 
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.ENERGY_MOVE_ELEMENT  # 宣言（G37 の理由の文）。受けるかは、はがすポケモン・つけるポケモンごとに ``reaches`` で決める
@@ -14369,16 +14432,13 @@ class MoveOpponentFieldEnergy(Element):
         return kind in (MOVE_OPPONENT_ENERGY, SELECT_POKEMON)
 
     def has_target(self, run: AttackRun) -> bool:
-        return bool(E.opponent_field_energy_options(run.state, run.player)[0])
+        return bool(E.opponent_field_energy_options(run.state, run.player))
 
     def run(self, run: AttackRun) -> bool:
-        options, rainbow = E.opponent_field_energy_options(run.state, run.player)
+        options = E.opponent_field_energy_options(run.state, run.player)
         if not options:
             return False
-        if len(rainbow) == len(options):
-            raise run.res.question("rainbow_basic_energy_card", f"相手の場のレインボーエネルギー {list(rainbow)}（エナジーコントロールの「特殊エネルギー以外」）")
-        extra = (("stage", "energy"),) + _unresolved_extra(rainbow, E.RAINBOW_BASIC_CODE, E.RAINBOW_BASIC_REASON)
-        run.suspend(kind=MOVE_OPPONENT_ENERGY, player=run.player, options=options, carry=True, extra=extra)
+        run.suspend(kind=MOVE_OPPONENT_ENERGY, player=run.player, options=options, carry=True, extra=(("stage", "energy"),))
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
@@ -14386,8 +14446,8 @@ class MoveOpponentFieldEnergy(Element):
         opponent = 1 - run.player
         p = state.players[opponent]
         if run.carried.get("stage") == "energy":
-            options, rainbow = E.opponent_field_energy_options(state, run.player)
-            if len(choices) != 1 or choices[0] not in options or choices[0] in rainbow:
+            options = E.opponent_field_energy_options(state, run.player)
+            if len(choices) != 1 or choices[0] not in options:
                 raise RuntimeError(f"はがすカード {choices} が、相手の場の選べるエネルギーカードではない（エンジンの不具合）")
             source = next(pokemon for pokemon in p.in_play() if choices[0] in pokemon.energy)
             if not reaches(run.res, run.fs, opponent, source, E.ENERGY_MOVE_ELEMENT):

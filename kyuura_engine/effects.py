@@ -6628,6 +6628,31 @@ def _retrievable_energy(state: GameState, player: int, excluded: tuple[int, ...]
     return tuple(uid for uid in state.players[player].discard if state.card_def(uid).is_basic_energy and uid not in excluded)
 
 
+# v0.195: この使用の play_trainer のあとにあれば、手札からの通常の使用ではない出来事（錯乱ジムのコイン・かわりに使うかの答え・［ちえくらべ］を使うかの答え）
+_NOT_PLAIN_USE_EVENTS = frozenset({"chaos_check", "chaos_answered", "trainer_reaction_answered"})
+
+
+def retrieval_from_hand(state: GameState, use: TrainerUse) -> bool:
+    """v0.195（docs/play-convention-tr4-v0.195.md）: 使用中のトレーナー ``use`` が、手札からの通常の使用か（回収の決定を再開する時点で、状態の値だけで決める。状態を変えない）。
+
+    - 状態の使用中の記録（``TrainerInUse``）がこのカードで、使うのは持ち主（``user`` が None）・外側の使用がない（``via`` が None・``trainer_stack`` が空）
+    - このカードの最後の ``play_trainer`` が持ち主の手札から（``via``・``source_zone`` がない）で、そのあとに錯乱ジムのコイン・かわりに使うかの答え・［ちえくらべ］を使うかの答え・
+      スタジアムの追加の条件のトラッシュ（``discard_from_hand`` の ``stadium_card``）がない
+
+    錯乱ジムのコインが「おもて」で持ち主がそのまま使う場合は、使用中の記録が手札からの使用と同じなので、ログ（状態の一部。書き出し・復元で残る）のこの使用の出来事で分ける。
+    観測の「使ったプレイヤー」・答えの時点の場のスタジアムからは決めない（リムーブ禁止ジムはエネルギー回収に条件を加えないので、場にあっても通常の使用）。"""
+    tiu = state.trainer_in_use
+    if tiu is None or tiu.card != use.card or tiu.player != use.player or tiu.user is not None or tiu.via is not None or state.trainer_stack:
+        return False
+    since = max((i for i, e in enumerate(state.log) if e["kind"] == "play_trainer" and e.get("card") == use.card), default=None)
+    if since is None:
+        return False
+    played = state.log[since]
+    if played.get("player") != use.player or "via" in played or "source_zone" in played:
+        return False
+    return not any(e["kind"] in _NOT_PLAIN_USE_EVENTS or (e["kind"] == "discard_from_hand" and "stadium_card" in e) for e in state.log[since + 1:])
+
+
 @dataclass(frozen=True)
 class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
     """使うための条件として手札から ``discard`` 枚を選んでトラッシュし、その後、自分のトラッシュの基本エネルギーカードを最大 ``retrieve`` 枚選び
@@ -6697,7 +6722,17 @@ class DiscardFromHandThenRetrieveEnergy(TrainerEffect):
             )
             return
         if not choices:
-            raise UnsupportedError(*self.ZERO_CHOICE)
+            # v0.195（docs/play-convention-tr4-v0.195.md）: 状態の規約集合にこの場面（停止コード）の続行規約があり、手札からの通常の使用なら、受理して使い終える（費用は
+            # もどさない・手札に加えない。このカードは呼ぶ側の使い終える処理で持ち主のトラッシュ）。経路は状態の値で決める（retrieval_from_hand）。ほかは今までどおり止める
+            lookup = None
+            if retrieval_from_hand(state, use):
+                from .conventions import continuation_for, record_application
+
+                lookup = continuation_for(state, self.ZERO_CHOICE[0])
+            if lookup is None:
+                raise UnsupportedError(*self.ZERO_CHOICE)
+            record_application(state, lookup, player=use.player, available=len(decision.options))
+            return
         cards = tuple(uid for uid in state.players[use.player].discard if uid in choices)
         return_discard_to_hand(state, use.player, cards)
         state.add_event("retrieve_energy", player=use.player, cards=cards)
@@ -7064,6 +7099,22 @@ def _select_own_pokemon_problems(
     return problems
 
 
+def unresolved_or_convention_rejection(state: GameState, code: str, reason: str, illegal_code: str, illegal_reason: str) -> IllegalActionError | UnsupportedError:
+    """v0.186（docs/play-convention-tr3-v0.186.md）: 受理の前の確かめで未裁定の条件が成り立ったときに投げる例外を返す。状態の規約集合に、その場面（停止コード）の続行規約が
+    あれば、規約による不正な操作（``IllegalActionError(illegal_code)``。理由の文に規約 ID、属性 ``convention`` に ``"ID@版"``。v0.143 の配置の拒否と同じ形）。なければ、規約が
+    ないことを確かめて今の未裁定の停止（``UnsupportedError(code, reason)``。コード・文は今と同じ）。カード ID・モードの名前で分けない（場面は停止コードだけ）。状態を変えない。"""
+    from .conventions import continuation_for, stop_without_continuation
+
+    lookup = continuation_for(state, code)
+    if lookup is not None:
+        convention = f"{lookup.convention[0]}@{lookup.convention[1]}"
+        error = IllegalActionError(illegal_code, f"{illegal_reason}（規約 {convention}: プレイ用の取り決めで使えない。カードは手札のまま）")
+        error.convention = convention
+        return error
+    stop_without_continuation(state, code)
+    return UnsupportedError(code, reason)
+
+
 @dataclass(frozen=True)
 class RemoveDamageCounters(TrainerEffect):
     """自分の場のポケモンを 1 匹選び、のっているダメージカウンターを ``counters`` 個とりのぞく
@@ -7086,10 +7137,12 @@ class RemoveDamageCounters(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not any(pokemon.damage > 0 for pokemon in state.players[use.player].in_play()):
-            raise UnsupportedError(
-                "UNRESOLVED_POTION_WITHOUT_DAMAGE",
+            # v0.186: 続行規約 PC-POTION-WITHOUT-DAMAGE@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_POTION_WITHOUT_DAMAGE",
                 "自分の場にダメージカウンターののったポケモンがいない。このときに「きずぐすり」を使えるかは、"
                 "『オフィシャルブック2000』（p.254・p.310）から決められないので扱わない",
+                "NO_DAMAGE_COUNTERS", "自分の場にダメージカウンターののったポケモンがいないので、「きずぐすり」を使えない",
             )
 
     def resolve(self, state: GameState, use: TrainerUse) -> None:
@@ -7154,10 +7207,12 @@ class SwitchWithBench(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[use.player].bench:
-            raise UnsupportedError(
-                "UNRESOLVED_SWITCH_WITHOUT_BENCH",
+            # v0.186: 続行規約 PC-SWITCH-WITHOUT-BENCH@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_SWITCH_WITHOUT_BENCH",
                 "控えポケモンがいない。このときに「ポケモンいれかえ」を使えるかは、"
                 "『オフィシャルブック2000』（p.254・p.310）から決められないので扱わない",
+                "NO_BENCH", "自分に控えポケモンがいないので、「ポケモンいれかえ」を使えない",
             )
         require_active_can_leave(state, use.player, "「ポケモンいれかえ」を使う")  # v0.93: AL2（手札から出す前）
         switch_max_hp_drop_check(state, use.player)  # v0.48: MH1（手札から出す前。決定への答えで止めない）
@@ -7309,10 +7364,12 @@ class SwitchOpponentWithBench(TrainerEffect):
 
     def check_playable(self, state: GameState, use: TrainerUse) -> None:
         if not state.players[1 - use.player].bench:
-            raise UnsupportedError(
-                "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
+            # v0.186: 続行規約 PC-GUST-WITHOUT-OPPONENT-BENCH@1（CS-KYUURA-PLAY-TR3@1 だけ）があれば規約による不正な操作。なければ今の未裁定の停止（GW5）
+            raise unresolved_or_convention_rejection(
+                state, "UNRESOLVED_GUST_WITHOUT_OPPONENT_BENCH",
                 "相手に控えポケモンがいない。このときに「突風」を使えるかは、『オフィシャルブック2000』（p.255・p.310）から決められない"
                 "ので扱わない（第1弾の印刷の文面の「相手に控えがいない場合は使えない」は、p.255 の最新の説明にない）",
+                "NO_OPPONENT_BENCH", "相手に控えポケモンがいないので、「突風」を使えない",
             )
         require_active_can_leave(state, 1 - use.player, "「突風」を使う")  # v0.93: AL2（手札から出す前）
         returning = _returning_lock_sources(state, use.player)
@@ -15288,6 +15345,24 @@ def freeze_forms(state: GameState) -> None:
     state.frozen_forms = tuple(frozen)
 
 
+def freeze_revealed_form(state: GameState, pokemon: PokemonInPlay) -> None:
+    """v0.194（C-TF2。docs/r2-transform-frozen-reveal-design.md 5.2 節・案 A）: ワザのコマンドの入口でうらの使い手 ``pokemon`` をおもてにした直後に、変身する特殊能力を持てば、
+    その今の姿を固定に加える。入口の固定（``freeze_forms``）は公開の前で、うらの使い手（特殊能力を持たない）を入れず、ワザの始めの ``freeze_forms`` は固定が空でなければ何もしない
+    ので、場にほかの変身できるポケモンがいると、公開した使い手の姿を固定しなかった（SF3。0.193.0 まで）。
+
+    既に固定しているポケモン・ばけているポケモン・変身する特殊能力を持たないポケモンなら何もしない。ほかの項目の値は変えず、並びは ``freeze_forms`` と同じ（プレイヤー → ``in_play()``）。
+    姿は ``live_form`` で求める（変身がはたらかなければ printed。相手のバトル場がうらなら、そのカードの uid だけで正体を読まない）。ログ・乱数を変えない。"""
+    from .state import FrozenForm  # v0.124
+
+    if form_frozen(state, pokemon) or pokemon.disguise is not None or not transform_capable(state, pokemon):
+        return
+    form = live_form(state, pokemon)
+    added = FrozenForm(pokemon.pokemon_id, form.card, form.kind, form.defender)
+    # 既存の項目はそのまま残す（安定な並べかえ。場にいない項目があっても落とさず、あとに置く）。既存の項目は freeze_forms の並びなので、相対の順は変わらない
+    rank = {q.pokemon_id: i for i, q in enumerate(q for player in state.players for q in player.in_play())}
+    state.frozen_forms = tuple(sorted((*state.frozen_forms, added), key=lambda frozen: rank.get(frozen.pokemon, len(rank))))
+
+
 TRANSFORM_REVERT_KO_CODE = "UNRESOLVED_TRANSFORM_REVERT_KNOCKOUT_TIMING"
 TRANSFORM_REVERT_KO_REASON = (
     "ワザ・宣言する特殊能力・トレーナーカードの処理が終わって変身の状態が変わり（もどる・姿が変わる）、HP がのっているダメージ以下になる（またはならなくなる）。もどったポケモンがきぜつすることは"
@@ -21328,7 +21403,63 @@ def _check_stadium_use_count(state: GameState, player: int, stadium: StadiumInPl
     if not once_stated and (same or other):
         raise UnsupportedError(LUCKY_STADIUM_REPEAT_CODE, LUCKY_STADIUM_REPEAT_REASON)
     if once_stated and other:
+        # v0.198（docs/play-convention-tr8-v0.198.md）: RS1 の事例を決めて続行規約を引く。規約があれば受け付ける（記録は受理の処理 engine._use_stadium が書く）。なければ今と同じ停止
+        lookup, case = _stadium_reuse_lookup(state, player, stadium)
+        if lookup is not None:
+            return
+        from .conventions import stop_without_continuation
+
+        stop_without_continuation(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case)
         raise UnsupportedError(STADIUM_REUSE_AFTER_REPLACEMENT_CODE, STADIUM_REUSE_AFTER_REPLACEMENT_REASON)
+
+
+# v0.198: RS1 の事例（停止の方針の台帳の CASES）。「自分の番ごとに1回」のラッキースタジアム（効果の登録の型 CoinDrawStadium・once_stated）の個体で、この番にそのプレイヤーが
+# 使った同じ名前の個体もすべてその型のとき ``lucky-once-stated-replacement``。ほかの RS1（エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとう、PRN-027 を使った記録が
+# ある入れかえ）は ``other``。カード ID では分けない
+STADIUM_REUSE_LUCKY_CASE = "lucky-once-stated-replacement"
+STADIUM_REUSE_OTHER_CASE = "other"
+
+
+def _once_stated_lucky(state: GameState, card: int) -> bool:
+    """v0.198: カード（uid）の印刷のカードの効果の登録の型が CoinDrawStadium で、once_stated が真か（版は ``CardInstance.card_id``。対戦の中で変わらない。場所は読まない）。"""
+    entry = state.effects.trainer_entry(state.cards[card].card_id)
+    return entry is not None and isinstance(entry.effect, CoinDrawStadium) and entry.effect.once_stated
+
+
+def stadium_reuse_used_cards(state: GameState, player: int, stadium: StadiumInPlay) -> tuple[int, ...]:
+    """v0.198: この番に ``player`` が使った、場のスタジアムと同じ名前の別のカード（uid。記録の順）。状態を変えない。"""
+    name = state.card_def(stadium.card).name_ja
+    return tuple(card for user, card in state.stadium_uses_this_turn
+                 if user == player and card != stadium.card and state.card_def(card).name_ja == name)
+
+
+def stadium_reuse_case(state: GameState, player: int, stadium: StadiumInPlay) -> str:
+    """v0.198: RS1 の事例（``STADIUM_REUSE_LUCKY_CASE``・``STADIUM_REUSE_OTHER_CASE``）。状態を変えない。"""
+    used = stadium_reuse_used_cards(state, player, stadium)
+    if used and _once_stated_lucky(state, stadium.card) and all(_once_stated_lucky(state, card) for card in used):
+        return STADIUM_REUSE_LUCKY_CASE
+    return STADIUM_REUSE_OTHER_CASE
+
+
+def _stadium_reuse_lookup(state: GameState, player: int, stadium: StadiumInPlay):
+    """v0.198: RS1 の条件がそろった場面の続行規約の照会（呼ぶ側が条件を確かめる）。(照会の結果か None, 事例)。状態・乱数・ログを変えない。"""
+    from .conventions import continuation_for
+
+    case = stadium_reuse_case(state, player, stadium)
+    return continuation_for(state, STADIUM_REUSE_AFTER_REPLACEMENT_CODE, case), case
+
+
+def stadium_reuse_continuation(state: GameState, player: int, stadium: StadiumInPlay):
+    """v0.198: 受理の処理（``engine._use_stadium``）が、使う前の確かめを通ったあと・使った記録を足す前に引く。RS1 の条件（場のカードが「自分の番ごとに1回」・このカードの
+    記録がない・同じ名前の別のカードの記録がある）がそろい、状態の規約集合にその事例の続行規約があれば照会の結果。なければ None（番の最初の使用・規約を選ばない集合など）。
+    確かめ（``_check_stadium_use_count``）と同じ条件・同じ照会を、同じ状態で引く（確かめを通ったので、SX2・2 回目・STB1・LK1 はここに来ない）。状態・乱数・ログを変えない。"""
+    entry = state.effects.trainer_entry(state.cards[stadium.card].card_id)
+    if entry is None or not getattr(entry.effect, "is_stadium", False) or not entry.effect.once_per_turn:
+        return None
+    same, other = stadium_use_history(state, player, stadium)
+    if same or not other:
+        return None
+    return _stadium_reuse_lookup(state, player, stadium)[0]
 
 
 def _no_stadium_choice(energy: int | None) -> None:
@@ -37423,7 +37554,7 @@ def attack_power_slot(state: GameState, attacker: PokemonInPlay, key: AttackKey)
 
 def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> PowerSlot:
     """ワザ ``key`` といっしょに特殊能力を使うことを選んだ（``UseAttack.attack_power``）ときの確かめ（v0.88。状態を変えない）。使えないなら ``IllegalActionError``、数え方が決まらないなら
-    ``UnsupportedError``。使えるならその特殊能力。"""
+    ``UnsupportedError``。使えるならその特殊能力。v0.193: 変身で写した力で、写すことを確かめていないなら ``UnsupportedError``（``copied_attack_power_check``）。"""
     from .continuous import power_suppressed
     from .persistent import powers_use_prevented
 
@@ -37439,6 +37570,7 @@ def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey
         raise IllegalActionError("POWER_SUPPRESSED", f"特殊能力「{slot.power.name_ja}」は、ほかの効果で使えず、その力も消えている")
     if powers_use_prevented(state, attacker) is not None:
         raise IllegalActionError("POWER_USE_PREVENTED", f"ポケモン {attacker.pokemon_id} は、相手のワザの効果で特殊能力を使うことができない")
+    copied_attack_power_check(state, attacker, slot)  # v0.193（C-TF1）: 写した力は、数え方の確かめ（RB1・BZ2・MEC1・CE1・CE2・TE1）の前に
     effect = slot.effect
     for cards, error in ((ambiguous_rainbow_cards(state, attacker, effect.energy_type), rainbow_type_error),
                          (converted_energy_cards(state, attacker, effect.energy_type), converted_energy_error)):
@@ -37449,6 +37581,17 @@ def attack_power_check(state: GameState, attacker: PokemonInPlay, key: AttackKey
     if problem is not None:
         raise problem
     return slot
+
+
+def copied_attack_power_check(state: GameState, user: PokemonInPlay, slot: PowerSlot) -> None:
+    """v0.193（C-TF1。docs/r2-transform-hydro-design.md 10 章）: ワザといっしょに使う力 ``slot`` を、持つポケモン ``user`` が変身で写した力として使うときの確かめ（状態を変えない）。
+    ``UsePokemonPower`` と同じ ``copied_declared_power_problem``（v0.124 の 3.1 節。写すことを確かめた ``COPY_VERIFIED_DECLARED`` でなければ ``UNSUPPORTED_TRANSFORM_COPIED_POWER``）で、
+    止めるなら ``UnsupportedError``。写した力でない（自分のカードの力・変身していない持ち主の力）なら何もしない。
+
+    位置は ``UsePokemonPower`` と同じく、使えない・消える効果の確かめ（``power_suppressed``・``powers_use_prevented``）のあと、力の型ごとの確かめ（数え方・この番の使用の記録）の前。"""
+    copied = copied_declared_power_problem(state, user, slot)
+    if copied is not None:
+        raise UnsupportedError(copied[0], f"場のポケモン {user.pokemon_id} の特殊能力「{slot.power.name_ja}」: {copied[1]}")
 
 
 def attack_power_modifier(state: GameState, attacker: PokemonInPlay, key: AttackKey) -> DamageModifier | None:
@@ -44232,24 +44375,20 @@ def baton_pass_targets(state: GameState, player: int, energy_type: EnergyType) -
     return tuple(options), tuple(stops)
 
 
-def opponent_field_energy_options(state: GameState, player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    """v0.116: エナジーコントロールで選べる相手の場のエネルギーカード（相手の場の並び（バトル場 → ベンチ）・ついている順）と、そのうちの選ぶと止めるレインボーエネルギー（RB3。
-    場のレインボーエネルギーが「特殊エネルギー以外」に当たるか）。選べるのは基本エネルギーカード（特殊エネルギーカード以外）。タケシの保護のついているポケモンのカードは、相手の使う
-    ワザでははがされないので入れない（``energy_removal_protected``）。"""
+def opponent_field_energy_options(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.116: エナジーコントロールで選べる相手の場のエネルギーカード（相手の場の並び（バトル場 → ベンチ）・ついている順）。選べるのは基本エネルギーカード（特殊エネルギー
+    カード以外）。タケシの保護のついているポケモンのカードは、相手の使うワザでははがされないので入れない（``energy_removal_protected``）。
+
+    v0.199（docs/energy-control-rainbow-v0.199.md）: 場についているレインボーエネルギーは、ワザの文面の「特殊エネルギー以外」に当たらない特殊エネルギーカードとして外す
+    （カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認）。v0.198 までは選べるが選ぶと止める（RB3）カードとして入れていた。この判断はエナジーコントロールだけで、
+    ``rainbow_cards_attached``・``rainbow_basic_error`` を使うほかの処理（RB3 で止める処理）には当てはめない。"""
     opponent = 1 - player
     options: list[int] = []
-    rainbow: list[int] = []
     for pokemon in state.players[opponent].in_play():
         if energy_removal_protected(state, opponent, pokemon, player) is not None:
             continue
-        found = set(rainbow_cards_attached(state, [pokemon]))
-        for uid in pokemon.energy:
-            if state.card_def(uid).is_basic_energy:
-                options.append(uid)
-            elif uid in found:
-                options.append(uid)
-                rainbow.append(uid)
-    return tuple(options), tuple(rainbow)
+        options.extend(uid for uid in pokemon.energy if state.card_def(uid).is_basic_energy)
+    return tuple(options)
 
 
 def returned_attached_cards(state: GameState, owner: int, pokemon: PokemonInPlay, by_player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -44455,8 +44594,10 @@ class FailOnTailsMoveOpponentFieldEnergy(AttackEffect):
     - 要素は ``FailOnTails`` → ``MoveOpponentFieldEnergy``。「うら」はワザの失敗（p.323）。選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。相手の場（バトル場 →
       ベンチ）のどのポケモンの基本エネルギーカードでもよい。対戦ポケモンだけに狭めない。``opponent_field_energy_options``）→ つけるポケモン（決定 ``SELECT_POKEMON``。相手の場のポケモン。
       はがしたポケモン自身も選べる（文面に「別の」はない。エナジートランスの「別の」（CR-ENERGY-TRANS-TARGET）を持ち込まない））。カードは 2 つめの答えのあとで動かす
-    - 場のレインボーエネルギーは「特殊エネルギー以外」に当たるかが決まらない（RB3）ので、選べるが選ぶと止める。はがすポケモン・つけるポケモンの効果の要素（``ENERGY_MOVE_ELEMENT``・
-      ``ENERGY_ATTACH_ELEMENT``。「ワザをうけない」状態・「とうめい」）。つけるポケモンが受けなければ、はがしたカードは持ち主のトラッシュ（T36 と同じ読み方）。手札からつける操作ではない"""
+    - v0.199: 場のレインボーエネルギーは特殊エネルギーカードとして選べるものに入れない（「特殊エネルギー以外」。カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認。
+      v0.198 までは RB3 で選べるが選ぶと止めた）。選べるカードが 0 枚なら、「おもて」でも決定を出さずにワザを終える（p.309 の処理の対象がない）
+    - はがすポケモン・つけるポケモンの効果の要素（``ENERGY_MOVE_ELEMENT``・``ENERGY_ATTACH_ELEMENT``。「ワザをうけない」状態・「とうめい」）。つけるポケモンが受けなければ、
+      はがしたカードは持ち主のトラッシュ（T36 と同じ読み方）。手札からつける操作ではない"""
 
     implementation_id = "fail_on_tails_move_opponent_field_energy"
     opponent_effect_elements = (ENERGY_MOVE_ELEMENT,)
@@ -44468,10 +44609,10 @@ class FailOnTailsMoveOpponentFieldEnergy(AttackEffect):
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         label = _label(state, use)
         if decision.kind == MOVE_OPPONENT_ENERGY:
-            options, rainbow = opponent_field_energy_options(state, use.player)
+            options = opponent_field_energy_options(state, use.player)
             problems = _decision_form(decision, label, kind=MOVE_OPPONENT_ENERGY, player=use.player, choices=(1, 1), options=options)
-            if tuple(decision.context_value("unresolved_choices", ())) != rainbow:
-                problems.append(f"「{label}」の決定の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {rainbow}（RB3）ではない")
+            if decision.context_value("unresolved_choices", ()):
+                problems.append(f"「{label}」の決定に選ぶと止める選択 {decision.context_value('unresolved_choices', ())} がある（v0.199 から、選べるのは基本エネルギーカードだけ）")
             return problems
         return _decision_form(decision, label, kind=SELECT_POKEMON, player=use.player, choices=(1, 1),
                               options=(p.pokemon_id for p in state.players[1 - use.player].in_play()))
@@ -45889,7 +46030,7 @@ def group_attack_powers_check(state: GameState, player: int, attacker: PokemonIn
 
 def group_attack_power_check(state: GameState, player: int, attacker: PokemonInPlay, key: AttackKey, holder_id: int) -> tuple[PokemonInPlay, PowerSlot]:
     """v0.118: ワザ ``key`` といっしょに、場の番号 ``holder_id`` のポケモンの［XXXXX］を使うことを選んだ（``UseAttack.with_power``）ときの確かめ（状態を変えない）。使えないなら
-    ``IllegalActionError``。使えるなら (発生源, 特殊能力)。"""
+    ``IllegalActionError``。使えるなら (発生源, 特殊能力)。v0.193: 持ち主が変身で写した力で、写すことを確かめていないなら ``UnsupportedError``（``copied_attack_power_check``）。"""
     from .continuous import power_suppressed
     from .persistent import powers_use_prevented
 
@@ -45908,6 +46049,7 @@ def group_attack_power_check(state: GameState, player: int, attacker: PokemonInP
         raise IllegalActionError("POWER_SUPPRESSED", f"特殊能力「{slot.power.name_ja}」は、ほかの効果で使えず、その力も消えている")
     if powers_use_prevented(state, holder) is not None:
         raise IllegalActionError("POWER_USE_PREVENTED", f"ポケモン {holder_id} は、相手のワザの効果で特殊能力を使うことができない")
+    copied_attack_power_check(state, holder, slot)  # v0.193（C-TF1）: 持ち主が変身で写した力（使い手自身でも、ほかの持ち主でも同じ）
     used = effect.other_use_problem(state, player, holder_id)
     if used is not None:
         raise used

@@ -1,0 +1,342 @@
+{
+ "unit": "C-TF2",
+ "title": "R-2 transform route: freezing the revealed Ditto's form during the attack (SF3) - minimal fix design",
+ "document": "docs/r2-transform-frozen-reveal-design.md",
+ "date": "2026-11-18",
+ "status": {
+  "c_tf2_kind": "investigation_design_documentation_only",
+  "sf3_fix": "not_implemented",
+  "c_tf1": "completed_unchanged",
+  "engine_version": "0.193.0",
+  "engine_changed": false,
+  "tests_or_scripts_executed": false
+ },
+ "base": {
+  "branch": "claude/r2-transform-c-tf1",
+  "commit": "f5a71bb09d94e1b094f0ac3c2c0cc3c7b134a01d",
+  "distribution_pin": "a85b773973d7725f29543ef238c697fdeddcdb84",
+  "origin_main": "b1e4430",
+  "in_main": false,
+  "tool_version": 13,
+  "judge_rules": 10,
+  "formats": 7,
+  "work_branch": "claude/r2-transform-c-tf2"
+ },
+ "previous_report_corrections": {
+  "ledger_diff_count": {
+   "source": "verifier/runs/r2-transform-c-tf1/out/ledger_diff_impl.json",
+   "source_sha256": "e72943ff614688ef652239f330b813927bb0ce7129c2a5941835ef5e9dc94f52",
+   "unit": "path",
+   "paths_total": 226,
+   "by_kind": {"line_position": 213, "test_reference": 10, "other": 3},
+   "test_reference_by_entry": {"258": 3, "300": 3, "356": 4},
+   "other_paths": ["entries/356/current_stop/0/sites", "entries/356/implementation_sites", "entries/356/implementation_sites_total"],
+   "other_added_site_values": ["kyuura_engine/effects.py:37478", "kyuura_engine/legal_actions.py:1304"],
+   "cause": "C-TF1 report and doc section 6 wrote 'implementation sites 2' (added site values) next to path counts; in paths it is 3 (213 + 10 + 3 = 226)",
+   "classifier_note": "the classifier labels these 3 paths 'other' (its own definition: unclassified); C-TF1 inspected them by hand as the existing stop code's added sites",
+   "effect": "wording only; sync, --check and counts unchanged",
+   "corrected_in": ["docs/r2-transform-copied-power-v0.193.md section 6 (appended; original kept)"]
+  },
+  "api_exception": {
+   "codes": {
+    "CANDIDATE_INPUT_INVALID": "input does not fit the candidate constraints (ids, counts, duplicates, ranges)",
+    "CANDIDATE_NOT_EXECUTABLE": "chosen option cannot be processed under the current rule set and implementation (not a game prohibition)"
+   },
+   "c_tf1_scope": "face-up user, stage 2 only: copied, unverified declared powers (_copied_addon) are not offered; sending their id gives CANDIDATE_INPUT_INVALID before check_use_attack; the direct command gives UNSUPPORTED_TRANSFORM_COPIED_POWER",
+   "consistency": [
+    {"ref": "kyuura_engine/legal_actions.py GUARANTEE_ATTACK.preconditions (sha pinned since 0.179)", "result": "consistent", "note": "offered pairs are still checked by check_use_attack; excluded pairs are a subset of those check_use_attack stops; the reason is not stated"},
+    {"ref": "docs/legal-actions-u7-4.md section 4 (line 92) and section 3 table B (line 67)", "result": "inconsistent_general_rule", "note": "general rule: stopping combinations are CANDIDATE_NOT_EXECUTABLE; the C-TF1 exception is recorded only in the v0.193 doc"},
+    {"ref": "docs/legal-actions-u7-4.md section 6 (line 116)", "result": "inconsistent_wording", "note": "INVALID described as game-impossible combinations; excluded pairs are not a game prohibition (unoffered id)"},
+    {"ref": "docs/legal-actions-u7-4.md section 8 display example (line 173)", "result": "possible_misreading", "note": "'cannot declare with this combination' reads as a game prohibition; GUI has no way to pick an unoffered id"}
+   ],
+   "correction_candidates": [
+    {"id": "AC-1", "target": "docs/legal-actions-u7-4.md", "change": "reference to the v0.193 doc section 4 (GUARANTEE_ATTACK text unchanged; excluded pairs are a subset of check_use_attack stops)"},
+    {"id": "AC-2", "target": "docs/legal-actions-u7-4.md sections 4 and 6", "change": "one-line limited exception: copied unverified declared powers (v0.193) are not offered; unoffered id -> CANDIDATE_INPUT_INVALID; direct command -> UNSUPPORTED_TRANSFORM_COPIED_POWER"},
+    {"id": "AC-3", "target": "docs/legal-actions-u7-4.md section 8", "change": "note that INVALID also covers ids excluded by a version exception"}
+   ],
+   "api_changed": false,
+   "decision": "D-TF-12"
+  }
+ },
+ "saved_examples": {
+  "source": "verifier/runs/r2-transform-c-tf0/out/c_tf0_direct.json",
+  "source_sha256": "f959a3cde0add45a625a50ac0e1fe46d6743cd27aac15f1701a2e9f0d387c13b",
+  "rerun_on_0_193": "verifier/runs/r2-transform-c-tf1/out/c_tf0_direct_on_c_tf1.json",
+  "rerun_sha256": "4ba529ec192ec16748906117df5a5e1f46eb7c7bdc7198f99ae925157eb578b6",
+  "pt5_identical_on_0_193": true,
+  "board": {"opponent_active": "ES3-009 (Vulpix, fire, weakness water)", "attack": "kitsunebi: optional switch before damage, 10 to the new active", "opponent_bench": ["PMCG1-001 (Bulbasaur, weakness fire)", "PMCG1-023 (Squirtle)"]},
+  "records": [
+   {"key": "PT5_fd_ditto_vs_vulpix_other_ditto_on_bench", "attacker": "face_down", "other_capable": "own bench PMCG3-042", "entry_frozen": [[2, "PMCG3-042", "printed"]], "frozen_at_decision": [[2, "PMCG3-042", "printed"]], "unresolved_choices": ["PMCG1-001", "PMCG1-023"], "answers": {"PMCG1-001": "rejected RX1", "PMCG1-023": "rejected RX1", "none": "accepted 10"}, "class": "SF3"},
+   {"key": "PT5_fd_ditto_vs_vulpix_opponent_bench_ditto", "attacker": "face_down", "other_capable": "opponent bench PMCG3-042", "entry_frozen": [[4, "PMCG3-042", "printed"]], "frozen_at_decision": [[4, "PMCG3-042", "printed"]], "unresolved_choices": ["PMCG1-001", "PMCG3-042"], "answers": {"PMCG1-001": "rejected RX1", "none": "accepted 10"}, "class": "SF3"},
+   {"key": "PT5_fd_ditto_vs_vulpix_no_other", "attacker": "face_down", "other_capable": null, "entry_frozen": [], "frozen_at_decision": [[5, "ES3-009", "transform"]], "unresolved_choices": [], "answers": {"PMCG1-001": "accepted 20", "PMCG1-023": "accepted 10", "none": "accepted 10"}, "class": "control"},
+   {"key": "PT5_up_ditto_vs_vulpix_other_ditto_on_bench", "attacker": "face_up", "other_capable": "own bench PMCG3-042", "entry_frozen": [[1, "ES3-009", "transform"], [2, "PMCG3-042", "printed"]], "frozen_at_decision": [[1, "ES3-009", "transform"], [2, "PMCG3-042", "printed"]], "unresolved_choices": [], "answers": {"PMCG1-001": "accepted 20", "PMCG1-023": "accepted 10", "none": "accepted 10"}, "class": "control"},
+   {"key": "PT5_up_ditto_vs_vulpix_no_other", "attacker": "face_up", "other_capable": null, "entry_frozen": [[1, "ES3-009", "transform"]], "frozen_at_decision": [[1, "ES3-009", "transform"]], "unresolved_choices": [], "answers": {"PMCG1-001": "accepted 20", "PMCG1-023": "accepted 10", "none": "accepted 10"}, "class": "control"}
+  ],
+  "preflight_modes_agree": true,
+  "rejections_unchanged_state_rng_log_decision": true
+ },
+ "trace": [
+  {"step": 1, "what": "command entry, clone", "code": "kyuura_engine/engine.py:888 _apply_once"},
+  {"step": 2, "what": "entry freeze (UseAttack, UsePokemonPower, PlayTrainer, UseStadium); no-op if non-empty; face-down cards are not transform_capable", "code": ["kyuura_engine/engine.py:915", "kyuura_engine/effects.py:15297 freeze_forms", "kyuura_engine/effects.py:15292 transform_capable"]},
+  {"step": 3, "what": "reveal of the face-down attacker (after the entry freeze)", "code": "kyuura_engine/engine.py:1099 _reveal_for_action"},
+  {"step": 4, "what": "post-reveal form computed on demand", "code": ["kyuura_engine/effects.py:15256 current_form", "kyuura_engine/effects.py:15279 live_form", "kyuura_engine/effects.py:15088 transform_defender"]},
+  {"step": 5, "what": "attack body freeze: only when frozen_forms is empty", "code": "kyuura_engine/resolution/flow.py:167"},
+  {"step": 6, "what": "non-empty frozen_forms != attacker frozen (form_frozen)", "code": "kyuura_engine/effects.py:15274 form_frozen"},
+  {"step": 7, "what": "mid-attack switch: RX1 when the attacker is not frozen", "code": ["kyuura_engine/resolution/programs.py:2348 _form_changes", "kyuura_engine/resolution/programs.py:962 _switch_changes_attacker"]},
+  {"step": 8, "what": "damage reads current_form (frozen if frozen, else live)", "code": "kyuura_engine/effects.py:15256"},
+  {"step": 9, "what": "release at attack end (before KO check, TK1) and at command end without decision; kept while a decision waits (serialized, format 29); rejection discards the clone", "code": ["kyuura_engine/resolution/flow.py:584", "kyuura_engine/engine.py:952", "kyuura_engine/serialize.py:865", "kyuura_engine/effects.py:15331 release_frozen_forms"]},
+  {"step": 10, "what": "preflight clone base after reveal (v0.189) includes the entry freeze", "code": "kyuura_engine/resolution/flow.py:160"},
+  {"step": 11, "what": "independent log audit freezes all transform holders at the attack/power event (after the reveal event)", "code": "tests/log_audit.py:6685-6687"}
+ ],
+ "lifetime": {
+  "owner": "GameState.frozen_forms (one per action; nested trainers share the outer one)",
+  "start": ["kyuura_engine/engine.py:915", "kyuura_engine/resolution/flow.py:167"],
+  "end": ["kyuura_engine/resolution/flow.py:584", "kyuura_engine/resolution/flow.py:1006", "kyuura_engine/resolution/flow.py:1100", "kyuura_engine/resolution/flow.py:1262", "kyuura_engine/engine.py:2271", "kyuura_engine/engine.py:952"],
+  "across_decisions": "kept in state and snapshot; not recomputed on resume",
+  "on_rejection": "clone discarded; original state unchanged"
+ },
+ "ruling": {
+  "id": "CR-TRANSFORM-FROZEN-DURING-ACTION",
+  "status": "CONFIRMED",
+  "source": "kyuura 71d1728938fb4c8fefde9b82779cdef74beb612d data/sidecar/rulings.json",
+  "clause": "GR-2000-P325-TRANSFORM-DURING-ACTION (p.324-325)"
+ },
+ "invariants": [
+  {"id": "I1", "when": "form at the start of using the action; for a face-down attacker, the first moment it has a form is right after the reveal (same moment the existing no-other control freezes at flow.py:167)", "code": ["kyuura_engine/engine.py:1099", "kyuura_engine/resolution/flow.py:167"]},
+  {"id": "I2", "which": "every in-play Pokemon with a transform power at the start, including untransformed ones; plus the attacker revealed at the same command entry", "code": "kyuura_engine/effects.py:15297"},
+  {"id": "I3", "opponent_switch": "keep the frozen form until the attack ends; no RX1; damage by the frozen form", "code": ["kyuura_engine/resolution/programs.py:2354", "kyuura_engine/resolution/programs.py:968"]},
+  {"id": "I4", "across_decisions": "kept; not rebuilt on answer/resume; snapshot value used as is", "code": "kyuura_engine/serialize.py:865"},
+  {"id": "I5", "back_to_live": "after all effects of the action, before KO check (attack); TK1 if the KO status changes", "code": "kyuura_engine/resolution/flow.py:584"},
+  {"id": "I6", "others": "already frozen entries are not changed during the action", "code": "kyuura_engine/effects.py:15302"}
+ ],
+ "options": [
+  {"id": "A", "summary": "add only the revealed attacker to the existing frozen info right after the reveal", "recommended": true},
+  {"id": "B", "summary": "rebuild the frozen info after the reveal", "recommended": false, "risks": ["overwrites other entries", "release runs TK1 checks mid-rebuild", "changes O-REV handling without checks"]},
+  {"id": "C", "summary": "broader change (move/unify freezing)", "recommended": false, "risks": ["changes L1/D1 after_power timing", "touches trainer/stadium/power paths"]},
+  {"id": "D", "summary": "keep as is", "recommended": false, "risks": ["violates a CONFIRMED rule", "SF3-b: TK1 check skips the attacker on no-later-damage switches (static)"]}
+ ],
+ "recommendation": {
+  "option": "A",
+  "new_function": "kyuura_engine/effects.py freeze_revealed_form(state, pokemon) (proposed, not implemented)",
+  "call_site": "kyuura_engine/engine.py _reveal_for_action, after reveal_face_down of the UseAttack subject returns the Pokemon",
+  "order": "same as freeze_forms (players -> in_play())",
+  "checks": {
+   "no_overwrite": "only adds an entry for a Pokemon not yet frozen; existing values unchanged",
+   "timing": "right after the reveal, before check_use_attack; earliest moment the attacker has a form",
+   "transform_disabled": "live_form reads transform_works at that moment; disabled -> printed (same as face-up entry freeze); face-down opponent active -> uid only, FD1 later as now",
+   "preflight_same": "added before the handler, so the v0.189 base clone includes it; flow.py:167 is a no-op in trials",
+   "v0_189_consistent": "base selection unchanged",
+   "no_double_reveal_cost_coin": "no event, no RNG, no energy movement",
+   "rollback_and_resume": "rejection discards the clone; decision snapshot stores the entry in the existing format; resume uses it as is"
+  },
+  "not_changed": ["freeze_forms", "release_frozen_forms", "flow.py:167", "RX1 checks", "TK1 checks", "API", "formats"]
+ },
+ "classes": [
+  {"id": "SF3", "kind": "current_defect", "scope": "face-down Ditto revealed by an attack with another transform_capable Pokemon in play (either side)", "unit": "C-TF2"},
+  {"id": "SF3-b", "kind": "current_defect_static", "scope": "part of SF3: no-later-damage switch changes the form mid-attack; release TK1 check skips the attacker", "unit": "C-TF2 (fixed by A)"},
+  {"id": "SF4", "kind": "future_registration_constraint", "scope": "printed-attack transform cards would make card=None point at the copied card's attack", "unit": "separate"},
+  {"id": "SF3-P", "kind": "structural_gap_static", "scope": "UsePokemonPower by a revealed face-down Ditto with a copied verified power: never frozen (no second freeze on the power path); no result difference found", "unit": "separate (D-TF-10)"},
+  {"id": "SF5", "kind": "research_question_candidate", "scope": "face-down transform-capable card revealed mid-action by designate_face_down", "unit": "separate (D-TF-13)"},
+  {"id": "O-REV", "kind": "observation_static", "scope": "the reveal itself changes other Pokemon's live forms; A keeps pre-reveal entries; log_audit freezes post-reveal", "unit": "separate (D-TF-13)"}
+ ],
+ "information_boundary": {
+  "added": ["revealed attacker (public after the reveal)", "its form from public zones (opponent active uid, transform kind)"],
+  "not_added": ["opponent face-down identity", "properties of unrevealed cards", "still face-down own cards (not transform_capable)"],
+  "kept": ["FD1", "RX1 (remaining routes)", "TK1", "TE1", "TF1-TF3", "C-TF1 copied power limits", "card=None and explicit card", "Water-only unresolved (D-TF-8)", "face-down Ditto candidate deferral (D-TF-2, D-TF-4)"],
+  "not_introduced": ["candidate-time transform trial", "new declared powers", "new stop codes, rulings, conventions"]
+ },
+ "verification_cases": [
+  {"id": "TC1", "class": "F", "board": "face-down Ditto + own bench fossil Ditto, kitsunebi, switch to Bulbasaur/Squirtle", "expected": "unresolved_choices empty; accepted; 20 / 10 (= PT5_up_ditto_vs_vulpix_other_ditto_on_bench); frozen empty after; attacker form = new active", "before_fix": "RX1 rejection"},
+  {"id": "TC2", "class": "F", "board": "face-down Ditto + opponent bench Ditto, switch to Bulbasaur", "expected": "accepted 20 (= face-up control); opponent Ditto entry stays printed", "before_fix": "RX1 rejection"},
+  {"id": "TC3", "class": "F_new", "board": "TC2, switch to the opponent Ditto", "expected": "equals the face-up control on the same board, recorded before the fix (printed freeze -> 10 expected)", "before_fix": "RX1 rejection (unrecorded)"},
+  {"id": "TC4", "class": "K", "board": "decline answer in TC1/TC2", "expected": "accepted 10 to Vulpix (unchanged)"},
+  {"id": "TC5", "class": "K", "board": "PT5_fd_ditto_vs_vulpix_no_other", "expected": "unchanged 20/10/10; frozen content unchanged"},
+  {"id": "TC6", "class": "K", "board": "PT5_up_* (2 records)", "expected": "unchanged"},
+  {"id": "TC7", "class": "F_static", "board": "no-later-damage switch attack, attacker damage crosses the HP difference", "expected": "equals face-up control (TK1 if TK1)", "before_fix": "expected to proceed without TK1 (record before the fix)"},
+  {"id": "TC8", "class": "K", "board": "transform disabled (asleep, paralyzed, confused, chemical gas)", "expected": "printed freeze; same rejection as now"},
+  {"id": "TC9", "class": "K", "board": "opponent active face-down", "expected": "same FD1 code and position"},
+  {"id": "TC10", "class": "K", "board": "opponent active absent; TF2/TF3/baby TF1 remainder", "expected": "same stops"},
+  {"id": "TC11", "class": "F_K", "board": "save/restore the decision snapshot, then answer", "expected": "attacker entry saved; answers equal TC1; released at attack end; nothing left after a command without decision"},
+  {"id": "TC12", "class": "K", "board": "old 0.193.0 SF3 decision snapshot restored on the new engine", "expected": "recorded frozen info used as is (no attacker); not rebuilt"},
+  {"id": "TC13", "class": "K", "board": "derived, derived_full, legacy", "expected": "same acceptance, decision, state hash and answers"},
+  {"id": "TC14", "class": "K", "board": "direct command vs public API", "expected": "face-up controls equal via submit; face-down Ditto candidate unchanged (no stage, no_printed_attack)"},
+  {"id": "TC15", "class": "K", "board": "rejections (remaining RX1, FD1, C-TF1 copied powers)", "expected": "state, RNG, log, decision unchanged; no frozen entry left"},
+  {"id": "TC16", "class": "K", "board": "other frozen entries", "expected": "values unchanged; order players -> in_play()"},
+  {"id": "TC17", "class": "K", "board": "C-TF1 regressions", "expected": "same as 0.193.0"},
+  {"id": "TC18", "class": "K", "board": "L1/D1 (non-basic reveal)", "expected": "unchanged; no entry added"},
+  {"id": "TC19", "class": "K", "board": "face-down ES2-032 (super transform) revealed", "expected": "equals face-up control (printed freeze)"},
+  {"id": "TC20", "class": "K", "board": "log_audit on TC1/TC2 logs", "expected": "0 problems"}
+ ],
+ "compatibility": {
+  "candidate_files": ["kyuura_engine/engine.py", "kyuura_engine/effects.py", "tests (new)", "docs/stop-policy-classification.json (line positions)", "version files (3)"],
+  "engine_version": "bump at implementation after checking published versions",
+  "behavior": "changes",
+  "instrumentation": "expected unchanged",
+  "bases": {"P1": "changes", "P2": "changes", "P3": "changes", "R": "changes", "reason": "engine.py and effects.py are in every basis file set"},
+  "formats": {"api": "unchanged", "plan": "unchanged", "completion": "unchanged", "snapshot": "unchanged (same frozen_forms record shape)"},
+  "old_records": "results kept (RX1); judged with the recorded basis",
+  "old_snapshots": "decision snapshots continue with stored frozen info",
+  "gui": "no card-specific work expected; dependency update and unresolved_choices display check are a separate unit"
+ },
+ "decisions": [
+  {"id": "D-TF-9", "item": "adopt option A for the C-TF2 implementation", "recommendation": "adopt"},
+  {"id": "D-TF-10", "item": "include SF3-P in the same unit", "recommendation": "no (separate unit)"},
+  {"id": "D-TF-11", "item": "rebuild frozen info of old decision snapshots", "recommendation": "no"},
+  {"id": "D-TF-12", "item": "apply API doc correction candidates AC-1..AC-3 to the U7-4 doc", "recommendation": "next documentation unit; API and constants unchanged"},
+  {"id": "D-TF-13", "item": "record SF5 and O-REV as research questions", "recommendation": "record; investigate separately"}
+ ],
+ "implementation": {
+  "date": "2026-11-18",
+  "engine_version": "0.194.0",
+  "document": "docs/r2-transform-frozen-reveal-v0.194.md",
+  "commits": {
+   "implementation": "c52f906",
+   "version": "f747dc971126145d1e61c4e6b14d8229c6a37e13"
+  },
+  "option": "A",
+  "function": "effects.freeze_revealed_form",
+  "call_site": "engine._reveal_for_action (UseAttack only, after a basic reveal, before the handler)",
+  "difference_from_sketch": "no internal RuntimeError guard; stable sort insertion (keeps entries not in play)",
+  "results": [
+   {
+    "id": "TC1",
+    "class": "F",
+    "result": "passed",
+    "note": "修正前は RX1。修正後は unresolved_choices が空、フシギダネ 20・ゼニガメ 10、ワザのあと固定は空。おもての対照と一致"
+   },
+   {
+    "id": "TC2",
+    "class": "F",
+    "result": "passed",
+    "note": "修正前は RX1。修正後はフシギダネ 20。相手のメタモンの項目は printed のまま"
+   },
+   {
+    "id": "TC3",
+    "class": "F_new",
+    "result": "passed",
+    "note": "おもての対照を修正前に実測して 10（相手のメタモンは printed の固定）。修正後のうらも 10"
+   },
+   {
+    "id": "TC4",
+    "class": "K",
+    "result": "passed",
+    "note": "入れ替えない答えは 10 のまま"
+   },
+   {
+    "id": "TC5",
+    "class": "K",
+    "result": "passed",
+    "note": "ほかがいない盤面の結果・固定の中身は同じ。固定の時点が公開の直後になり、ワザの始めの freeze_forms は何もしない（観測だけの差）"
+   },
+   {
+    "id": "TC6",
+    "class": "K",
+    "result": "passed",
+    "note": "おもての 2 件は同じ"
+   },
+   {
+    "id": "TC7",
+    "class": "F_static",
+    "result": "not_reachable",
+    "note": "うらのカードにダメージはのらない（不変条件）ので、うらの使い手が宣言のときにダメージを持つ妥当な構築盤面がない。ダメージなしのふきとばしで、固定の項目がおもての対照と同じことを確かめた。おもての対照（ダメージ 40）は derived・derived_full が TK1、legacy は決定を出す（既存の方法の差。変えていない）"
+   },
+   {
+    "id": "TC8",
+    "class": "K",
+    "result": "passed_existing",
+    "note": "既存のテスト（C-TF0 の test_suppressed_transform_has_no_attacks）で維持"
+   },
+   {
+    "id": "TC9",
+    "class": "K",
+    "result": "passed",
+    "note": "相手のバトル場がうらなら、ほかのメタモンの有無によらず FD1"
+   },
+   {
+    "id": "TC10",
+    "class": "K",
+    "result": "passed_existing",
+    "note": "C-TF0 のテスト（TF1 の残り・TF2・TF3）で維持"
+   },
+   {
+    "id": "TC11",
+    "class": "F_K",
+    "result": "passed",
+    "note": "決定待ちの snapshot の往復で足した項目を保つ（修正前は答えが RX1）。決定のないコマンドの終わりに固定が残らない"
+   },
+   {
+    "id": "TC12",
+    "class": "K",
+    "result": "passed_corrected",
+    "note": "設計の期待（保存した固定のまま続ける）を訂正: 0.193.0 の決定待ちの snapshot は restore_snapshot の識別の検査で unsupported（implementation_differs・engine_version_differs）。補修しない"
+   },
+   {
+    "id": "TC13",
+    "class": "K",
+    "result": "passed",
+    "note": "SF3 の盤面と対照で、3 つの先読みの方法の状態が一致"
+   },
+   {
+    "id": "TC14",
+    "class": "K",
+    "result": "passed",
+    "note": "おもての対照は API と直接のコマンドで同じ状態。うらのメタモンの候補は no_printed_attack の保留のまま（段なし）"
+   },
+   {
+    "id": "TC15",
+    "class": "K",
+    "result": "passed",
+    "note": "FD1・C-TF1 の写した力の拒否・RX1 の残る経路（v0.65 のテスト）で、状態・乱数・ログ・決定は不変"
+   },
+   {
+    "id": "TC16",
+    "class": "K",
+    "result": "passed",
+    "note": "既存の項目（自分のベンチ・相手のベンチのメタモン、printed）は不変。並びはおもての対照と同じ（攻撃者 → 自分のベンチ → 相手のベンチ）"
+   },
+   {
+    "id": "TC17",
+    "class": "K",
+    "result": "passed",
+    "note": "C-TF1 のテスト・スモークで写した力の拒否と提示は同じ"
+   },
+   {
+    "id": "TC18",
+    "class": "K",
+    "result": "passed",
+    "note": "たねでない公開はトラッシュして受理。固定を足さない"
+   },
+   {
+    "id": "TC19",
+    "class": "K",
+    "result": "passed",
+    "note": "すごいへんしんのメタモン（ES2-032）はワザを持たず、うら・おもてとも INVALID_ATTACK（同じ）"
+   },
+   {
+    "id": "TC20",
+    "class": "K",
+    "result": "unconfirmed",
+    "note": "log_audit の log_problems は new_game から進めたログ用で、構築盤面に使えない"
+   }
+  ],
+  "extra_checks": [
+   "Ram (PMCG2-033): before RX1 at declaration, after equal to face-up control (50, self 20)"
+  ],
+  "c_tf0_records": {
+   "total": 83,
+   "same": 42,
+   "state_hash_only": 25,
+   "freeze_site_observation_only": 14,
+   "changed_intended": 2
+  },
+  "old_snapshots_0193": "unsupported (implementation_differs, engine_version_differs); not repaired",
+  "identity": {
+   "behavior": "changed",
+   "instrumentation": "unchanged",
+   "p1_p2_p3_r_basis": "changed",
+   "tool": "unchanged",
+   "judge_rules": 10,
+   "formats": "unchanged"
+  }
+ }
+}

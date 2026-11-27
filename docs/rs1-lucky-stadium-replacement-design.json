@@ -1,0 +1,4359 @@
+{
+ "format": "kyuura-rs1-lucky-stadium-replacement-design/1",
+ "date": "2026-11-23",
+ "doc": "docs/rs1-lucky-stadium-replacement-design.md",
+ "base": {
+  "branch": "claude/tr7-supplemental-audit",
+  "commit": "706b9ab0d6de52882c44a8eecb8afa048dd9591a"
+ },
+ "work_branch": "claude/rs1-lucky-stadium-replacement-design",
+ "run_commits": {
+  "tr3u1": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+  "tr6a": "7f7712acebd022ac5c9a7d5a346b89d3a2ab9690",
+  "tr7s": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c"
+ },
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-design-run/",
+ "code": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+ "id": "RS1",
+ "id_note": "RS1 の記号は v0.83 の UNRESOLVED_REFLECT_SHIELD_TIMING とも重なる。この文書は v0.74 の RS1 だけを指す",
+ "supplemental_two_positions": {
+  "positions": 2,
+  "rows": 4,
+  "uses": 2,
+  "replacements_after_use": 2,
+  "shared_use_or_replacement": false,
+  "replacement_before_use_not_excluded": 1,
+  "games": 1
+ },
+ "old_use_stadium_remap": {
+  "TR3|pilot": {
+   "games_read": 4,
+   "units": {
+    "total": 2,
+    "first_attempt_only": 1,
+    "positions": 1,
+    "games": 1
+   },
+   "measured": 0,
+   "static": {
+    "RS1": {
+     "total": 2,
+     "first_attempt_only": 1,
+     "positions": 1,
+     "games": 1
+    }
+   },
+   "unknown": {
+    "total": 0,
+    "first_attempt_only": 0,
+    "positions": 0,
+    "games": 0
+   },
+   "old_aggregate_units": {
+    "total": 2,
+    "first_attempt_only": 1,
+    "positions": 1,
+    "games": 1
+   },
+   "equal_to_old": true,
+   "log_matches_state_all": true
+  },
+  "TR3|main": {
+   "games_read": 24,
+   "units": {
+    "total": 14,
+    "first_attempt_only": 7,
+    "positions": 7,
+    "games": 4
+   },
+   "measured": 0,
+   "static": {
+    "RS1": {
+     "total": 14,
+     "first_attempt_only": 7,
+     "positions": 7,
+     "games": 4
+    }
+   },
+   "unknown": {
+    "total": 0,
+    "first_attempt_only": 0,
+    "positions": 0,
+    "games": 0
+   },
+   "old_aggregate_units": {
+    "total": 14,
+    "first_attempt_only": 7,
+    "positions": 7,
+    "games": 4
+   },
+   "equal_to_old": true,
+   "log_matches_state_all": true
+  },
+  "TR6|pilot": {
+   "games_read": 4,
+   "units": {
+    "total": 2,
+    "first_attempt_only": 1,
+    "positions": 1,
+    "games": 1
+   },
+   "measured": 0,
+   "static": {
+    "RS1": {
+     "total": 2,
+     "first_attempt_only": 1,
+     "positions": 1,
+     "games": 1
+    }
+   },
+   "unknown": {
+    "total": 0,
+    "first_attempt_only": 0,
+    "positions": 0,
+    "games": 0
+   },
+   "old_aggregate_units": {
+    "total": 2,
+    "first_attempt_only": 1,
+    "positions": 1,
+    "games": 1
+   },
+   "equal_to_old": true,
+   "log_matches_state_all": true
+  },
+  "TR6|main": {
+   "games_read": 15,
+   "units": {
+    "total": 6,
+    "first_attempt_only": 3,
+    "positions": 3,
+    "games": 2
+   },
+   "measured": 0,
+   "static": {
+    "RS1": {
+     "total": 6,
+     "first_attempt_only": 3,
+     "positions": 3,
+     "games": 2
+    }
+   },
+   "unknown": {
+    "total": 0,
+    "first_attempt_only": 0,
+    "positions": 0,
+    "games": 0
+   },
+   "old_aggregate_units": {
+    "total": 6,
+    "first_attempt_only": 3,
+    "positions": 3,
+    "games": 2
+   },
+   "equal_to_old": true,
+   "log_matches_state_all": true
+  },
+  "TR7S|main": {
+   "games_read": 9,
+   "units": {
+    "total": 4,
+    "first_attempt_only": 2,
+    "positions": 2,
+    "games": 1
+   },
+   "measured": 0,
+   "static": {
+    "RS1": {
+     "total": 4,
+     "first_attempt_only": 2,
+     "positions": 2,
+     "games": 1
+    }
+   },
+   "unknown": {
+    "total": 0,
+    "first_attempt_only": 0,
+    "positions": 0,
+    "games": 0
+   },
+   "old_aggregate_units": {
+    "total": 4,
+    "first_attempt_only": 2,
+    "positions": 2,
+    "games": 1
+   },
+   "equal_to_old": true,
+   "log_matches_state_all": true
+  }
+ },
+ "positions": [
+  {
+   "audit": "TR3",
+   "phase": "pilot",
+   "plan": "vai-batch-tr3u1-p4",
+   "game": "g001-rules-v2-s9006",
+   "actor": 0,
+   "position": 168,
+   "turn": 57,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 58,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 57
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     57
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 57,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 459,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 460,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 462,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 57,
+     "owner": 0
+    },
+    {
+     "log_index": 463,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 57,
+     "result": "tails",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 464,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 58,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 465,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 58,
+     "replaces": 57
+    },
+    {
+     "log_index": 466,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 57,
+     "by_card": 58,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 201,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 202,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 18,
+   "hand": 9,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "tails"
+   ],
+   "replacements_this_turn": [
+    [
+     57,
+     58
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g001-rules-v2-s9007",
+   "actor": 0,
+   "position": 41,
+   "turn": 10,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 56,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 10
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     59
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 59,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 95,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 96,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 98,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 59,
+     "owner": 0
+    },
+    {
+     "log_index": 99,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 59,
+     "result": "tails",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 100,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 56,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 101,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 56,
+     "replaces": 59
+    },
+    {
+     "log_index": 102,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 59,
+     "by_card": 56,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 55,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 56,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 39,
+   "hand": 2,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "tails"
+   ],
+   "replacements_this_turn": [
+    [
+     59,
+     56
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g001-rules-v2-s9007",
+   "actor": 0,
+   "position": 207,
+   "turn": 66,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 57,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 66
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     58
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 58,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 556,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 557,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 559,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 58,
+     "owner": 0
+    },
+    {
+     "log_index": 560,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 58,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 561,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 562,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 57,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 563,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 57,
+     "replaces": 58
+    },
+    {
+     "log_index": 564,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 58,
+     "by_card": 57,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 277,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 278,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 4,
+   "hand": 15,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     58,
+     57
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g002-rules-v2-s9008",
+   "actor": 0,
+   "position": 80,
+   "turn": 20,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 57,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 20
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     58
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 58,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 201,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 202,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 203,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 58,
+     "owner": 0
+    },
+    {
+     "log_index": 204,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 58,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 205,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 206,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 57,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 207,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 57,
+     "replaces": 58
+    },
+    {
+     "log_index": 208,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 58,
+     "by_card": 57,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 98,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 99,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 33,
+   "hand": 2,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     58,
+     57
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g002-rules-v2-s9008",
+   "actor": 0,
+   "position": 162,
+   "turn": 46,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 59,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 46
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     57
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 57,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 427,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 428,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 431,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 57,
+     "owner": 0
+    },
+    {
+     "log_index": 432,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 57,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 433,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 435,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 59,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 436,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 59,
+     "replaces": 57
+    },
+    {
+     "log_index": 437,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 57,
+     "by_card": 59,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 199,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 200,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 17,
+   "hand": 7,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     57,
+     59
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g003-rules-v2-s9009",
+   "actor": 0,
+   "position": 74,
+   "turn": 18,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 59,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 18
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     58
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 58,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 169,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 170,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 173,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 58,
+     "owner": 0
+    },
+    {
+     "log_index": 174,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 58,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 175,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 176,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 59,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 177,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 59,
+     "replaces": 58
+    },
+    {
+     "log_index": 178,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 58,
+     "by_card": 59,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 96,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 97,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 33,
+   "hand": 2,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     58,
+     59
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g006-rules-v2-s9012",
+   "actor": 0,
+   "position": 183,
+   "turn": 58,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 59,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 58
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     58
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 58,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 507,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 508,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 509,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 58,
+     "owner": 0
+    },
+    {
+     "log_index": 510,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 58,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 511,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 512,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 59,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 513,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 59,
+     "replaces": 58
+    },
+    {
+     "log_index": 514,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 58,
+     "by_card": 59,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 235,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 236,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 9,
+   "hand": 16,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     58,
+     59
+    ]
+   ]
+  },
+  {
+   "audit": "TR3",
+   "phase": "main",
+   "plan": "vai-batch-tr3u1-m4",
+   "game": "g006-rules-v2-s9012",
+   "actor": 0,
+   "position": 189,
+   "turn": 60,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 57,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 60
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     59
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 59,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 524,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 525,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 528,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 59,
+     "owner": 0
+    },
+    {
+     "log_index": 529,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 59,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 530,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 531,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 57,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 532,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 57,
+     "replaces": 59
+    },
+    {
+     "log_index": 533,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 59,
+     "by_card": 57,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 243,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 244,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 7,
+   "hand": 16,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     59,
+     57
+    ]
+   ]
+  },
+  {
+   "audit": "TR6",
+   "phase": "pilot",
+   "plan": "vai-batch-tr6a-p4",
+   "game": "g001-rules-v2-s9013",
+   "actor": 0,
+   "position": 18,
+   "turn": 4,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 58,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 4
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     59
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 59,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 39,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 40,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 42,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 59,
+     "owner": 0
+    },
+    {
+     "log_index": 43,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 59,
+     "result": "tails",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 44,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 58,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 45,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 58,
+     "replaces": 59
+    },
+    {
+     "log_index": 46,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 59,
+     "by_card": 58,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 23,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 24,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 45,
+   "hand": 2,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "tails"
+   ],
+   "replacements_this_turn": [
+    [
+     59,
+     58
+    ]
+   ]
+  },
+  {
+   "audit": "TR6",
+   "phase": "main",
+   "plan": "vai-batch-tr6a-m4",
+   "game": "g001-rules-v2-s9014",
+   "actor": 0,
+   "position": 34,
+   "turn": 11,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 56,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 11
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     59
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 59,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 81,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 82,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 84,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 59,
+     "owner": 0
+    },
+    {
+     "log_index": 85,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 59,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 86,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 88,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 56,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 89,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 56,
+     "replaces": 59
+    },
+    {
+     "log_index": 90,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 59,
+     "by_card": 56,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 45,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 46,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 40,
+   "hand": 2,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     59,
+     56
+    ]
+   ]
+  },
+  {
+   "audit": "TR6",
+   "phase": "main",
+   "plan": "vai-batch-tr6a-m4",
+   "game": "g001-rules-v2-s9014",
+   "actor": 0,
+   "position": 178,
+   "turn": 53,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 58,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 53
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     57
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 57,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 468,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 469,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 470,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 57,
+     "owner": 0
+    },
+    {
+     "log_index": 471,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 57,
+     "result": "tails",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 472,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 58,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 473,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 58,
+     "replaces": 57
+    },
+    {
+     "log_index": 474,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 57,
+     "by_card": 58,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 237,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 238,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 12,
+   "hand": 12,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "tails"
+   ],
+   "replacements_this_turn": [
+    [
+     57,
+     58
+    ]
+   ]
+  },
+  {
+   "audit": "TR6",
+   "phase": "main",
+   "plan": "vai-batch-tr6a-m4",
+   "game": "g003-rules-v2-s9016",
+   "actor": 0,
+   "position": 17,
+   "turn": 2,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 56,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 2
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     59
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 59,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 24,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 25,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 31,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 59,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 32,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 59,
+     "replaces": null
+    },
+    {
+     "log_index": 33,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 59,
+     "owner": 0
+    },
+    {
+     "log_index": 34,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 59,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 35,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 37,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 56,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 38,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 56,
+     "replaces": 59
+    },
+    {
+     "log_index": 39,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 59,
+     "by_card": 56,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 20,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 21,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 44,
+   "hand": 1,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     null,
+     59
+    ],
+    [
+     59,
+     56
+    ]
+   ]
+  },
+  {
+   "audit": "TR7S",
+   "phase": "main",
+   "plan": "vai-batch-tr7s-c4",
+   "game": "g001-rules-v2-s9017",
+   "actor": 0,
+   "position": 102,
+   "turn": 35,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 57,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 35
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     56
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 56,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 275,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 276,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 278,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 56,
+     "owner": 0
+    },
+    {
+     "log_index": 279,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 56,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 280,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 281,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 57,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 282,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 57,
+     "replaces": 56
+    },
+    {
+     "log_index": 283,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 56,
+     "by_card": 57,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 147,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 148,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 26,
+   "hand": 9,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     56,
+     57
+    ]
+   ]
+  },
+  {
+   "audit": "TR7S",
+   "phase": "main",
+   "plan": "vai-batch-tr7s-c4",
+   "game": "g001-rules-v2-s9017",
+   "actor": 0,
+   "position": 181,
+   "turn": 63,
+   "static_code": "RS1",
+   "stadium_now": {
+    "card": 59,
+    "card_id": "PRN-015",
+    "owner": 0,
+    "placed_turn": 63
+   },
+   "stadium_uses_this_turn": [
+    [
+     0,
+     58
+    ]
+   ],
+   "other_same_name": [
+    {
+     "card": 58,
+     "card_id": "PRN-015",
+     "same_name": true
+    }
+   ],
+   "trainer_locks": [],
+   "pollen_in_play": [],
+   "public_log_this_turn": [
+    {
+     "log_index": 513,
+     "kind": "turn_start",
+     "player": 0
+    },
+    {
+     "log_index": 514,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 516,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 58,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 517,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 58,
+     "replaces": 57
+    },
+    {
+     "log_index": 518,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 57,
+     "by_card": 58,
+     "reason": "replaced"
+    },
+    {
+     "log_index": 519,
+     "kind": "stadium_used",
+     "player": 0,
+     "card": 58,
+     "owner": 0
+    },
+    {
+     "log_index": 520,
+     "kind": "coin_flip",
+     "player": 0,
+     "card": 58,
+     "result": "heads",
+     "effect": "PRN-015",
+     "source": "stadium"
+    },
+    {
+     "log_index": 521,
+     "kind": "draw",
+     "player": 0,
+     "hidden_cards": 1
+    },
+    {
+     "log_index": 522,
+     "kind": "play_trainer",
+     "player": 0,
+     "card": 59,
+     "trainer": "ラッキースタジアム"
+    },
+    {
+     "log_index": 523,
+     "kind": "stadium_placed",
+     "player": 0,
+     "card": 59,
+     "replaces": 58
+    },
+    {
+     "log_index": 524,
+     "kind": "stadium_discarded",
+     "player": 0,
+     "card": 58,
+     "by_card": 59,
+     "reason": "replaced"
+    }
+   ],
+   "attempts": [
+    {
+     "n": 269,
+     "chose": "c2",
+     "chose_kind": "retreat",
+     "reason": "rule2:priority5:retreat",
+     "submitted": false,
+     "outcome": null,
+     "refusal_code": null
+    },
+    {
+     "n": 270,
+     "chose": "c1",
+     "chose_kind": "end_turn",
+     "reason": "rule2:priority6:end_turn",
+     "submitted": true,
+     "outcome": "accepted",
+     "refusal_code": null
+    }
+   ],
+   "deck": 0,
+   "hand": 22,
+   "lucky_in_hand": 0,
+   "coin_of_use": [
+    "heads"
+   ],
+   "replacements_this_turn": [
+    [
+     57,
+     58
+    ],
+    [
+     58,
+     59
+    ]
+   ]
+  }
+ ],
+ "census": {
+  "plans": 20,
+  "games": 56,
+  "placed_by_name": {
+   "ラッキースタジアム": 37
+  },
+  "used_by_name": {
+   "ラッキースタジアム": 438
+  },
+  "replaced_after_own_use_same_turn": 14,
+  "max_uses_per_player_turn": 1
+ },
+ "source": {
+  "all_equal_across_run_commits": true,
+  "segments": 23,
+  "uses_line_files": 7,
+  "registrations": {
+   "coin_draw_stadium_entries": [
+    [
+     "NIP2X-009",
+     "LUCKY_STADIUM_NIP2X_TEXT"
+    ],
+    [
+     "PRN-027",
+     "LUCKY_STADIUM_PRN027_TEXT, once_stated=False"
+    ],
+    [
+     "neo4-106",
+     "LUCKY_STADIUM_NEO_TEXT"
+    ],
+    [
+     "shared:\"PRN-015\", \"PRN-016\", \"PRN-017\", \"PRN-018\", \"PRN-019\", \"PRN-020\", \"PRN-021\", \"PRN-022\"",
+     "LUCKY_STADIUM_PRN_TEXT"
+    ]
+   ],
+   "same_data_line": [
+    "MappingProxyType({card: \"PRN-015\" for card in (\"PRN-016\", \"PRN-017\", \"PRN-018\", \"PRN-019\", \"PRN-020\", \"PRN-021\", \"PRN-022\")})"
+   ],
+   "prevent_trainer_use_cards": [
+    "PMCG4-010"
+   ]
+  },
+  "check_order": [
+   "require_turn",
+   "NO_STADIUM",
+   "STADIUM_CHOICE_NOT_USED",
+   "SX2 (same and returned)",
+   "STADIUM_ALREADY_USED (same)",
+   "STB1",
+   "LK1 (PRN-027)",
+   "RS1 (once_stated and other same-name)"
+  ],
+  "record": {
+   "field": "GameState.stadium_uses_this_turn",
+   "key": "(player, stadium card uid)",
+   "written": "engine._use_stadium: after checks, after log stadium_used, before coin",
+   "replacement": "not cleared",
+   "turn_end": "cleared at procedures.begin_turn; sudden_death reset",
+   "save_restore": "snapshot saves/restores all GameState fields as values; serialize format 17+",
+   "observation": "public (observation.py)"
+  },
+  "candidate_record_has_code": false
+ },
+ "sources": {
+  "card_text_PRN_015": "おたがいのプレイヤーは、それぞれ、のぞむなら、自分の番ごとに1回、コインを投げてもよい。コインを投げて「おもて」なら、山札からカードを1枚引いて、手札に加える。",
+  "kyuura_commit": "71d1728938fb4c8fefde9b82779cdef74beb612d",
+  "records": [
+   "rule_differences stadium（2000.02.14 版。P43）",
+   "GR-2000-P310-TRAINERS",
+   "UQ-FUCHSIA-GYM-ONCE-PER-TURN（FG1。未解決。当時の Q&A などは未調査）"
+  ],
+  "kyuura_disposition_RS1": "not_in_kyuura",
+  "direct_answer": false,
+  "limit_unit_stated": "プレイヤーごと・自分の番ごとに 1 回（同じ名前の別のカードに入れかわったあとの数え方は書かれていない）"
+ },
+ "counting_options": {
+  "per_player_name": {
+   "after_replacement": "不可",
+   "same_instance_again": "不可",
+   "same_instance_returns_SX2": "不可",
+   "different_version": "不可",
+   "PRN_027": "LK1 のまま"
+  },
+  "per_card_instance": {
+   "after_replacement": "可",
+   "same_instance_again": "不可",
+   "same_instance_returns_SX2": "決めない（SX2 のまま）",
+   "different_version": "可",
+   "PRN_027": "LK1 のまま。PRN-027 を使ったあとの版は範囲の外"
+  }
+ },
+ "options": [
+  {
+   "id": "A",
+   "name": "現状維持",
+   "new_moves_saved_positions": 0,
+   "display_only": false
+  },
+  {
+   "id": "B",
+   "name": "史料に基づく修正",
+   "new_moves_saved_positions": null,
+   "note": "直接の史料がないので今はできない"
+  },
+  {
+   "id": "C1",
+   "name": "明示選択の限定規約（個体で数える）",
+   "new_moves_saved_positions": 14,
+   "new_moves_by_audit": {
+    "TR3|pilot": 1,
+    "TR3|main": 7,
+    "TR6|pilot": 1,
+    "TR6|main": 3,
+    "TR7S|main": 2
+   },
+   "effect": "コイン 1 枚。おもてなら 1 枚引く（山札 0 なら引かない・負けではない）。記録に (本人, 新しいカード)",
+   "upper_bound": "プレイヤーの番ごとに、その番に場に出たラッキースタジアムの個体の数まで。保存局面では手札のラッキースタジアム 0 で、続けて増える手はない",
+   "scope": "「自分の番ごとに1回」のラッキースタジアム 10 枚（NIP2X-009・PRN-015〜PRN-022・neo4-106）。エネルギースタジアム・忍者ジム（RS1）・FG1・SX2・LK1・STB1 は変えない",
+   "impact": [
+    "新しい規約集合（既存の集合は固定）",
+    "judge の期待",
+    "観測の表示",
+    "方策の候補"
+   ]
+  },
+  {
+   "id": "C2",
+   "name": "明示選択の限定規約（名前で数える）",
+   "new_moves_saved_positions": 0,
+   "display_only": true,
+   "note": "候補がゲーム上できないに変わり表示されなくなる"
+  },
+  {
+   "id": "D",
+   "name": "追加検証が先",
+   "new_moves_saved_positions": 0,
+   "recommended": true,
+   "steps": [
+    "kyuura の側で当時の日本語の資料を調べる（別の作業。ガイドブックの読み直しは利用者の依頼のときだけ）",
+    "規約の範囲と数え方を決める（利用者の判断）",
+    "最小盤面で今の動きを確かめる"
+   ]
+  }
+ ],
+ "recommendation": "D",
+ "minimal_boards": [
+  {
+   "id": "M1",
+   "board": "同じ個体の再使用",
+   "now": "候補なし・STADIUM_ALREADY_USED",
+   "c1": "同じ"
+  },
+  {
+   "id": "M2",
+   "board": "同名の別個体への入れかえ",
+   "now": "unresolved_ruling・RS1",
+   "c1": "受理・コイン・記録 2 件"
+  },
+  {
+   "id": "M2b",
+   "board": "3 枚目への入れかえ",
+   "now": "RS1",
+   "c1": "受理（上限は個体の数）"
+  },
+  {
+   "id": "M3",
+   "board": "翌番",
+   "now": "使える",
+   "c1": "同じ"
+  },
+  {
+   "id": "M4",
+   "board": "相手の番",
+   "now": "相手は使える",
+   "c1": "同じ"
+  },
+  {
+   "id": "M5",
+   "board": "異なる版（PRN-015 → NIP2X-009・neo4-106）",
+   "now": "RS1",
+   "c1": "受理"
+  },
+  {
+   "id": "M6",
+   "board": "PRN-027 との入れかえ（両方向）",
+   "now": "LK1 / RS1",
+   "c1": "同じ（範囲の外）"
+  },
+  {
+   "id": "M7",
+   "board": "対象外のスタジアム（エネルギースタジアム・忍者ジム・セキチクシティジム）",
+   "now": "RS1 / RS1 / FG1",
+   "c1": "同じ"
+  },
+  {
+   "id": "M8",
+   "board": "名前の違うスタジアムへの入れかえ",
+   "now": "止めない",
+   "c1": "同じ"
+  },
+  {
+   "id": "M9",
+   "board": "同じ個体の再登場（じくうへんかん）",
+   "now": "SX2",
+   "c1": "SX2 のまま"
+  },
+  {
+   "id": "M10",
+   "board": "保存と復元",
+   "now": "保存の前と同じ",
+   "c1": "同じ"
+  },
+  {
+   "id": "M11",
+   "board": "トレーナーの使用の禁止の下",
+   "now": "STB1",
+   "c1": "STB1 のまま"
+  },
+  {
+   "id": "M12",
+   "board": "山札 0",
+   "now": "RS1",
+   "c1": "受理・引かない・負けにしない"
+  }
+ ],
+ "checks_per_board": [
+  "候補（processability・reasons・stadium）",
+  "入力（no_input・choices []）",
+  "check",
+  "submit（outcome・refusal.code）",
+  "stadium_uses_this_turn の前後",
+  "stadium_used・coin_flip・draw の並びと枚数",
+  "拒否のときの状態・乱数・ログが変わらないこと",
+  "コインを固定して両方"
+ ],
+ "unconfirmed": [
+  "当時の日本語の資料の記述",
+  "ほかのデッキ・方策での頻度",
+  "方策がその手を選ぶか・手の価値",
+  "最初の試みで「にげる」を送らなかった理由（方策の記録は読んでいない）",
+  "候補の記録に停止のコードがないこと（API の変更は別の単位）"
+ ],
+ "not_done": [
+  "規約の採用",
+  "製品コード・規約・judge・方策・GUI・版の変更",
+  "構築盤面の実行・新しい対戦・旧監査の再開",
+  "kyuura の変更",
+  "旧集計・登録済みの証跡の変更",
+  "main への push・マージ・PR"
+ ],
+ "board_verification": {
+  "date": "2026-11-23",
+  "doc_section": "11",
+  "base": {
+   "branch": "claude/rs1-lucky-stadium-replacement-design",
+   "commit": "af23af1119ff2a342e2ccdf3372f26738b478fb9"
+  },
+  "work_branch": "claude/rs1-board-verification",
+  "run_commit": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c",
+  "engine_version": "0.197.0",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-boards-run/",
+  "convention_sets": [
+   "CS-KYUURA-PLAY-TR7@1",
+   "CURRENT"
+  ],
+  "tr7_digest": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45",
+  "method": "tests.helpers.build_test_state の盤面から正規の操作（PlayTrainer・UseStadium・UsePokemonPower・ResolveDecision・EndTurn）。コインは with_coin_results。規約集合は操作の前に置く。状態の直接の書きかえなし",
+  "boards": {
+   "M1": {
+    "design_now": "候補なし・STADIUM_ALREADY_USED",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使ったあと（同じ個体の 2 回目）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": false
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "STADIUM_ALREADY_USED",
+       "category": "invalid_input",
+       "raised": "IllegalActionError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M2": {
+    "design_now": "unresolved_ruling・RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を出した直後（使う前）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 10,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 10,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M2b": {
+    "design_now": "RS1（3 枚目でも）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "C に入れかえたあと（3 枚目）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 5,
+       "card_id": "PRN-017",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M3": {
+    "design_now": "使える（記録は空）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "相手の番（相手）",
+      "turn": 8,
+      "actor": 1,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "本人の次の番",
+      "turn": 9,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 8,
+         "uses_after": [
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 8,
+         "uses_after": [
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M4": {
+    "design_now": "相手は使える",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "相手の番に相手が場の B を使う",
+      "turn": 8,
+      "actor": 1,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 1,
+         "deck_delta": -1,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           1,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M5": {
+    "design_now": "RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-015 を使い、NIP2X-009 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "NIP2X-009",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-015 を使い、neo4-106 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "neo4-106",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "neo4-106 を使い、PRN-015 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M6": {
+    "design_now": "LK1 / RS1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-015 を使い、PRN-027 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-027 を使い、PRN-015 に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "PRN-027 の同じ個体の 2 回目（LK1 の対照）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M7": {
+    "design_now": "RS1・RS1・FG1",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "エネルギースタジアム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "NIP1X-009",
+       "name": "エネルギースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "キョウの忍者ジム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PR1-067",
+       "name": "キョウの忍者ジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "セキチクシティジム A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PMCG6-086",
+       "name": "セキチクシティジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M8": {
+    "design_now": "止めない",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "ラッキースタジアムを使い、セキチクシティジムに入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PMCG6-086",
+       "name": "セキチクシティジム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           0,
+           3
+          ],
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 9,
+         "uses_after": [
+          [
+           0,
+           3
+          ],
+          [
+           0,
+           4
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M9": {
+    "design_now": "SX2",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、でこぼこジムで A がトラッシュ、［じくうへんかん］で A がもどったあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "returned_same_card": true
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M10": {
+    "design_now": "記録・候補・submit の結果が保存の前と同じ",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "保存の前（B に入れかえたあと）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "label": "復元のあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     },
+     {
+      "restore_status": "restored",
+      "state_equal": true,
+      "probes_equal": {
+       "uses_before": true,
+       "stadium": true,
+       "candidate_api": true,
+       "direct": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M11": {
+    "design_now": "STB1（RS1 より先）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、B に入れかえ、トレーナーの使用の禁止がはたらいたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "trainer_locks": [
+       {
+        "player": 0,
+        "source_player": 0,
+        "source_card": 5,
+        "effect": "PMCG6-091",
+        "created_turn": 7,
+        "expires_turn": 9,
+        "origin": "trainer"
+       }
+      ]
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "M12": {
+    "design_now": "RS1（山札 0）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を出した直後（使う前）",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [],
+      "candidate": {
+       "present": true,
+       "processability": "may_stop_later",
+       "reasons": [
+        "continuation_not_evaluated"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": null,
+       "submit": "accepted",
+       "submit_refusal": null,
+       "submit_state_unchanged": null
+      },
+      "direct": {
+       "outcome": "accepted",
+       "diagnostic_id": null,
+       "category": null,
+       "raised": null,
+       "state_unchanged": null,
+       "accepted": {
+        "heads": {
+         "events": [
+          "stadium_used",
+          "coin_flip",
+          "draw"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 0,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        },
+        "tails": {
+         "events": [
+          "stadium_used",
+          "coin_flip"
+         ],
+         "hand_delta": 0,
+         "deck_delta": 0,
+         "deck_before": 0,
+         "uses_after": [
+          [
+           0,
+           3
+          ]
+         ],
+         "lost": false
+        }
+       }
+      }
+     },
+     {
+      "label": "A を使い、B に入れかえたあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-016",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      },
+      "deck_count": 0
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O1": {
+    "design_now": "同じ個体の 2 回目が STB1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "同じ個体の 2 回目 + 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": false
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "STADIUM_ALREADY_USED",
+       "category": "invalid_input",
+       "raised": "IllegalActionError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O2": {
+    "design_now": "STB1 が LK1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "PRN-027 の 2 回目（LK1 の条件）+ 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 3,
+       "card_id": "PRN-027",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        3
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O3": {
+    "design_now": "SX2 が STB1 より先",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "SX2 + 禁止",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   },
+   "O4": {
+    "design_now": "SX2 が RS1 より先（同じ個体の記録と別の個体の記録の両方）",
+    "result": {
+     "TR7": "一致",
+     "CURRENT": "一致"
+    },
+    "problems": {
+     "TR7": [],
+     "CURRENT": []
+    },
+    "probes": [
+     {
+      "label": "A を使い、B に入れかえ、［じくうへんかん］で A がもどったあと",
+      "turn": 7,
+      "actor": 0,
+      "stadium": {
+       "card": 4,
+       "card_id": "PRN-015",
+       "name": "ラッキースタジアム",
+       "owner": 0
+      },
+      "uses_before": [
+       [
+        0,
+        4
+       ]
+      ],
+      "candidate": {
+       "present": true,
+       "processability": "unresolved_ruling",
+       "reasons": [
+        "stops_before_acceptance"
+       ],
+       "input_disclosure": "no_input",
+       "choices_format": "[]",
+       "inputs_stages": 0,
+       "check_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit": "refused",
+       "submit_refusal": "CANDIDATE_NOT_EXECUTABLE",
+       "submit_state_unchanged": true
+      },
+      "direct": {
+       "outcome": "rejected",
+       "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+       "category": "unresolved_ruling",
+       "raised": "UnsupportedError",
+       "state_unchanged": true
+      }
+     }
+    ],
+    "tr7_equals_current": true
+   }
+  },
+  "counts": {
+   "TR7": {
+    "一致": 17
+   },
+   "CURRENT": {
+    "一致": 17
+   }
+  },
+  "main_13": {
+   "TR7": {
+    "一致": 13,
+    "不一致": 0,
+    "到達不能": 0,
+    "未確認": 0
+   },
+   "CURRENT": {
+    "一致": 13,
+    "不一致": 0,
+    "到達不能": 0,
+    "未確認": 0
+   }
+  },
+  "order_measured": {
+   "O1": "STADIUM_ALREADY_USED > STB1",
+   "O2": "STB1 > LK1",
+   "O3": "SX2 > STB1",
+   "O4": "SX2 > RS1",
+   "M11": "STB1 > RS1",
+   "LK1_RS1": "構成上重ならない（場のカードの版で一方だけ）"
+  },
+  "candidate_api_codes": "候補 API は停止のコードを出さない（unresolved_ruling・stops_before_acceptance、check・submit は CANDIDATE_NOT_EXECUTABLE）。直接のコマンドの診断は候補 API の実測コードに数えない",
+  "deck_zero": "使える使用の「おもて」: coin_flip のあと draw の出来事、引いた枚数 0、負けにしない。入れかえ後の B は RS1 でコインの前に止まる",
+  "conclusion": "ラッキースタジアムの別個体だけを対象にした規約の設計へ進める（採用ではない。裁定は確定しない）。SX2・FG1・エネルギースタジアム・忍者ジムへの適用は別の判断",
+  "saved_positions": "保存記録の 14 局面は静的な照合のまま（盤面の実測とは別に数える）"
+ },
+ "convention_design": {
+  "date": "2026-11-23",
+  "doc_section": "12",
+  "status": "design_only_not_registered",
+  "base": {
+   "branch": "claude/rs1-board-verification",
+   "commit": "a3b410b1184152d56835f543a3a2d96b72e56ae0"
+  },
+  "work_branch": "claude/rs1-lucky-convention-design",
+  "implementation_reference": "bca9623e0b7859185f8ec2c703d38c0f3b2ddc0c",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-convention-design-run/",
+  "evidence_classes": {
+   "saved_positions_14": "static_match",
+   "boards_13_plus_order_4": "measured_current_behavior",
+   "convention_side": "design_expectation"
+  },
+  "correction": {
+   "section": "7",
+   "was": "RS1 は 3 つの名前（ラッキー・エネルギー・忍者ジム）で共有",
+   "now": "0.197.0 では 5 つの効果の型が _check_stadium_use_count を通る",
+   "types": {
+    "CureByDiscardingEnergyStadium": [
+     "GD4-027",
+     "PMCG5-078"
+    ],
+    "ReturnBasicEnergyStadium": [
+     "GD6-025",
+     "PMCG6-090"
+    ],
+    "CoinRetrieveBasicEnergyStadium": [
+     "NIP1X-009",
+     "neo4-101"
+    ],
+    "CoinReturnOwnerPokemonStadium": [
+     "PMCG6-086"
+    ],
+    "CoinBenchOwnerBasicFromDeckStadium": [
+     "PR1-067"
+    ],
+    "CoinHealOwnActiveStadium": [
+     "neo3-054"
+    ],
+    "LookDeckTopStadium": [
+     "neo4-112"
+    ],
+    "CoinDrawStadium": [
+     "NIP2X-009",
+     "PRN-015",
+     "PRN-016",
+     "PRN-017",
+     "PRN-018",
+     "PRN-019",
+     "PRN-020",
+     "PRN-021",
+     "PRN-022",
+     "neo4-106",
+     "PRN-027"
+    ]
+   }
+  },
+  "convention": {
+   "id": "PC-LUCKY-STADIUM-REPLACEMENT",
+   "version": 1,
+   "id_free": true,
+   "layer": "continuation",
+   "approval": "user_adoption_required",
+   "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement",
+   "other_case": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#other",
+   "text": "「自分の番ごとに1回」のラッキースタジアムをこの番に使ったあと、同じ名前の別のカードに入れかわったとき、新しいカードの効果を 1 回使える。回数はプレイヤー・自分の番・カードの個体で数える",
+   "applies_when": [
+    "場のカードの効果の型が CoinDrawStadium で once_stated が真",
+    "(使うプレイヤー, 場のカード) の記録がない（あれば SX2 か STADIUM_ALREADY_USED）",
+    "トレーナーの使用の禁止がない（あれば STB1）",
+    "この番の、そのプレイヤーの同じ名前の別のカードの記録が 1 件以上（今の RS1 の条件）",
+    "その記録のすべてのカードの効果の型が CoinDrawStadium で once_stated が真"
+   ],
+   "target_versions": [
+    "NIP2X-009",
+    "PRN-015",
+    "PRN-016",
+    "PRN-017",
+    "PRN-018",
+    "PRN-019",
+    "PRN-020",
+    "PRN-021",
+    "PRN-022",
+    "neo4-106"
+   ],
+   "target_count": 10,
+   "excluded_same_type": [
+    "PRN-027"
+   ],
+   "identification": {
+    "by": "効果の登録の型と once_stated（カード ID で分岐しない）",
+    "old_card": "stadium_uses_this_turn の uid → state.cards[uid].card_id（CardInstance は frozen）",
+    "public": "使ったときに場に表で出ていた（stadium_placed・stadium_used に uid）",
+    "save_restore": "snapshot が cards と stadium_uses_this_turn を値で保存・復元（11 章 M10）",
+    "unidentifiable_found": false,
+    "to_check": "記録のカードが非公開の場所へ移っても版だけを読むこと（secret_dependency public_only）"
+   },
+   "counting": "player × own turn × card instance",
+   "chain_example": "A 使用 → B → B 使用 → C: C も 1 回（記録 A・B がどれも対象の版）",
+   "unchanged": [
+    "番の最初の 1 回",
+    "STADIUM_ALREADY_USED（同じ個体の 2 回目）",
+    "SX2",
+    "STB1",
+    "LK1",
+    "PRN-027 を使った記録がある入れかえ（RS1・#other）",
+    "FG1",
+    "エネルギースタジアム・キョウの忍者ジム・いやしの野原・ラジオとうの RS1（#other）",
+    "名前の違うスタジアムの記録を数えないこと",
+    "候補・入力・確かめの契約",
+    "規約を選ばない集合の挙動"
+   ]
+  },
+  "paths": {
+   "shared_check": "engine.check_use_stadium → CoinDrawStadium.check_activation → _check_stadium_use_count（今の RS1 の分岐の位置）",
+   "candidate_api": {
+    "without": {
+     "processability": "unresolved_ruling",
+     "reasons": [
+      "stops_before_acceptance"
+     ],
+     "inputs": "no_input",
+     "check": "CANDIDATE_NOT_EXECUTABLE",
+     "submit": "CANDIDATE_NOT_EXECUTABLE"
+    },
+    "with": {
+     "processability": "may_stop_later",
+     "reasons": [
+      "continuation_not_evaluated"
+     ],
+     "inputs": "no_input",
+     "check": "valid",
+     "submit": "accepted"
+    }
+   },
+   "direct_command": {
+    "without": {
+     "outcome": "rejected",
+     "diagnostic_id": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "apply_command": "UnsupportedError"
+    },
+    "with": {
+     "outcome": "accepted",
+     "apply_command": "no exception"
+    }
+   },
+   "pass_condition": "候補 API の受理と直接のコマンドの受理が同じ状態から同じ結果（assert_same_as_direct の形）",
+   "record_application": "受理した処理（_use_stadium）だけで書く。確かめの結果を check_use_stadium から渡し、記録を足す前の状態で判定する"
+  },
+  "on_accept": {
+   "log_order": [
+    "stadium_used",
+    "convention_applied",
+    "coin_flip",
+    "draw（おもて）"
+   ],
+   "coin": 1,
+   "heads": "1 枚引く（手札 +1・山札 -1）",
+   "tails": "何もしない",
+   "deck_zero_heads": "draw の出来事が出る・引く枚数 0・負けにしない（11 章 M12 の今の挙動）",
+   "record": "(使ったプレイヤー, 新しい個体の uid) が 1 件増える。stadium_used と 1 対 1",
+   "convention_applied": {
+    "when": "規約が RS1 の代わりに受理を決めたときだけ 1 回",
+    "fields": [
+     "convention",
+     "version",
+     "scene",
+     "code",
+     "player",
+     "card",
+     "used_cards"
+    ],
+    "fields_missing_in_APPLIED_FIELDS": [
+     "card",
+     "used_cards"
+    ]
+   }
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR8",
+   "version": 1,
+   "id_free": true,
+   "usage": "development",
+   "members": 27,
+   "composition": "CS-KYUURA-PLAY-TR7@1 の 26 規約 + PC-LUCKY-STADIUM-REPLACEMENT@1",
+   "existing_unchanged": {
+    "CS-KYUURA-CURRENT@1": "sha256:9a9b95c689d86fa01a5b710984560efda3c08f4dbf1d7c6218094ac8666f3cee",
+    "CS-KYUURA-LEGACY-UNRECORDED@1": "sha256:abf39e6d87755507a9169537608596246f4ed9a9bf0c2e8794ffa44a97742407",
+    "CS-KYUURA-PLAY-S2A@1": "sha256:b317a3f050206577bff35ac05c87fdb4224ee28c6c0222e4e7f8460b5e9410c4",
+    "CS-KYUURA-PLAY-PO@1": "sha256:06d512194feee1857319f0c765ab2162d5259e4519895ed057d176d15fc43528",
+    "CS-KYUURA-PLAY-TR3@1": "sha256:a7b800cff2a8614d7b181cc3a8a39f68ec4e17be9ceab0a04e75a48c4358ffb4",
+    "CS-KYUURA-PLAY-TR4@1": "sha256:15af975a643c8d5844bf76e0a85ab20020ca331b01c463aeb344047806435552",
+    "CS-KYUURA-PLAY-TR6@1": "sha256:aa53bc52cfc1d2193a3e1692efc585cf7daef23251c5d08dd09d7e554cf6ead2",
+    "CS-KYUURA-PLAY-TR7@1": "sha256:4ee438eac0d76a1ec4fed207764fb0741c21b50f138ae3c699d73d7d6d828c45"
+   },
+   "all_existing_pinned_equal_computed": true
+  },
+  "verification_table": [
+   {
+    "id": "V1",
+    "board": "PRN-015 A を使い PRN-016 B に入れかえ",
+    "without": "RS1",
+    "with": "受理・convention_applied 1"
+   },
+   {
+    "id": "V2",
+    "board": "V1 のあと B を使い PRN-017 C に入れかえ",
+    "without": "RS1",
+    "with": "C を受理・convention_applied 通算 2・C の前の記録 A・B"
+   },
+   {
+    "id": "V3",
+    "board": "B の 2 回目",
+    "without": "—",
+    "with": "候補なし・STADIUM_ALREADY_USED"
+   },
+   {
+    "id": "V4",
+    "board": "A が［じくうへんかん］でもどる（B を使う／使わない）",
+    "without": "SX2",
+    "with": "SX2"
+   },
+   {
+    "id": "V5",
+    "board": "対象の版の中の異版（PRN-015→NIP2X-009・→neo4-106・neo4-106→PRN-015・PRN-016→PRN-022）",
+    "without": "RS1",
+    "with": "受理"
+   },
+   {
+    "id": "V6",
+    "board": "PRN-027 の対照 (a)(b)(c)",
+    "without": "LK1 / RS1 / RS1",
+    "with": "LK1 / RS1（#other）/ 受理"
+   },
+   {
+    "id": "V7",
+    "board": "翌番・相手の番",
+    "without": "使える",
+    "with": "使える・convention_applied なし"
+   },
+   {
+    "id": "V8",
+    "board": "保存と復元（V1 の直後・V2 の C の直後）",
+    "without": "前後で同じ（RS1）",
+    "with": "前後で同じ（受理）・規約集合 TR8@1"
+   },
+   {
+    "id": "V9",
+    "board": "先行する停止（STB1・2 回目＋禁止・SX2＋禁止）",
+    "without": "STB1 / STADIUM_ALREADY_USED / SX2",
+    "with": "同じ"
+   },
+   {
+    "id": "V10",
+    "board": "山札 0・コインの両方",
+    "without": "RS1（コインの前）",
+    "with": "受理・おもては draw の出来事 0 枚・負けなし・うらはコインだけ"
+   },
+   {
+    "id": "V11",
+    "board": "範囲の外（エネルギースタジアム・忍者ジム・いやしの野原・ラジオとう・セキチクシティジム）",
+    "without": "RS1×4・FG1",
+    "with": "同じ"
+   },
+   {
+    "id": "V12",
+    "board": "名前の違うスタジアムをはさむ（ラッキー A → セキチク使用 → ラッキー B）",
+    "without": "RS1",
+    "with": "受理"
+   },
+   {
+    "id": "V13",
+    "board": "集合の固定（CURRENT・既定・TR7@1）",
+    "without": "11 章と同じ",
+    "with": "変わらない"
+   }
+  ],
+  "check_items": [
+   "候補（区分・理由・入力）",
+   "check・submit",
+   "直接のコマンドの結果と診断",
+   "コイン（固定して両方）と公開ログ（convention_applied の有無と回数）",
+   "使用の記録の前後",
+   "拒否のときの状態・ログ・乱数の不変"
+  ],
+  "saved_positions_expected": {
+   "class": "static",
+   "positions": 14,
+   "new_moves_each": 1,
+   "heads_draw_positions": 13,
+   "deck_zero_positions": 1,
+   "chain_possible": 0,
+   "known": [
+    "コイン 1 枚と最大 1 枚のドロー",
+    "手札にラッキースタジアムなし"
+   ],
+   "untested": [
+    "方策がその手を選ぶか",
+    "その後の展開・勝ち負け・完走率",
+    "TR8@1 の対戦での頻度",
+    "14 局面は TR3・TR6・TR7@1 の局で TR8@1 の局ではない"
+   ]
+  },
+  "decisions_before_adoption": [
+   "採るか（個体で数える・ラッキースタジアムだけの範囲）",
+   "当時の資料の調査を先にするか",
+   "SX2・FG1・ほかの 4 つの型への適用（別の判断）"
+  ],
+  "technical_tasks": [
+   "RS1 の事例の分割（CASES・convention_records.json・台帳の数え・停止の方針の文書の再生成）",
+   "APPLIED_FIELDS に card・used_cards",
+   "確かめの結果を受理の処理へ渡す（確かめで記録しない・記録を足す前に判定）",
+   "固定のダイジェストの追加と既存の値の不変のテスト・IMPLEMENTED_CONTINUATIONS",
+   "judge が規約で受理した use_stadium と convention_applied を扱うか（実測していない）",
+   "旧個体の版の判定が公開の情報だけによることの構築盤面での確認",
+   "候補 API は停止のコードを出さない（規約なしの検証は直接の診断と候補の区分を別に照らす）"
+  ],
+  "not_done": [
+   "規約・集合の登録と実装",
+   "構築盤面・対戦の実行",
+   "史料の追加の調査",
+   "judge・方策・GUI・版の変更",
+   "main への push・マージ・PR"
+  ]
+ },
+ "tr8_implementation": {
+  "date": "2026-11-23",
+  "doc_section": "13",
+  "document": "docs/play-convention-tr8-v0.198.md",
+  "status": "implemented_in_development_set",
+  "base": {
+   "branch": "claude/rs1-lucky-convention-design",
+   "commit": "a1bd346d50c55776c841a2ea21acf28417c91cfc"
+  },
+  "work_branch": "claude/rs1-lucky-convention-tr8",
+  "commits": {
+   "implementation": "0350725f8f543f37fa89d609e7bd532ae6852879",
+   "generated_followup": "44459cfc51bf1c547940350dd3a62e79a6a7e1e8",
+   "version_pinned_distribution": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0"
+  },
+  "engine_version": "0.198.0",
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-rs1-tr8-run/",
+  "convention": {
+   "id": "PC-LUCKY-STADIUM-REPLACEMENT",
+   "version": 1,
+   "digest": "sha256:5b5d1b4f7dfa52299cb1502957d9d47262c7e47e684e09147a0d9c886cc4a017",
+   "scene": "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT#lucky-once-stated-replacement"
+  },
+  "set": {
+   "id": "CS-KYUURA-PLAY-TR8",
+   "version": 1,
+   "members": 27,
+   "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "default_set": "CS-KYUURA-CURRENT@1"
+  },
+  "existing_sets_unchanged": true,
+  "target_versions_by_registered_type": [
+   "NIP2X-009",
+   "PRN-015",
+   "PRN-016",
+   "PRN-017",
+   "PRN-018",
+   "PRN-019",
+   "PRN-020",
+   "PRN-021",
+   "PRN-022",
+   "neo4-106"
+  ],
+  "applied_record": {
+   "order": [
+    "stadium_used",
+    "convention_applied",
+    "coin_flip",
+    "draw（おもて）"
+   ],
+   "fields": [
+    "player",
+    "card",
+    "used_cards"
+   ],
+   "used_cards": "版（card_id）の並び。uid は書かない（設計 12.5 との差。先に使ったカードが手札・山札にある場合に uid を新しいログに書かないため）"
+  },
+  "identity_difference": {
+   "diagnosis": "RS1 の診断のコード表の項目は事例が 2 つになり case_id が null・case_status が not_identified（diagnostic_id・区分・文は同じ）",
+   "behavior_digest": [
+    "c01995787f67084193dc0fa3c9ba95a11c9496ad97f4a756385381572c12bf4f",
+    "c9912dd81eca81f572030c32b8de0993820b53eb1e07f11b43186cd2361b8b06"
+   ],
+   "instrumentation_digest": [
+    "13c773a8892efc0736d8896544d2f29bd8d6ce94a534502a852daabf07eba27a",
+    "61f09812b1a330ad14c0080c41612c5c405a7fec3ae0a42609981bc39270ff67"
+   ]
+  },
+  "baseline_0197": "CURRENT・TR7 の対象の盤面は直接のコマンドで RS1・候補 API で unresolved_ruling と CANDIDATE_NOT_EXECUTABLE。TR8 は登録がない（RS1 の確かめに数えない）",
+  "v_results": {
+   "counts": {
+    "CURRENT": {
+     "一致": 12
+    },
+    "TR7": {
+     "一致": 12
+    },
+    "TR8": {
+     "一致": 12
+    }
+   },
+   "hidden_zone": {
+    "CURRENT": "一致",
+    "TR7": "一致",
+    "TR8": "一致"
+   },
+   "v13": "一致",
+   "tr8_codes": {
+    "V1": [
+     "accepted"
+    ],
+    "V2": [
+     "accepted",
+     "B を使った（受理）",
+     "accepted"
+    ],
+    "V3": [
+     "STADIUM_ALREADY_USED"
+    ],
+    "V4": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+    ],
+    "V5": [
+     "accepted",
+     "accepted",
+     "accepted",
+     "accepted"
+    ],
+    "V6": [
+     "UNRESOLVED_LUCKY_STADIUM_UNSTATED_REPEAT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "accepted"
+    ],
+    "V7": [
+     "accepted",
+     "accepted"
+    ],
+    "V8": [
+     "accepted",
+     "accepted",
+     "V1 の入れかえの直後",
+     "accepted",
+     "accepted",
+     "B を使い C に入れかえた直後"
+    ],
+    "V9": [
+     "UNRESOLVED_STADIUM_ACTIVATION_UNDER_TRAINER_BAN",
+     "STADIUM_ALREADY_USED",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_RETURN"
+    ],
+    "V10": [
+     "accepted"
+    ],
+    "V11": [
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_STADIUM_REUSE_AFTER_REPLACEMENT",
+     "UNRESOLVED_FUCHSIA_GYM_AFTER_REPLACEMENT"
+    ],
+    "V12": [
+     "accepted"
+    ]
+   }
+  },
+  "judge": {
+   "CURRENT": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    }
+   ],
+   "TR7": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "end_turn",
+      "outcome": "accepted"
+     },
+     "verdict": null,
+     "single_runner_verdict": null,
+     "undetermined": 0
+    }
+   ],
+   "TR8": [
+    {
+     "coin": "HEADS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "use_stadium",
+      "outcome": "accepted"
+     },
+     "verdict": "expected",
+     "single_runner_verdict": "expected",
+     "undetermined": 0
+    },
+    {
+     "coin": "TAILS",
+     "first_attempt": {
+      "actor": 0,
+      "n": 1,
+      "kind": "use_stadium",
+      "outcome": "accepted"
+     },
+     "verdict": "expected",
+     "single_runner_verdict": "expected",
+     "undetermined": 0
+    }
+   ]
+  },
+  "checks_version": {
+   "tests.test_arcanine_name_migration_v0_123": 0,
+   "tests.test_baby_rules_evolution_v0_114": 0,
+   "tests.test_blaines_quiz_heights_v0_129": 0,
+   "tests.test_catalog_scope_migration_v0_128": 0,
+   "tests.test_damage_reactions_poison_sleep_v0_119": 0,
+   "tests.test_deferred_shortage_user_promos_v0_127": 0,
+   "tests.test_energy_movement_attachment_devolution_v0_116": 0,
+   "tests.test_flash_faceup_deck_v0_126": 0,
+   "tests.test_fossil_basic_virtual_attacks_v0_120": 0,
+   "tests.test_retreat_return_active_powers_v0_117": 0,
+   "tests.test_spread_damage_allocation_v0_115": 0,
+   "tests.test_sudden_death_v0_134": 0,
+   "tests.test_unbounded_coins_heal_allocation_v0_118": 0,
+   "tests.test_unown_fossil_retreat_reactions_v0_122": 0,
+   "tests.test_implementation_assumptions": 0,
+   "tests.test_play_convention_tr8_v0_198": 0,
+   "tests.test_legal_actions_u7_5d": 0,
+   "tests.test_neo_trainer_components_v0_80": 0,
+   "tests.test_instant_trainers_v0_55": 0,
+   "tests.test_play_convention_tr7_v0_197": 0,
+   "tests.test_transparency_v0_9": 0,
+   "tests.test_event_kernel_v0_14": 0,
+   "tests.test_existing_effect_pokemon_v0_28": 0,
+   "tests.test_existing_effect_pokemon_v0_29": 0,
+   "tests.test_existing_elements_v0_17a": 0,
+   "tests.test_barrier_resume_coin_bonus_v0_34": 0,
+   "tests.test_bench_switch_combined_v0_38": 0,
+   "tests.test_cd4_opponent_energy_coins_v0_33": 0,
+   "tests.test_coin_failure_status_flight_v0_107": 0,
+   "tests.test_conditional_damage_energy_v0_45": 0,
+   "tests.test_heal_counter_status_v0_41": 0,
+   "tests.test_selected_target_damage_v0_89": 0,
+   "tests.test_power_decisions_v0_42": 0,
+   "tests.test_legacy_reference_v0_16": 0,
+   "tests.test_diagnostics_adapter_v0_152": 0,
+   "tests.test_po_boundaries_v0_146": 0,
+   "tests.test_sc2_integrity_v0_144": 0,
+   "tests.test_haunter_games_v0_9": 0,
+   "tests.test_moltres_games_v0_12": 0,
+   "tests.test_declared_entry_powers_v0_43_games": 0,
+   "tests.test_power_decisions_v0_42_games": 0,
+   "tests.test_play_convention_tr6_v0_196": 0,
+   "tests.test_play_convention_tr4_v0_195": 0,
+   "tests.test_play_convention_tr3_v0_186": 0,
+   "tests.test_conventions_v0_142": 0,
+   "tests.test_play_policy_s2a_v0_143": 0,
+   "tests.test_poison_mist_play_po_v0_145": 0,
+   "tests.test_lockstep_conventions_v0_146": 0,
+   "tests.test_replay_record_v0_153": 0,
+   "tests.test_state_snapshot_v0_157": 0,
+   "tests.test_stop_policy_classification": 0,
+   "tests.test_stop_policy_generator_tr3_v0_186": 0,
+   "tests.test_stop_policy_token_roles_v0_186": 0,
+   "tests.test_play_policy_family_plan": 0,
+   "tests.test_implementation_identity_design": 0,
+   "tests.test_energy_retrieval_v0_23": 0,
+   "tests.test_search_recovery_trainers_v0_73": 0,
+   "tests.test_reprint_text_variants_v0_71": 0,
+   "tests.test_research_links_v0_18e": 0,
+   "tests.test_unresolved_boundaries_v0_4e": 0,
+   "tests.test_haunter_line_v0_9": 0,
+   "tests.test_recover_zero_energy_premise_v0_187": 0,
+   "tests.test_slowking_mind_games_v0_132": 0,
+   "tests.test_stadiums_v0_57": 0,
+   "tests.test_stadium_reuse_special_energy_v0_58": 0,
+   "tests.test_remaining_stadiums_v0_74": 0,
+   "tests.test_legal_actions_decision_audit": 0,
+   "tests.test_legal_actions_u7_4": 0,
+   "tests.test_preset_decks_v0_20": 0,
+   "tests.test_verification_ai_er9_evidence": 0,
+   "tests.test_verification_ai_batch_judge": 0,
+   "tests.test_verification_ai_recover_zero_r10": 0,
+   "tests.test_verification_ai_lost_target_p1": 0,
+   "tests.test_verification_ai_lost_target_p2": 0,
+   "tests.test_verification_ai_lost_target_p3": 0,
+   "tests.test_verification_ai_observation": 0,
+   "check_implementation_assumptions_check": 0,
+   "check_implementation_assumptions_sites": 0,
+   "check_normalization_revalidation_check": 0,
+   "build_convention_records_check": 0,
+   "build_diagnostic_catalog_check": 0,
+   "build_diagnostics_replay_api_design_check": 0,
+   "build_implementation_identity_design_check": 0,
+   "build_legal_actions_api_design_check": 0,
+   "build_legal_actions_u7_5_design_check": 0,
+   "build_play_policy_family_plan_check": 0,
+   "build_play_policy_s2a_spec_check": 0,
+   "build_poison_mist_play_policy_spec_check": 0,
+   "build_state_snapshot_design_check": 0,
+   "build_stop_policy_classification_check": 0,
+   "legal_actions_decision_sites_check": 0,
+   "git_status_unchanged": true
+  },
+  "distribution": {
+   "commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+   "wheel": "kyuura_engine-0.198.0-py3-none-any.whl",
+   "wheel_sha256": "c225b612e046859136b26356e3ff95c3b5643dd7ce2d929f5f34f89e5b4d7890",
+   "package_files": 62,
+   "check_distribution": 0,
+   "pip_install": 0,
+   "smoke_result_sha256": "9c02221adb38d0516374230d4f535a5127409130d9e7bd1e434c35a62d363d18",
+   "smoke_problems": 0,
+   "identity_equals_source": true,
+   "direct_url": true
+  },
+  "saved_positions": "14 局面は静的な照合のまま（TR8 で再現していない）。通常の対戦での到達・方策の選択・完走は未確認",
+  "not_done": [
+   "通常の対戦・新しいバッチ",
+   "旧監査の再開",
+   "GUI・方策・judge の変更",
+   "main への push・マージ・PR"
+  ]
+ }
+}

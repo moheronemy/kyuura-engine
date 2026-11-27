@@ -1,0 +1,627 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-damage-swap-loop-experiment.md",
+ "date": "2026-11-24",
+ "base": "3fd20a8a5070bd7e6f56ab09a625ad4dab9c119f",
+ "branch": "claude/tr8-swap-loop-rules-v3",
+ "policy_commit": "001210fa09dfd0e40512985fe95cf0a51cd5150b",
+ "runtime": {
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "engine": "0.198.0",
+  "engine_identity_equal_to_m1": true,
+  "tool": {
+   "version": 14,
+   "digest": "aa4f9e89a8facd28e49ec34455aab1f1cfd1b4b9d2f65ec389fae018446cea43",
+   "previous": [
+    13,
+    "be95aa1e5c6fc5ee45755f9741d7fbbda7ddea5567b7968b7f44ecadd4935a41"
+   ]
+  },
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "decks": "L67-U vs L67-U (C1)",
+  "profile": "deep",
+  "observation": true,
+  "prestop": true,
+  "limits": {
+   "accepted": 1000,
+   "operations": 2000,
+   "turns": 200,
+   "seconds": 120.0
+  }
+ },
+ "policy": {
+  "mode": "rules-v3",
+  "rules_version": 3,
+  "distribution": "rules-v3-candidate+uniform-stage",
+  "default": false,
+  "base": "rules-v2 (ranks, ties, input-level repeat suppression unchanged)",
+  "target": "use_power with power.name_ja ダメージスワップ",
+  "key": "kind + holder pokemon reference (candidate id, zone, inputs excluded)",
+  "compare": "own view response, canonical JSON, outside identifiers (request_id, operation_id) removed",
+  "run": "same actor, same turn, consecutive accepted target powers (accept serial must be contiguous)",
+  "on_return": "candidates used from the latest matching view to now -> rank 7 (after end_turn) until turn change",
+  "cut": "any other accepted operation (own or other actor)",
+  "reset": "turn change clears run and demotion",
+  "no_view": "run without view is not demoted",
+  "no_history": "rejection / unbuildable / suppression do not advance",
+  "no_alternative": "rank-7 candidates remain selectable",
+  "reason_tag": "rule3:... (:loop_demotedN when demoted candidates are present)"
+ },
+ "tests": {
+  "new_module": "tests.test_verification_ai_rules_v3",
+  "new_tests": 18,
+  "verification_ai_modules": 26,
+  "verification_ai_tests": 454,
+  "failures": 1,
+  "failure": "tests.test_verification_ai_prestop LimitTest.test_rows_1mib_counts_utf8_bytes_and_newlines_before_writing: fails in the full run on the base 3fd20a8 too (436 tests, same 1 failure); passes alone; row bytes include a measured elapsed time",
+  "rules_v2_fingerprint_equal_to_base": true,
+  "rules_v2_fingerprint": {
+   "rules-v2-s13": [
+    387,
+    "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772"
+   ],
+   "rules-v2-l67u-s9023": [
+    597,
+    "c83fde59d83cb2c5c0c7094f2e1f49aa7c83a221cca6e59bd580276ff94ec9ce"
+   ]
+  },
+  "plan_identity": {
+   "ok": true,
+   "r2_r3_top_diff": [
+    "batch_id",
+    "written"
+   ],
+   "m1_r2_top_diff": [
+    "batch_id",
+    "commits.tool",
+    "identity.tool.digest",
+    "identity.tool.version",
+    "limits.max_games",
+    "written"
+   ]
+  }
+ },
+ "plans": {
+  "vai-batch-tr8v3-r2": "3749b531d68998fd4bd23705ef1982f4351ec587d84005f35f280bca141e7aec",
+  "vai-batch-tr8v3-r3": "321939236ff119a0d029e90a0dd6791508f575b66c38fd289596e6c76bb0c9d2"
+ },
+ "offline_detector_on_m1": {
+  "s9023": {
+   "accepted": 1000,
+   "swaps": 775,
+   "first": {
+    "actor": "1",
+    "position": 85,
+    "turn": [
+     0,
+     19
+    ],
+    "cycle_length": 2
+   }
+  },
+  "s9022": {
+   "accepted": 175,
+   "swaps": 38,
+   "first": {
+    "actor": "0",
+    "position": 133,
+    "turn": [
+     0,
+     32
+    ],
+    "cycle_length": 2
+   }
+  },
+  "s9024": {
+   "accepted": 122,
+   "swaps": 9,
+   "first": {
+    "actor": "0",
+    "position": 76,
+    "turn": [
+     0,
+     19
+    ],
+    "cycle_length": 2
+   }
+  }
+ },
+ "games": {
+  "planned": 6,
+  "started": 6,
+  "complete": 6,
+  "gates_go": 6,
+  "policy_stop": 0,
+  "aborted": false
+ },
+ "pairs": [
+  {
+   "seed": 9023,
+   "role": "primary",
+   "old_m1": {
+    "game_id": "g003-rules-v2-s9023",
+    "termination": "limit_accepted",
+    "turns": 73,
+    "accepted": 1000,
+    "swaps_accepted": 775
+   },
+   "old_vs_rules_v2": {
+    "action_sequence_equal": true,
+    "contract_sequence_equal": true,
+    "attempts_equal": true,
+    "attempts": [
+     1563,
+     1563
+    ],
+    "termination_equal": true,
+    "accepted_equal": true,
+    "swaps_equal": true,
+    "first_attempt_difference": null
+   },
+   "rules_v2": {
+    "game_id": "g001-rules-v2-s9023",
+    "termination": "limit_accepted",
+    "turns": 73,
+    "accepted": 1000,
+    "swaps_chosen": 932,
+    "swaps_accepted": 775,
+    "returns": 601,
+    "classification": {
+     "reversal": 174,
+     "net": 173,
+     "cycle": 427,
+     "undetermined:truncated": 1
+    },
+    "net_led_to": {
+     "end_turn": 167,
+     "other:retreat": 1,
+     "other:play_trainer": 4,
+     "other:reveal_face_down": 1
+    },
+    "end_turn_accepted": 43,
+    "attack_accepted": 29,
+    "policy_suppressed": 161,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 0,
+    "loop_detections_by_actor": {},
+    "choices_with_loop_demoted": 0,
+    "after_loop_demotion": {},
+    "end_turn_after_loop_demotion": 0,
+    "attack_after_loop_demotion": 0,
+    "outer_seconds": 75.628
+   },
+   "rules_v3": {
+    "game_id": "g001-rules-v3-s9023",
+    "termination": "game_over",
+    "turns": 35,
+    "accepted": 141,
+    "swaps_chosen": 11,
+    "swaps_accepted": 11,
+    "returns": 8,
+    "classification": {
+     "reversal": 4,
+     "cycle": 4,
+     "net": 3
+    },
+    "net_led_to": {
+     "other:play_trainer": 3
+    },
+    "end_turn_accepted": 9,
+    "attack_accepted": 26,
+    "policy_suppressed": 4,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 3,
+    "loop_detections_by_actor": {
+     "1": 3
+    },
+    "choices_with_loop_demoted": 6,
+    "after_loop_demotion": {
+     "retreat:unbuildable": 3,
+     "end_turn:accepted": 3
+    },
+    "end_turn_after_loop_demotion": 3,
+    "attack_after_loop_demotion": 0,
+    "first_detection": {
+     "episode": 86,
+     "actor": 1,
+     "cycle_length": 2,
+     "demoted_this_turn": 1,
+     "newly_demoted": [
+      "2d927d9cdf26c2ae"
+     ],
+     "position": 85,
+     "returned_to": 0,
+     "run_accepts": 2,
+     "turn": [
+      0,
+      19
+     ],
+     "view": "3a6f8d8a9cdb4280",
+     "next_attempts": [
+      {
+       "n": 97,
+       "kind": "retreat",
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": {
+        "stage": 2,
+        "unbuildable": "total_units_unreachable"
+       },
+       "outcome": null
+      },
+      {
+       "n": 98,
+       "kind": "end_turn",
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ]
+    },
+    "outer_seconds": 19.871
+   },
+   "first_divergence_v2_v3": {
+    "attempt_index": 96,
+    "attempt_n": 97,
+    "position": 85,
+    "r3": {
+     "actor": 1,
+     "kind": "retreat",
+     "reason": "rule3:priority5:retreat:loop_demoted1",
+     "outcome": null
+    },
+    "r2": {
+     "actor": 1,
+     "kind": "use_power",
+     "reason": "rule2:priority5:use_power:tie2",
+     "outcome": "accepted"
+    },
+    "r3_reason_has_loop_demoted": true,
+    "r3_any_loop_demoted_before": false,
+    "at_or_after_first_detection": true
+   },
+   "judgement": {
+    "detection": true,
+    "returns_reduced": true,
+    "game_over": true
+   }
+  },
+  {
+   "seed": 9022,
+   "role": "regression",
+   "old_m1": {
+    "game_id": "g002-rules-v2-s9022",
+    "termination": "game_over",
+    "turns": 38,
+    "accepted": 175,
+    "swaps_accepted": 38
+   },
+   "old_vs_rules_v2": {
+    "action_sequence_equal": true,
+    "contract_sequence_equal": true,
+    "attempts_equal": true,
+    "attempts": [
+     230,
+     230
+    ],
+    "termination_equal": true,
+    "accepted_equal": true,
+    "swaps_equal": true,
+    "first_attempt_difference": null
+   },
+   "rules_v2": {
+    "game_id": "g002-rules-v2-s9022",
+    "termination": "game_over",
+    "turns": 38,
+    "accepted": 175,
+    "swaps_chosen": 51,
+    "swaps_accepted": 38,
+    "returns": 20,
+    "classification": {
+     "net": 18,
+     "reversal": 7,
+     "cycle": 13
+    },
+    "net_led_to": {
+     "end_turn": 18
+    },
+    "end_turn_accepted": 17,
+    "attack_accepted": 21,
+    "policy_suppressed": 17,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 0,
+    "loop_detections_by_actor": {},
+    "choices_with_loop_demoted": 0,
+    "after_loop_demotion": {},
+    "end_turn_after_loop_demotion": 0,
+    "attack_after_loop_demotion": 0,
+    "outer_seconds": 21.268
+   },
+   "rules_v3": {
+    "game_id": "g002-rules-v3-s9022",
+    "termination": "game_over",
+    "turns": 46,
+    "accepted": 172,
+    "swaps_chosen": 22,
+    "swaps_accepted": 19,
+    "returns": 7,
+    "classification": {
+     "net": 12,
+     "reversal": 4,
+     "cycle": 3
+    },
+    "net_led_to": {
+     "end_turn": 12
+    },
+    "end_turn_accepted": 21,
+    "attack_accepted": 25,
+    "policy_suppressed": 7,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 3,
+    "loop_detections_by_actor": {
+     "0": 3
+    },
+    "choices_with_loop_demoted": 6,
+    "after_loop_demotion": {
+     "retreat:unbuildable": 3,
+     "end_turn:accepted": 3
+    },
+    "end_turn_after_loop_demotion": 3,
+    "attack_after_loop_demotion": 0,
+    "first_detection": {
+     "episode": 134,
+     "actor": 0,
+     "cycle_length": 2,
+     "demoted_this_turn": 1,
+     "newly_demoted": [
+      "3b2225e2b6617233"
+     ],
+     "position": 133,
+     "returned_to": 1,
+     "run_accepts": 3,
+     "turn": [
+      0,
+      32
+     ],
+     "view": "ba0ec2e86415f012",
+     "next_attempts": [
+      {
+       "n": 160,
+       "kind": "retreat",
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": {
+        "stage": 2,
+        "unbuildable": "total_units_unreachable"
+       },
+       "outcome": null
+      },
+      {
+       "n": 161,
+       "kind": "end_turn",
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ]
+    },
+    "outer_seconds": 20.95
+   },
+   "first_divergence_v2_v3": {
+    "attempt_index": 160,
+    "attempt_n": 161,
+    "position": 133,
+    "r3": {
+     "actor": 0,
+     "kind": "end_turn",
+     "reason": "rule3:priority6:end_turn:loop_demoted1",
+     "outcome": "accepted"
+    },
+    "r2": {
+     "actor": 0,
+     "kind": "use_power",
+     "reason": "rule2:priority5:use_power",
+     "outcome": "accepted"
+    },
+    "r3_reason_has_loop_demoted": true,
+    "r3_any_loop_demoted_before": true,
+    "at_or_after_first_detection": true
+   },
+   "judgement": {
+    "detection": true,
+    "returns_reduced": true,
+    "game_over": true
+   }
+  },
+  {
+   "seed": 9024,
+   "role": "regression",
+   "old_m1": {
+    "game_id": "g004-rules-v2-s9024",
+    "termination": "game_over",
+    "turns": 34,
+    "accepted": 122,
+    "swaps_accepted": 9
+   },
+   "old_vs_rules_v2": {
+    "action_sequence_equal": true,
+    "contract_sequence_equal": true,
+    "attempts_equal": true,
+    "attempts": [
+     135,
+     135
+    ],
+    "termination_equal": true,
+    "accepted_equal": true,
+    "swaps_equal": true,
+    "first_attempt_difference": null
+   },
+   "rules_v2": {
+    "game_id": "g003-rules-v2-s9024",
+    "termination": "game_over",
+    "turns": 34,
+    "accepted": 122,
+    "swaps_chosen": 13,
+    "swaps_accepted": 9,
+    "returns": 8,
+    "classification": {
+     "reversal": 8,
+     "net": 1
+    },
+    "net_led_to": {
+     "other:retreat": 1
+    },
+    "end_turn_accepted": 11,
+    "attack_accepted": 23,
+    "policy_suppressed": 4,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 0,
+    "loop_detections_by_actor": {},
+    "choices_with_loop_demoted": 0,
+    "after_loop_demotion": {},
+    "end_turn_after_loop_demotion": 0,
+    "attack_after_loop_demotion": 0,
+    "outer_seconds": 20.091
+   },
+   "rules_v3": {
+    "game_id": "g003-rules-v3-s9024",
+    "termination": "game_over",
+    "turns": 36,
+    "accepted": 117,
+    "swaps_chosen": 5,
+    "swaps_accepted": 5,
+    "returns": 4,
+    "classification": {
+     "reversal": 4,
+     "net": 1
+    },
+    "net_led_to": {
+     "end_turn": 1
+    },
+    "end_turn_accepted": 12,
+    "attack_accepted": 24,
+    "policy_suppressed": 0,
+    "rejected": 0,
+    "anomalies": 0,
+    "loop_detections": 2,
+    "loop_detections_by_actor": {
+     "0": 2
+    },
+    "choices_with_loop_demoted": 6,
+    "after_loop_demotion": {
+     "retreat:unbuildable": 3,
+     "play_trainer:accepted": 1,
+     "end_turn:accepted": 2
+    },
+    "end_turn_after_loop_demotion": 2,
+    "attack_after_loop_demotion": 0,
+    "first_detection": {
+     "episode": 77,
+     "actor": 0,
+     "cycle_length": 2,
+     "demoted_this_turn": 1,
+     "newly_demoted": [
+      "884556539c190a04"
+     ],
+     "position": 76,
+     "returned_to": 0,
+     "run_accepts": 2,
+     "turn": [
+      0,
+      19
+     ],
+     "view": "71223e2b99d24fc1",
+     "next_attempts": [
+      {
+       "n": 80,
+       "kind": "retreat",
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": {
+        "stage": 2,
+        "unbuildable": "total_units_unreachable"
+       },
+       "outcome": null
+      },
+      {
+       "n": 81,
+       "kind": "play_trainer",
+       "reason": "rule3:priority5:play_trainer:loop_demoted1",
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ]
+    },
+    "outer_seconds": 19.783
+   },
+   "first_divergence_v2_v3": {
+    "attempt_index": 81,
+    "attempt_n": 82,
+    "position": 77,
+    "r3": {
+     "actor": 0,
+     "kind": "retreat",
+     "reason": "rule3:priority5:retreat:loop_demoted1",
+     "outcome": null
+    },
+    "r2": {
+     "actor": 0,
+     "kind": "use_power",
+     "reason": "rule2:priority5:use_power:tie2",
+     "outcome": "accepted"
+    },
+    "r3_reason_has_loop_demoted": true,
+    "r3_any_loop_demoted_before": true,
+    "at_or_after_first_detection": true
+   },
+   "judgement": {
+    "detection": true,
+    "returns_reduced": true,
+    "game_over": true
+   }
+  }
+ ],
+ "regression_9024_turn23": {
+  "unit_test": "test_net_move_then_retreat_then_attack: pass",
+  "old_scene_in_rules_v3_game": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "note": "rules-v3 diverged at turn 19; on turn 23 the same net move (active 60->50) happened but retreat was unbuildable; the old scene did not appear -> unconfirmed in a normal game"
+ },
+ "budget": {
+  "tool_seconds": 75.061,
+  "outer_seconds": 177.591,
+  "evidence_bytes": 145552450,
+  "limits": {
+   "tool_seconds": 1800.0,
+   "outer_seconds": 3600.0,
+   "evidence_bytes": 2147483648
+  }
+ },
+ "open_issues": [
+  "3 seeds only; no general completion rate",
+  "9023 completion follows a divergence at turn 19; the turn 41+ stall of rules-v2 never arose, so rules-v3 was not observed inside that stall",
+  "each detection needs one return first (8 returns remain in 9023)",
+  "target is the power name; other repeatable powers are not covered",
+  "9024 turn 23 legit pattern confirmed by unit test only",
+  "rules-v3 not default; adoption needs a wider batch"
+ ],
+ "not_done": [
+  "rules-v3 as default",
+  "engine / TR8 / legality / limits / judge change",
+  "version bump of the engine",
+  "push to main / merge / PR"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8-swap-v3-run/ (+ vai-batch-tr8v3-r2, vai-batch-tr8v3-r3)",
+ "failures": [
+  "F1: full verification_ai test run fails 1 pre-existing prestop byte-count test (also on base)",
+  "F2: driver derivation first written inline with unescaped Windows paths (nothing written for the two ps1); rewritten as derive_drivers_tr8v.py",
+  "F3: exec.json first written with doubled backslashes; rewritten before use"
+ ],
+ "followup": "docs/tr8-rules-v3-fresh-seed-comparison.md"
+}

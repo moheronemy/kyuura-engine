@@ -1,0 +1,318 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-rules-v9-refused-input-experiment.md",
+ "date": "2026-11-27",
+ "base": "10e203d647200f473f329a279d2b198a09e8d6ab",
+ "branch": "claude/tr8-rules-v9-refused-input",
+ "policy_commit": "ef3891b561a07d4161252b1f01ddcd9c8ef3b697",
+ "runtime": {
+  "engine": "0.198.0",
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "tool_version": 20,
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "convention_digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+  "pyc_cache_files": 185,
+  "identity_diff_vs_previous_unit": [
+   "engine_file path",
+   "tool digest",
+   "tool_version 19 -> 20"
+  ]
+ },
+ "policy": {
+  "mode": "rules-v9",
+  "explicit_only": true,
+  "base_policy": "rules-v8",
+  "rules_version": 9,
+  "distribution": "rules-v9-candidate+uniform-stage",
+  "refused_rank": 8,
+  "refused_input_avoidance": {
+   "candidate": "rank 8 (after end_turn and rank 7) only when every buildable input of the fetched inputs is refused; candidate kept; when only such candidates remain it is chosen, nothing is sent, and the existing draws_per_position limit applies",
+   "inputs": "for a candidate with refused signatures, every buildable input is enumerated (actions.enumerate_inputs) and the choice is drawn uniformly from the unrefused ones (other inputs of the same attack stay selectable)",
+   "key": "same actor, same episode (position); (candidate identity without ids, canonical input meaning signature); option ids are not used",
+   "not_evaluable": "enumeration limit or a restriction from rules-v4..v8 on the same inputs: the existing build (refused signatures still not resent)",
+   "reset": "new episode (acceptance or a new decision)",
+   "target": "submit outcome rejected whose public result category is unresolved_ruling and continuable is true (check invalid, build failures and non-continuable rejections are not recorded)",
+   "unchanged": "engine refusal, judge classification, stop policy, candidate ranks otherwise",
+   "version": 1
+  },
+  "unchanged": [
+   "engine refusal (RB3)",
+   "judge classification",
+   "stop policy",
+   "rules-v2..v8 behaviour",
+   "default mode",
+   "single-game limits",
+   "candidate ranks otherwise"
+  ]
+ },
+ "boards": {
+  "module": "tests/test_verification_ai_rules_v9.py",
+  "tests": 10,
+  "passed": 10,
+  "B1_single_input": "seeds 1-4: refusal once, next attempt retreat sent and accepted; refused_input buildable 1 remaining 0 all_refused; reselections 0; rules-v8: 63 reselections, no_progress; attempts equal up to the refusal",
+  "B1_rewind": "state, checks, update sequence, per-audience updates, log length and rng equal before / after; notice only in the submitter's response (role actor, viewer 0); anomalies 0",
+  "B2_other_input": "Energy Control refused, Telekinesis (same use_attack candidate) kept (buildable 2, remaining 1) and accepted; candidate not demoted",
+  "B2_declaration_inputs_synthetic": "synthetic stages: only refused tuples removed; all refused -> REFUSED_ALL; restriction present -> existing build",
+  "B3_reevaluation": "refusal -> Potion accepted -> same attack sent again in the new position and refused again; record not carried over (refused_for_candidate 1, refused_inputs_cleared 1)",
+  "B4_no_alternative": "API response filtered in the test (no engine board without end_turn): 1 check and 1 submit; 63 refused_inputs_all with :refused_no_alternative; no_progress draws_per_position, rejections 1",
+  "existing_sequences": {
+   "rules-v6..v8": "equal to base 10e203d (default deck s13, L67-U s9023)",
+   "rules-v9_without_refusals": "equal to rules-v8"
+  }
+ },
+ "checks_before_commit": {
+  "verification_ai_modules": 32,
+  "doc_tests": 20,
+  "generator_checks": 4,
+  "all_zero": true,
+  "sites": "1,827 = base",
+  "regenerated": "docs/stop-policy-classification.json (RB3 code test mentions 7 -> 8, files 6 -> 7)"
+ },
+ "plans": {
+  "v8": {
+   "batch": "vai-batch-tr8v9-v8",
+   "plan_sha256": "0d879ef47716c963a08fa3cb4b44cf5d5b22a1e51a04b4ddabab3dad9fe2bf30"
+  },
+  "v9": {
+   "batch": "vai-batch-tr8v9-v9",
+   "plan_sha256": "69de22892086b2faa30df1ce0db372e5e1d641ed596200f274197f2d38a63dd7"
+  },
+  "seed": 9083,
+  "games_each": 1,
+  "decks": {
+   "0": "C116",
+   "1": "R58"
+  },
+  "profile": "deep",
+  "observation": true,
+  "prestop": true,
+  "limits": {
+   "plan_tool_seconds": 300,
+   "plan_evidence_mib": 512,
+   "total_tool_seconds": 600,
+   "total_wall_seconds": 1800,
+   "total_evidence_mib": 1024
+  },
+  "start_conditions": {
+   "tool_seconds": 150,
+   "wall_seconds": 600,
+   "evidence_mib": 384,
+   "drive_mib": 4096
+  },
+  "check_vs_old_plan_ok": true,
+  "dry_run": {
+   "plans": 2,
+   "use_cache": true,
+   "not_started": true
+  }
+ },
+ "results": {
+  "rb3_same_board_and_input": {
+   "v8_reached": true,
+   "v9_reached": true,
+   "same": true,
+   "direct_comparison": "established"
+  },
+  "refusal": {
+   "v8": {
+    "seq": 97,
+    "accepted_before": 96,
+    "turn": [
+     0,
+     28
+    ],
+    "actor": 0,
+    "command": {
+     "attack_index": 0,
+     "card": 20,
+     "player": 0,
+     "type": "use_attack"
+    },
+    "attack": [
+     "エナジーコントロール"
+    ],
+    "refused_input": null
+   },
+   "v9": {
+    "seq": 97,
+    "accepted_before": 96,
+    "turn": [
+     0,
+     28
+    ],
+    "actor": 0,
+    "command": {
+     "attack_index": 0,
+     "card": 20,
+     "player": 0,
+     "type": "use_attack"
+    },
+    "attack": [
+     "エナジーコントロール"
+    ],
+    "refused_input": {
+     "all_refused": true,
+     "buildable": 1,
+     "refused_for_candidate": 1,
+     "remaining": 0,
+     "result": "recorded"
+    }
+   }
+  },
+  "first_divergence": {
+   "attempt_n": 117,
+   "operations_equal_before": 97
+  },
+  "v7_old_vs_v8_identical": true,
+  "v8": {
+   "after_refusal": {
+    "ok_already_tried|None": 63
+   },
+   "termination": "no_progress",
+   "termination_detail": {
+    "actor": 0,
+    "draws": 64,
+    "reason": "draws_per_position",
+    "rejections": 1
+   },
+   "plan_status": "stopped_policy",
+   "plan_stop": {
+    "game": "g001-rules-v8-s9083",
+    "reasons": [
+     "undetermined:no_progress:1"
+    ]
+   },
+   "rejections": 1,
+   "accepted": 96,
+   "turns": 28
+  },
+  "v9": {
+   "after_refusal": [
+    {
+     "n": 117,
+     "actor": 0,
+     "kind": "retreat",
+     "attack": [
+      null
+     ],
+     "reason": "rule7:priority5:retreat:refused_excluded1",
+     "build": "ok",
+     "check": true,
+     "submit": "accepted",
+     "refused_filter": null
+    }
+   ],
+   "accepted_after_refusal": {
+    "next_sent_kind": "retreat",
+    "accepted_kind": "retreat",
+    "accepted_attempt_n": 117,
+    "resent_same_input": 0,
+    "continued": true,
+    "game_over": true
+   },
+   "termination": "game_over",
+   "winner": 1,
+   "plan_status": "completed",
+   "rejections": 1,
+   "accepted": 535,
+   "turns": 81,
+   "reselections_same_input": 0,
+   "refused_records": {
+    "recorded": 1
+   },
+   "refused_excluded_rows": 1
+  },
+  "continued_after_refusal": {
+   "v8": false,
+   "v9": true
+  },
+  "game_over": {
+   "v8": false,
+   "v9": true
+  },
+  "per_game_checks": "complete record, observation, prestop, judge, final-state replay, gates (v8 as policy stop), per-game aggregate consistency, cache unchanged",
+  "final_aggregate_diff": "derived counts (files 2) and 1 byte of management size in the v9 plan; game files unchanged",
+  "analysis_consistency_ok": true,
+  "policy_identity_ok": true,
+  "budget": {
+   "games": {
+    "v8": {
+     "tool_seconds": 5.252,
+     "plan_status": "stopped_policy",
+     "outer_seconds_driver": 27.401,
+     "driver_code": 18,
+     "driver_step": "analyze_tr8v8",
+     "plan_dir_bytes": 7354092
+    },
+    "v9": {
+     "tool_seconds": 42.941,
+     "plan_status": "completed",
+     "outer_seconds_driver": 70.984,
+     "driver_code": 0,
+     "driver_step": "ok",
+     "plan_dir_bytes": 49127483
+    }
+   },
+   "program_after": {
+    "plan_remaining_seconds": 257.059,
+    "program_tool_used_seconds": 48.193,
+    "program_remaining_tool_seconds": 551.807,
+    "program_outer_used_seconds": 98.385,
+    "program_remaining_outer_seconds": 1701.615,
+    "plan_remaining_evidence_bytes": 487743429,
+    "program_evidence_bytes": 56481575,
+    "program_remaining_evidence_bytes": 1017260249,
+    "required_bytes": 402653184,
+    "reference_1_5x_biggest_bytes": 73616278,
+    "max_complete_attempt_bytes": 49077519,
+    "drive_free_bytes": 241754435584
+   },
+   "note": "v8 outer_seconds is the driver run that stopped at the analysis step (F4); the post-check of call 1 ran outside the program ledger (read-only, about 10 s)"
+  }
+ },
+ "expanded_audit": {
+  "plans_fixed": 16,
+  "plan_hashes_equal": 16,
+  "pilot_not_started": 5,
+  "main_not_started": 48
+ },
+ "unconfirmed": [
+  "engine board where only one of several declaration inputs of the same attack is refused (synthetic stages only)",
+  "engine board without any alternative (B4 filtered API response)",
+  "enumeration limit or rules-v4..v8 restriction combined with a refusal",
+  "other conditions and seeds of the expanded audit (1 game, 1 seed)",
+  "whether to add rules-v9 to the expanded audit"
+ ],
+ "failures": [
+  {
+   "id": "F1",
+   "what": "board 4 test expectation (ok_already_tried) differed from the implementation (refused_inputs_all); test corrected"
+  },
+  {
+   "id": "F2",
+   "what": "generator check: stop-policy ledger stale because the new test mentions the RB3 code; regenerated and committed with the policy"
+  },
+  {
+   "id": "F3",
+   "what": "exec.json written with a bash heredoc had invalid JSON escapes; first two dry-runs exited with empty arguments (plans not started); rewritten and rerun"
+  },
+  {
+   "id": "F4",
+   "what": "derived analysis script put the header in a separate docstring so from __future__ was not first; the v8 driver stopped at the analysis step (18) after the game completed; script fixed and only the remaining checks applied to the saved record (all ok, policy stop 30); no game rerun"
+  }
+ ],
+ "not_done": [
+  "stop release",
+  "retry",
+  "seed substitution",
+  "extra games",
+  "stop policy / judge relaxation",
+  "engine / TR8 / default / rules-v2..v8 changes",
+  "expanded-audit fixed plans",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v9-run/"
+}

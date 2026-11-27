@@ -1,0 +1,707 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-energy-trans-progress-policy-experiment.md",
+ "date": "2026-11-27",
+ "base": "4bd65f94bf13b213ff3b465d2712cc2557de5ff4",
+ "branch": "claude/tr8-rules-v8-energy-trans-progress",
+ "implementation_commit": "280660be69630d5a9007e11e1022db3f221630b1",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 19,
+  "conventions": "CS-KYUURA-PLAY-TR8@1"
+ },
+ "policy": {
+  "mode": "rules-v8",
+  "default": false,
+  "rules_version": 8,
+  "distribution": "rules-v8-candidate+uniform-stage",
+  "decisions": {
+   "D1": "read-only retreat inputs of each retreat candidate in the same response when Energy Trans is chosen; reused for the same actor / position / candidate; not a retreat selection",
+   "D2": "fixed engine card registry (printed attack cost, basic energy type) for the own active's own printed attacks only",
+   "D3": "transfer_moves + build_choices restriction (stage-wise uniform)",
+   "D4": "within the tier, keep moves preserving currently payable goals when any",
+   "D5": "attack not evaluated with non-basic energy on the active; retreat via per-card units of the inputs; non-basic moved card not evaluated"
+  },
+  "kept": [
+   "candidate ranks",
+   "rules-v2..v7",
+   "default policy",
+   "engine",
+   "conventions",
+   "judge",
+   "single-game limits"
+  ]
+ },
+ "tests": {
+  "rules_v8_module": 18,
+  "modules": 31,
+  "all_zero": true,
+  "git_status_unchanged": true
+ },
+ "gates": {
+  "all_pass": true,
+  "boards": [
+   "E1",
+   "E2",
+   "E3",
+   "E4",
+   "E5",
+   "C1",
+   "C2",
+   "C4",
+   "C4p",
+   "D4"
+  ],
+  "seeds": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "per_board": {
+   "E1": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     4,
+     2,
+     2,
+     4
+    ],
+    "et_v7": [
+     47,
+     14,
+     94,
+     21
+    ],
+    "ops_v8": [
+     6,
+     4,
+     4,
+     5
+    ],
+    "ops_v7": [
+     49,
+     17,
+     97,
+     24
+    ]
+   },
+   "E2": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     4,
+     2,
+     4,
+     4
+    ],
+    "et_v7": [
+     4,
+     6,
+     20,
+     9
+    ],
+    "ops_v8": [
+     6,
+     4,
+     6,
+     6
+    ],
+    "ops_v7": [
+     6,
+     8,
+     21,
+     11
+    ],
+    "retreat_accepted_seeds": [
+     1,
+     2,
+     3,
+     4
+    ]
+   },
+   "E3": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     2,
+     2,
+     2,
+     2
+    ],
+    "et_v7": [
+     2,
+     2,
+     2,
+     2
+    ],
+    "ops_v8": [
+     3,
+     3,
+     3,
+     3
+    ],
+    "ops_v7": [
+     3,
+     3,
+     3,
+     3
+    ]
+   },
+   "E4": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     4,
+     7,
+     4,
+     4
+    ],
+    "et_v7": [
+     21,
+     8,
+     6,
+     13
+    ],
+    "ops_v8": [
+     5,
+     9,
+     7,
+     5
+    ],
+    "ops_v7": [
+     23,
+     11,
+     9,
+     15
+    ],
+    "solarbeam_after_4_seeds": [
+     1,
+     4
+    ]
+   },
+   "E5": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     6,
+     6,
+     6,
+     4
+    ],
+    "et_v7": [
+     6,
+     6,
+     6,
+     4
+    ],
+    "ops_v8": [
+     7,
+     7,
+     7,
+     5
+    ],
+    "ops_v7": [
+     7,
+     7,
+     7,
+     5
+    ]
+   },
+   "C1": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     3,
+     4,
+     6,
+     3
+    ],
+    "et_v7": [
+     3,
+     4,
+     7,
+     3
+    ],
+    "ops_v8": [
+     5,
+     6,
+     8,
+     5
+    ],
+    "ops_v7": [
+     5,
+     6,
+     9,
+     5
+    ]
+   },
+   "C2": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     3,
+     4,
+     6,
+     3
+    ],
+    "et_v7": [
+     3,
+     4,
+     7,
+     3
+    ],
+    "ops_v8": [
+     5,
+     6,
+     8,
+     5
+    ],
+    "ops_v7": [
+     5,
+     6,
+     9,
+     5
+    ]
+   },
+   "C4": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     22,
+     24,
+     18,
+     17
+    ],
+    "et_v7": [
+     22,
+     24,
+     18,
+     17
+    ],
+    "ops_v8": [
+     23,
+     25,
+     19,
+     18
+    ],
+    "ops_v7": [
+     23,
+     25,
+     19,
+     18
+    ]
+   },
+   "C4p": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     22,
+     24,
+     18,
+     17
+    ],
+    "et_v7": [
+     22,
+     24,
+     18,
+     17
+    ],
+    "ops_v8": [
+     23,
+     25,
+     19,
+     18
+    ],
+    "ops_v7": [
+     23,
+     25,
+     19,
+     18
+    ]
+   },
+   "D4": {
+    "pass": [
+     true,
+     true,
+     true,
+     true
+    ],
+    "et_v8": [
+     7,
+     6,
+     6,
+     7
+    ],
+    "et_v7": [
+     7,
+     6,
+     6,
+     3
+    ],
+    "ops_v8": [
+     9,
+     8,
+     8,
+     9
+    ],
+    "ops_v7": [
+     9,
+     8,
+     8,
+     6
+    ],
+    "kept_seeds": [
+     1,
+     4
+    ]
+   }
+  },
+  "c3": "not constructible as a board; checked in the policy test with JSON views (tier 3, no restriction)"
+ },
+ "games": {
+  "setup": "0.198.0, TR8@1, C2 fixed decks v2, deep; seats / limits / observation / prestop from vai-batch-tr8v7-v7 (9056) and vai-batch-tr8v6-v6 (9045)",
+  "order": [
+   "9056 rules-v7",
+   "9056 rules-v8",
+   "9045 rules-v7",
+   "9045 rules-v8"
+  ],
+  "policy_stops": 0,
+  "anomalies": 0,
+  "retries": 0,
+  "9056": {
+   "v7": {
+    "termination": "game_over",
+    "winner": 1,
+    "operations": 272,
+    "accepted": 272,
+    "attempts": 324,
+    "turns": 53,
+    "actor1": {
+     "accepted": 187,
+     "attempts": 213,
+     "et_accepted": 89,
+     "et_attempts": 89,
+     "et_returns_detected": 4,
+     "retreat_accepted": 5,
+     "attack_accepted": 16,
+     "retreat_build_failed": 26,
+     "progress_results": {},
+     "progress_restricted": 0,
+     "progress_d4": {},
+     "progress_skipped": {},
+     "fetch_sources": {}
+    }
+   },
+   "v8": {
+    "termination": "game_over",
+    "winner": 1,
+    "operations": 144,
+    "accepted": 144,
+    "attempts": 179,
+    "turns": 39,
+    "actor1": {
+     "accepted": 72,
+     "attempts": 88,
+     "et_accepted": 5,
+     "et_attempts": 5,
+     "et_returns_detected": 0,
+     "retreat_accepted": 2,
+     "attack_accepted": 9,
+     "retreat_build_failed": 16,
+     "progress_results": {
+      "tier2": 1,
+      "tier1": 4
+     },
+     "progress_restricted": 5,
+     "progress_d4": {},
+     "progress_skipped": {},
+     "fetch_sources": {
+      "reused_attempt": 2,
+      "fetched": 3
+     }
+    }
+   },
+   "first_tier_change": {
+    "n": 123,
+    "position": 90,
+    "actor": 1,
+    "turn": [
+     0,
+     23
+    ],
+    "progress": {
+     "result": "tier2",
+     "state": "reachable",
+     "moves": 35,
+     "excluded_v6": 0,
+     "choosable": 35,
+     "tier_sizes": [
+      0,
+      7,
+      28
+     ],
+     "chosen_set": 7,
+     "d4": null,
+     "goals": [
+      {
+       "deficit": 4,
+       "kind": "attack",
+       "label": "attack:0",
+       "met": false,
+       "source": "registry"
+      },
+      {
+       "deficit": 2,
+       "kind": "retreat",
+       "label": "retreat",
+       "met": false,
+       "source": "reused_attempt"
+      }
+     ]
+    },
+    "submitted": "accepted"
+   },
+   "first_submit_change": {
+    "index": 90,
+    "v7": {
+     "n": 123,
+     "position": 90,
+     "kind": "use_power",
+     "et": true
+    },
+    "v8": {
+     "n": 123,
+     "position": 90,
+     "kind": "use_power",
+     "et": true,
+     "progress": "tier2",
+     "restricted": true
+    }
+   },
+   "same_prefix_sent": 90,
+   "after_divergence": {
+    "v7_views": 133,
+    "v8_views": 22,
+    "v8_views_matching_v7": 0
+   },
+   "divergence_turn": {
+    "v7": {
+     "et": 81,
+     "retreat_met_after_et": 59,
+     "attack_met_after_et": 81,
+     "accepted_retreat_after_et": 60,
+     "accepted_attack_after_et": 81,
+     "ops": 85
+    },
+    "v8": {
+     "et": 2,
+     "retreat_met_after_et": 2,
+     "attack_met_after_et": null,
+     "accepted_retreat_after_et": 2,
+     "accepted_attack_after_et": 2,
+     "ops": 5
+    }
+   },
+   "old_v7_same_sent_sequence": true,
+   "old_v7_batch": "vai-batch-tr8v7-v7",
+   "shortening_claimed": false,
+   "why_not": "after the divergence rules-v8 never reached a rules-v7 view; separate paths"
+  },
+  "9045": {
+   "v7": {
+    "termination": "game_over",
+    "winner": 1,
+    "operations": 206,
+    "accepted": 206,
+    "attempts": 238,
+    "turns": 36,
+    "actor1": {
+     "accepted": 132,
+     "attempts": 146,
+     "et_accepted": 63,
+     "et_attempts": 63,
+     "et_returns_detected": 30,
+     "retreat_accepted": 4,
+     "attack_accepted": 12,
+     "retreat_build_failed": 14,
+     "progress_results": {},
+     "progress_restricted": 0,
+     "progress_d4": {},
+     "progress_skipped": {},
+     "fetch_sources": {}
+    }
+   },
+   "v8": {
+    "termination": "game_over",
+    "winner": 1,
+    "operations": 145,
+    "accepted": 145,
+    "attempts": 172,
+    "turns": 36,
+    "actor1": {
+     "accepted": 71,
+     "attempts": 80,
+     "et_accepted": 3,
+     "et_attempts": 3,
+     "et_returns_detected": 0,
+     "retreat_accepted": 3,
+     "attack_accepted": 13,
+     "retreat_build_failed": 9,
+     "progress_results": {
+      "tier1": 3
+     },
+     "progress_restricted": 3,
+     "progress_d4": {
+      "all_keep": 1
+     },
+     "progress_skipped": {},
+     "fetch_sources": {
+      "fetched": 3
+     }
+    }
+   },
+   "first_tier_change": {
+    "n": 168,
+    "position": 140,
+    "actor": 1,
+    "turn": [
+     0,
+     36
+    ],
+    "progress": {
+     "result": "tier1",
+     "state": "reachable",
+     "moves": 20,
+     "excluded_v6": 0,
+     "choosable": 20,
+     "tier_sizes": [
+      3,
+      0,
+      17
+     ],
+     "chosen_set": 3,
+     "d4": null,
+     "goals": [
+      {
+       "deficit": 3,
+       "kind": "attack",
+       "label": "attack:0",
+       "met": false,
+       "source": "registry"
+      },
+      {
+       "deficit": 1,
+       "kind": "retreat",
+       "label": "retreat",
+       "met": false,
+       "source": "fetched"
+      }
+     ]
+    },
+    "submitted": "accepted"
+   },
+   "first_submit_change": {
+    "index": 140,
+    "v7": {
+     "n": 168,
+     "position": 140,
+     "kind": "use_power",
+     "et": true
+    },
+    "v8": {
+     "n": 168,
+     "position": 140,
+     "kind": "use_power",
+     "et": true,
+     "progress": "tier1",
+     "restricted": true
+    }
+   },
+   "same_prefix_sent": 140,
+   "after_divergence": {
+    "v7_views": 35,
+    "v8_views": 4,
+    "v8_views_matching_v7": 0
+   },
+   "divergence_turn": {
+    "v7": {
+     "et": 63,
+     "retreat_met_after_et": 14,
+     "attack_met_after_et": null,
+     "accepted_retreat_after_et": 15,
+     "accepted_attack_after_et": null,
+     "ops": 73
+    },
+    "v8": {
+     "et": 3,
+     "retreat_met_after_et": 1,
+     "attack_met_after_et": 3,
+     "accepted_retreat_after_et": 1,
+     "accepted_attack_after_et": 3,
+     "ops": 12
+    }
+   },
+   "shortening_claimed": false,
+   "why_not": "after the divergence rules-v8 never reached a rules-v7 view; separate paths"
+  }
+ },
+ "budget": {
+  "tool_seconds_used": 48.922,
+  "outer_seconds_used": 148.449,
+  "evidence_bytes_used": 67450176
+ },
+ "unevaluated_in_games": 0,
+ "e5_remaining": "unreachable is identified and the rules-v7 choice is kept; Energy Trans still outranks end_turn, so operations do not fall; demotion / count limits remain a separate decision (E4 is the control)",
+ "not_confirmed": [
+  "other colours / special-energy-heavy decks",
+  "general effect of the path change after divergence (2 seeds, old views never reached)",
+  "D4 effect size"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "first trial gate run (scratchpad, working tree): C2 / D4 judged after the original active had retreated, and C4 put the asleep Venusaur as the only Energy Trans holder; judging limited to the original active and C4 boards fixed before the evidence run",
+   "kept": "raw/F1/"
+  }
+ ]
+}

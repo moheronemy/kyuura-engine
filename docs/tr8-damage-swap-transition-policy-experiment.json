@@ -1,0 +1,2892 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-damage-swap-transition-policy-experiment.md",
+ "date": "2026-11-24",
+ "base": "988bdc52ec5fb6c6f35c1140b6065943630009ef",
+ "implementation_commit": "8dc96a2a3a8ddf5adf3d8389a6fe514c91b5f56b",
+ "engine_version": "0.198.0",
+ "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+ "engine_diff_from_engine_commit": 0,
+ "tool_version": 15,
+ "branch": "claude/tr8-rules-v4-experiment",
+ "policy": {
+  "mode": "rules-v4",
+  "rules_version": 4,
+  "distribution": "rules-v4-candidate+uniform-stage",
+  "explicit_only": true,
+  "default": false,
+  "u1_decision": "no extra guard in this trial"
+ },
+ "design": "docs/tr8-damage-swap-transition-policy-design.md",
+ "answers": {
+  "s5_other_move_accepted": "4/4",
+  "c1_9023_rules_v4_completed": true,
+  "adoption_hold_condition_met": false,
+  "rules_v2_rules_v3_kept": true,
+  "evidence_for_extra_guard": "yes: 9022 rules-v4 accepted 46 Damage Swaps (rules-v2 38, rules-v3 19), max 17 in a turn (rules-v2 18); that turn had 1 detection"
+ },
+ "implementation": {
+  "policy": "policies.TransitionRulePolicy (not a subclass of LoopRulePolicy)",
+  "key": "(pre-move own view, holder loop_key, source pokemon, target pokemon), directed; recorded only on a confirmed cycle (rules-v3 detection)",
+  "hooks": [
+   "runner: observe_inputs / input_restriction after inputs, before building (entry.input_restriction)",
+   "runner: accepted_input after acceptance",
+   "actions.transition_pairs (options_by_choice via _allowed_ids, deep only)",
+   "actions.build_choices(..., restriction=None)"
+  ],
+  "cases": {
+   "no_key": "rank and inputs as rules-v2",
+   "some_pair_not_keyed": "rank 5 kept, keyed pairs removed from the choices",
+   "all_cached_pairs_keyed": "rank 7 without inputs (:deferred_allN)",
+   "fresh_response_zero_pairs": "not built, rank 7 in the episode (transition_deferred_all)",
+   "only_rank7_left": "restriction lifted (:no_alternative)",
+   "no_cache_or_other_shape": "not demoted, not restricted (restriction_unavailable)"
+  },
+  "batch": "mode rules-v4, plan policy record transition_deferral, TOOL_VERSION 15",
+  "not_changed": [
+   "rules-v2",
+   "rules-v3",
+   "default mode",
+   "engine",
+   "TR8",
+   "judge",
+   "limits"
+  ]
+ },
+ "tests": {
+  "rules_v4_tests": 23,
+  "modules": 27,
+  "modules_ok": 26,
+  "failed_module": [
+   "tests.test_verification_ai_prestop"
+  ],
+  "prestop_instability": {
+   "full_run_failure": "LimitTest.test_rows_1mib_counts_utf8_bytes_and_newlines_before_writing (811 vs 813 bytes)",
+   "alone_3_runs_impl_failed": 1,
+   "alone_3_runs_base_failed": 2,
+   "same_tests_fail_on_base": true
+  },
+  "generator_checks": {
+   "build_convention_records": 0,
+   "build_diagnostic_catalog": 0,
+   "build_play_policy_family_plan": 0,
+   "build_stop_policy_classification": 0
+  },
+  "sequences_base": {
+   "rules-v2-s13": {
+    "length": 387,
+    "sha256": "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772",
+    "swaps_accepted": 0,
+    "termination": "game_over",
+    "accepted": 284
+   },
+   "rules-v2-l67u-s9023": {
+    "length": 597,
+    "sha256": "c83fde59d83cb2c5c0c7094f2e1f49aa7c83a221cca6e59bd580276ff94ec9ce",
+    "swaps_accepted": 210,
+    "termination": "limit_operations",
+    "accepted": 400
+   },
+   "rules-v3-s13": {
+    "length": 387,
+    "sha256": "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772",
+    "swaps_accepted": 0,
+    "termination": "game_over",
+    "accepted": 284
+   },
+   "rules-v3-l67u-s9023": {
+    "length": 160,
+    "sha256": "0118115faae16bcd0706c427957aaeb040bfd53540b64cec857c0fff7f07980e",
+    "swaps_accepted": 11,
+    "termination": "game_over",
+    "accepted": 141
+   }
+  },
+  "sequences_impl": {
+   "rules-v2-s13": {
+    "length": 387,
+    "sha256": "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772",
+    "swaps_accepted": 0,
+    "termination": "game_over",
+    "accepted": 284
+   },
+   "rules-v2-l67u-s9023": {
+    "length": 597,
+    "sha256": "c83fde59d83cb2c5c0c7094f2e1f49aa7c83a221cca6e59bd580276ff94ec9ce",
+    "swaps_accepted": 210,
+    "termination": "limit_operations",
+    "accepted": 400
+   },
+   "rules-v3-s13": {
+    "length": 387,
+    "sha256": "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772",
+    "swaps_accepted": 0,
+    "termination": "game_over",
+    "accepted": 284
+   },
+   "rules-v3-l67u-s9023": {
+    "length": 160,
+    "sha256": "0118115faae16bcd0706c427957aaeb040bfd53540b64cec857c0fff7f07980e",
+    "swaps_accepted": 11,
+    "termination": "game_over",
+    "accepted": 141
+   },
+   "rules-v4-s13": {
+    "length": 387,
+    "sha256": "132cee3587b589021db03fca1e3ad7c0ac05b206588e7da1311b3fff0b27e772",
+    "swaps_accepted": 0,
+    "termination": "game_over",
+    "accepted": 284
+   },
+   "rules-v4-l67u-s9023": {
+    "length": 185,
+    "sha256": "4fb6dcae64112c3f8c9525cf1566ebef564cdd835e6b0e302d5697d1035941e8",
+    "swaps_accepted": 12,
+    "termination": "game_over",
+    "accepted": 161
+   }
+  }
+ },
+ "s5_gate": {
+  "ok": true,
+  "passed": 4,
+  "seeds": [
+   {
+    "seed": 1,
+    "ok": true,
+    "first_difference": null,
+    "checks": {
+     "termination_script_complete": true,
+     "detection_at_returned_view": true,
+     "no_attempt_1_to_2": true,
+     "swap_rank_kept_5": true,
+     "restricted_exactly_1_to_2": true,
+     "chosen_1_to_3_checked_accepted": true,
+     "no_new_detection_after_1_to_3": true
+    },
+    "attempts_at_returned_view": [
+     {
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "input_restriction": {
+       "view": "a03ff76e0980190c",
+       "holder": "2d927d9cdf26c2ae",
+       "deferred_at_view": [
+        [
+         1,
+         2
+        ]
+       ],
+       "pairs": 2,
+       "excluded": [
+        [
+         1,
+         2
+        ]
+       ],
+       "result": "restricted"
+      },
+      "picks": [
+       {
+        "stage": 1,
+        "items": 1,
+        "reason": "uniform:option"
+       },
+       {
+        "stage": 2,
+        "items": 1,
+        "reason": "uniform:option"
+       }
+      ],
+      "build": "ok",
+      "check_valid": true,
+      "outcome": "accepted"
+     }
+    ],
+    "v3_same_seed": [
+     {
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "outcome": null
+     },
+     {
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "build": "ok",
+      "outcome": "accepted"
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "ok": true,
+    "first_difference": null,
+    "checks": {
+     "termination_script_complete": true,
+     "detection_at_returned_view": true,
+     "no_attempt_1_to_2": true,
+     "swap_rank_kept_5": true,
+     "restricted_exactly_1_to_2": true,
+     "chosen_1_to_3_checked_accepted": true,
+     "no_new_detection_after_1_to_3": true
+    },
+    "attempts_at_returned_view": [
+     {
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "input_restriction": null,
+      "picks": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "check_valid": null,
+      "outcome": null
+     },
+     {
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       1,
+       3
+      ],
+      "input_restriction": {
+       "view": "a03ff76e0980190c",
+       "holder": "2d927d9cdf26c2ae",
+       "deferred_at_view": [
+        [
+         1,
+         2
+        ]
+       ],
+       "pairs": 2,
+       "excluded": [
+        [
+         1,
+         2
+        ]
+       ],
+       "result": "restricted"
+      },
+      "picks": [
+       {
+        "stage": 1,
+        "items": 1,
+        "reason": "uniform:option"
+       },
+       {
+        "stage": 2,
+        "items": 1,
+        "reason": "uniform:option"
+       }
+      ],
+      "build": "ok",
+      "check_valid": true,
+      "outcome": "accepted"
+     }
+    ],
+    "v3_same_seed": [
+     {
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "outcome": null
+     },
+     {
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "build": "ok",
+      "outcome": "accepted"
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "ok": true,
+    "first_difference": null,
+    "checks": {
+     "termination_script_complete": true,
+     "detection_at_returned_view": true,
+     "no_attempt_1_to_2": true,
+     "swap_rank_kept_5": true,
+     "restricted_exactly_1_to_2": true,
+     "chosen_1_to_3_checked_accepted": true,
+     "no_new_detection_after_1_to_3": true
+    },
+    "attempts_at_returned_view": [
+     {
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "input_restriction": null,
+      "picks": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "check_valid": null,
+      "outcome": null
+     },
+     {
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       1,
+       3
+      ],
+      "input_restriction": {
+       "view": "a03ff76e0980190c",
+       "holder": "2d927d9cdf26c2ae",
+       "deferred_at_view": [
+        [
+         1,
+         2
+        ]
+       ],
+       "pairs": 2,
+       "excluded": [
+        [
+         1,
+         2
+        ]
+       ],
+       "result": "restricted"
+      },
+      "picks": [
+       {
+        "stage": 1,
+        "items": 1,
+        "reason": "uniform:option"
+       },
+       {
+        "stage": 2,
+        "items": 1,
+        "reason": "uniform:option"
+       }
+      ],
+      "build": "ok",
+      "check_valid": true,
+      "outcome": "accepted"
+     }
+    ],
+    "v3_same_seed": [
+     {
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "outcome": null
+     },
+     {
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "build": "ok",
+      "outcome": "accepted"
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "ok": true,
+    "first_difference": null,
+    "checks": {
+     "termination_script_complete": true,
+     "detection_at_returned_view": true,
+     "no_attempt_1_to_2": true,
+     "swap_rank_kept_5": true,
+     "restricted_exactly_1_to_2": true,
+     "chosen_1_to_3_checked_accepted": true,
+     "no_new_detection_after_1_to_3": true
+    },
+    "attempts_at_returned_view": [
+     {
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "input_restriction": {
+       "view": "a03ff76e0980190c",
+       "holder": "2d927d9cdf26c2ae",
+       "deferred_at_view": [
+        [
+         1,
+         2
+        ]
+       ],
+       "pairs": 2,
+       "excluded": [
+        [
+         1,
+         2
+        ]
+       ],
+       "result": "restricted"
+      },
+      "picks": [
+       {
+        "stage": 1,
+        "items": 1,
+        "reason": "uniform:option"
+       },
+       {
+        "stage": 2,
+        "items": 1,
+        "reason": "uniform:option"
+       }
+      ],
+      "build": "ok",
+      "check_valid": true,
+      "outcome": "accepted"
+     }
+    ],
+    "v3_same_seed": [
+     {
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "build": {
+       "unbuildable": "total_units_unreachable",
+       "stage": 2
+      },
+      "outcome": null
+     },
+     {
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "build": "ok",
+      "outcome": "accepted"
+     }
+    ]
+   }
+  ]
+ },
+ "board_controls": {
+  "K1_reverse-v4": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 2,
+     "detections": 1,
+     "restricted_builds": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        2,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c30c5b32278e7d16",
+      "newly_deferred": [
+       {
+        "view": "c30c5b32278e7d16",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       },
+       {
+        "view": "fccb4a3f24eb5e7b",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 4,
+     "detections": 2,
+     "restricted_builds": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        2,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c30c5b32278e7d16",
+      "newly_deferred": [
+       {
+        "view": "c30c5b32278e7d16",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       },
+       {
+        "view": "fccb4a3f24eb5e7b",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 4,
+     "detections": 2,
+     "restricted_builds": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        2,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c30c5b32278e7d16",
+      "newly_deferred": [
+       {
+        "view": "c30c5b32278e7d16",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       },
+       {
+        "view": "fccb4a3f24eb5e7b",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 9,
+     "detections": 4,
+     "restricted_builds": 7
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        2,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c30c5b32278e7d16",
+      "newly_deferred": [
+       {
+        "view": "c30c5b32278e7d16",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       },
+       {
+        "view": "fccb4a3f24eb5e7b",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   }
+  ],
+  "K2_cycle3-v4": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 8,
+     "detections": 5,
+     "restricted_builds": 4
+    },
+    "first_attempts": [
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        3,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 3,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 3,
+      "cycle_length": 3,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         3
+        ]
+       },
+       {
+        "view": "c713227db8aa09d0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         3,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 3
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 8,
+     "detections": 4,
+     "restricted_builds": 5
+    },
+    "first_attempts": [
+     {
+      "position": 3,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        3,
+        1
+       ]
+      ]
+     }
+    ],
+    "detections": [
+     {
+      "position": 3,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 3,
+      "cycle_length": 3,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         3
+        ]
+       },
+       {
+        "view": "c713227db8aa09d0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         3,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 3
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 6,
+     "detections": 4,
+     "restricted_builds": 3
+    },
+    "first_attempts": [
+     {
+      "position": 3,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        3,
+        1
+       ]
+      ]
+     }
+    ],
+    "detections": [
+     {
+      "position": 3,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 3,
+      "cycle_length": 3,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         3
+        ]
+       },
+       {
+        "view": "c713227db8aa09d0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         3,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 3
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 4,
+     "detections": 2,
+     "restricted_builds": 2
+    },
+    "first_attempts": [
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        3,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 3,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 3,
+      "cycle_length": 3,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         3
+        ]
+       },
+       {
+        "view": "c713227db8aa09d0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         3,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 3
+     }
+    ]
+   }
+  ],
+  "K3_two_holders-v4": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 4,
+     "deferred_keys": 24,
+     "detections": 16,
+     "restricted_builds": 13
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "dde1f09534370ce0",
+      "newly_deferred": [
+       {
+        "view": "dde1f09534370ce0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "5af462d1968c37d6",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 6,
+     "deferred_keys": 23,
+     "detections": 18,
+     "restricted_builds": 20
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        2,
+        1
+       ]
+      ]
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "dde1f09534370ce0",
+      "newly_deferred": [
+       {
+        "view": "dde1f09534370ce0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "5af462d1968c37d6",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 17,
+     "detections": 10,
+     "restricted_builds": 8
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:tie3",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       3,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "dde1f09534370ce0",
+      "newly_deferred": [
+       {
+        "view": "dde1f09534370ce0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "5af462d1968c37d6",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 3,
+     "deferred_keys": 23,
+     "detections": 16,
+     "restricted_builds": 17
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 3,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie3",
+      "move": [
+       3,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "dde1f09534370ce0",
+      "newly_deferred": [
+       {
+        "view": "dde1f09534370ce0",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "5af462d1968c37d6",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   }
+  ],
+  "K4_same_move_other_view-v4": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 8,
+     "detections": 4,
+     "restricted_builds": 3
+    },
+    "first_attempts": [
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     },
+     {
+      "position": 6,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 7,
+     "detections": 4,
+     "restricted_builds": 5
+    },
+    "first_attempts": [
+     {
+      "position": 4,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       2,
+       1
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": "restricted",
+      "excluded": [
+       [
+        1,
+        2
+       ]
+      ]
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 4,
+     "detections": 2,
+     "restricted_builds": 3
+    },
+    "first_attempts": [
+     {
+      "position": 4,
+      "reason": "rule4:priority5:retreat:tie2",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       3,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "deferred_keys": 2,
+     "detections": 1,
+     "restricted_builds": 1
+    },
+    "first_attempts": [
+     {
+      "position": 4,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       3
+      ],
+      "inputs_fetched": true,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 5,
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       1,
+       2
+      ],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "a03ff76e0980190c",
+      "newly_deferred": [
+       {
+        "view": "a03ff76e0980190c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "b8b07b235b6ce281",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   }
+  ],
+  "K5_all_deferred-v4": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 2,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:deferred_all1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority6:end_turn:deferred_all1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_deferred": [
+       {
+        "view": "c720c23a519e360c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "6f347cd70b4c6998",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 2,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:deferred_all1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority6:end_turn:deferred_all1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_deferred": [
+       {
+        "view": "c720c23a519e360c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "6f347cd70b4c6998",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 2,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:deferred_all1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority6:end_turn:deferred_all1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_deferred": [
+       {
+        "view": "c720c23a519e360c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "6f347cd70b4c6998",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_deferred_all": 2,
+     "deferred_keys": 2,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule4:priority5:retreat:deferred_all1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule4:priority6:end_turn:deferred_all1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_deferred": [
+       {
+        "view": "c720c23a519e360c",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         1,
+         2
+        ]
+       },
+       {
+        "view": "6f347cd70b4c6998",
+        "holder": "2d927d9cdf26c2ae",
+        "move": [
+         2,
+         1
+        ]
+       }
+      ],
+      "deferred_this_turn": 2
+     }
+    ]
+   }
+  ],
+  "K5_all_deferred-v3": [
+   {
+    "seed": 1,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_loop_demoted": 2,
+     "demoted_keys": 1,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_demoted": [
+       "2d927d9cdf26c2ae"
+      ],
+      "demoted_this_turn": 1
+     }
+    ]
+   },
+   {
+    "seed": 2,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_loop_demoted": 2,
+     "demoted_keys": 1,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_demoted": [
+       "2d927d9cdf26c2ae"
+      ],
+      "demoted_this_turn": 1
+     }
+    ]
+   },
+   {
+    "seed": 3,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_loop_demoted": 2,
+     "demoted_keys": 1,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_demoted": [
+       "2d927d9cdf26c2ae"
+      ],
+      "demoted_this_turn": 1
+     }
+    ]
+   },
+   {
+    "seed": 4,
+    "termination": "script_complete",
+    "anomalies": 0,
+    "loop_counts": {
+     "choices_with_loop_demoted": 2,
+     "demoted_keys": 1,
+     "detections": 1
+    },
+    "first_attempts": [
+     {
+      "position": 2,
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": [],
+      "inputs_fetched": true,
+      "outcome": null,
+      "restriction": null,
+      "excluded": null
+     },
+     {
+      "position": 2,
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": [],
+      "inputs_fetched": false,
+      "outcome": "accepted",
+      "restriction": null,
+      "excluded": null
+     }
+    ],
+    "detections": [
+     {
+      "position": 2,
+      "turn": [
+       0,
+       7
+      ],
+      "returned_to": 0,
+      "run_accepts": 2,
+      "cycle_length": 2,
+      "view": "c720c23a519e360c",
+      "newly_demoted": [
+       "2d927d9cdf26c2ae"
+      ],
+      "demoted_this_turn": 1
+     }
+    ]
+   }
+  ]
+ },
+ "comparison": {
+  "conditions": "0.198.0, TR8@1, C1 (L67-U both), deep, observation and prestop on, game limits of the saved plan (accepted 1,000)",
+  "plans": {
+   "vai-batch-tr8v4-v3": {
+    "sha256": "d1288c8de6326f917be7e305af46c3578a84f266a91b5c028a8d2aa2bb864d9f",
+    "recorded": "d1288c8de6326f917be7e305af46c3578a84f266a91b5c028a8d2aa2bb864d9f",
+    "files": [
+     "plan.json",
+     "plan.sha256"
+    ]
+   },
+   "vai-batch-tr8v4-v4": {
+    "sha256": "0905f120d692d1b542afef3cd316ec89a16f2d469a3ff9fcf492b304f3a580e7",
+    "recorded": "0905f120d692d1b542afef3cd316ec89a16f2d469a3ff9fcf492b304f3a580e7",
+    "files": [
+     "plan.json",
+     "plan.sha256"
+    ]
+   }
+  },
+  "plan_check_ok": true,
+  "order": [
+   "9023 v3",
+   "9023 v4",
+   "9022 v3",
+   "9022 v4",
+   "9024 v3",
+   "9024 v4"
+  ],
+  "gates_go": 6,
+  "policy_stops": 0,
+  "retries": 0,
+  "pairs": [
+   {
+    "seed": 9023,
+    "rules_v2_saved": {
+     "termination": "limit_accepted",
+     "turns": 73,
+     "accepted": 1000,
+     "swaps_accepted": 775,
+     "max_swaps_accepted_in_a_turn": 84,
+     "returns": 601
+    },
+    "rules_v3": {
+     "termination": "game_over",
+     "turns": 35,
+     "accepted": 141,
+     "swaps_accepted": 11,
+     "max_swaps_accepted_in_a_turn": 5,
+     "returns": 8,
+     "loop_detections": 3,
+     "restricted_attempts": 0,
+     "restricted_accepted": 0,
+     "choices_with_deferred_all": 0,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 4,
+     "anomalies": 0
+    },
+    "rules_v4": {
+     "termination": "game_over",
+     "turns": 41,
+     "accepted": 161,
+     "swaps_accepted": 12,
+     "max_swaps_accepted_in_a_turn": 4,
+     "returns": 10,
+     "loop_detections": 5,
+     "restricted_attempts": 2,
+     "restricted_accepted": 2,
+     "choices_with_deferred_all": 5,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 4,
+     "anomalies": 0
+    },
+    "rules_v4_top_turns": [
+     {
+      "actor": 1,
+      "turn": [
+       0,
+       19
+      ],
+      "swaps": 4
+     },
+     {
+      "actor": 1,
+      "turn": [
+       0,
+       21
+      ],
+      "swaps": 4
+     },
+     {
+      "actor": 1,
+      "turn": [
+       0,
+       29
+      ],
+      "swaps": 2
+     },
+     {
+      "actor": 1,
+      "turn": [
+       0,
+       23
+      ],
+      "swaps": 1
+     },
+     {
+      "actor": 1,
+      "turn": [
+       0,
+       35
+      ],
+      "swaps": 1
+     }
+    ],
+    "first_deferral": {
+     "n": 97,
+     "actor": 1,
+     "position": 85,
+     "turn": [
+      0,
+      19
+     ],
+     "kind": "use_power",
+     "reason": "rule4:priority5:use_power:tie2",
+     "restriction": {
+      "deferred_at_view": [
+       [
+        2,
+        8
+       ]
+      ],
+      "excluded": [
+       [
+        2,
+        8
+       ]
+      ],
+      "holder": "2d927d9cdf26c2ae",
+      "pairs": 2,
+      "result": "restricted",
+      "view": "3a6f8d8a9cdb4280"
+     },
+     "move_chosen": [
+      2,
+      7
+     ],
+     "build": "ok",
+     "policy_review": "below_threshold",
+     "outcome": "accepted",
+     "attempts_at_position": [
+      {
+       "n": 97,
+       "kind": "use_power",
+       "reason": "rule4:priority5:use_power:tie2",
+       "restriction": "restricted",
+       "excluded": [
+        [
+         2,
+         8
+        ]
+       ],
+       "move": [
+        2,
+        7
+       ],
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ],
+     "accepted_instead": {
+      "kind": "use_power",
+      "move": [
+       2,
+       7
+      ],
+      "reason": "rule4:priority5:use_power:tie2"
+     }
+    },
+    "first_divergence_v3_v4": {
+     "attempt_index": 96,
+     "position": 85,
+     "v4": {
+      "actor": 1,
+      "kind": "use_power",
+      "reason": "rule4:priority5:use_power:tie2",
+      "move": [
+       2,
+       7
+      ],
+      "restriction": "restricted",
+      "outcome": "accepted"
+     },
+     "v3": {
+      "actor": 1,
+      "kind": "retreat",
+      "reason": "rule3:priority5:retreat:loop_demoted1",
+      "move": null,
+      "outcome": null
+     }
+    },
+    "rules_v3_equal_saved": {
+     "action_sequence_equal": true,
+     "contract_sequence_equal": true,
+     "attempts_equal": true,
+     "attempts": [
+      160,
+      160
+     ],
+     "termination_equal": true,
+     "accepted_equal": true,
+     "swaps_equal": true,
+     "first_attempt_difference": null
+    }
+   },
+   {
+    "seed": 9022,
+    "rules_v2_saved": {
+     "termination": "game_over",
+     "turns": 38,
+     "accepted": 175,
+     "swaps_accepted": 38,
+     "max_swaps_accepted_in_a_turn": 18,
+     "returns": 20
+    },
+    "rules_v3": {
+     "termination": "game_over",
+     "turns": 46,
+     "accepted": 172,
+     "swaps_accepted": 19,
+     "max_swaps_accepted_in_a_turn": 6,
+     "returns": 7,
+     "loop_detections": 3,
+     "restricted_attempts": 0,
+     "restricted_accepted": 0,
+     "choices_with_deferred_all": 0,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 7,
+     "anomalies": 0
+    },
+    "rules_v4": {
+     "termination": "game_over",
+     "turns": 38,
+     "accepted": 183,
+     "swaps_accepted": 46,
+     "max_swaps_accepted_in_a_turn": 17,
+     "returns": 16,
+     "loop_detections": 9,
+     "restricted_attempts": 11,
+     "restricted_accepted": 8,
+     "choices_with_deferred_all": 0,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 19,
+     "anomalies": 0
+    },
+    "rules_v4_top_turns": [
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       36
+      ],
+      "swaps": 17
+     },
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       32
+      ],
+      "swaps": 12
+     },
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       34
+      ],
+      "swaps": 9
+     },
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       30
+      ],
+      "swaps": 6
+     },
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       38
+      ],
+      "swaps": 2
+     }
+    ],
+    "first_deferral": {
+     "n": 161,
+     "actor": 0,
+     "position": 133,
+     "turn": [
+      0,
+      32
+     ],
+     "kind": "use_power",
+     "reason": "rule4:priority5:use_power",
+     "restriction": {
+      "deferred_at_view": [
+       [
+        9,
+        7
+       ]
+      ],
+      "excluded": [
+       [
+        9,
+        7
+       ]
+      ],
+      "holder": "3b2225e2b6617233",
+      "pairs": 4,
+      "result": "restricted",
+      "view": "ba0ec2e86415f012"
+     },
+     "move_chosen": [
+      9,
+      1
+     ],
+     "build": "ok",
+     "policy_review": "below_threshold",
+     "outcome": "accepted",
+     "attempts_at_position": [
+      {
+       "n": 161,
+       "kind": "use_power",
+       "reason": "rule4:priority5:use_power",
+       "restriction": "restricted",
+       "excluded": [
+        [
+         9,
+         7
+        ]
+       ],
+       "move": [
+        9,
+        1
+       ],
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ],
+     "accepted_instead": {
+      "kind": "use_power",
+      "move": [
+       9,
+       1
+      ],
+      "reason": "rule4:priority5:use_power"
+     }
+    },
+    "first_divergence_v3_v4": {
+     "attempt_index": 160,
+     "position": 133,
+     "v4": {
+      "actor": 0,
+      "kind": "use_power",
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       9,
+       1
+      ],
+      "restriction": "restricted",
+      "outcome": "accepted"
+     },
+     "v3": {
+      "actor": 0,
+      "kind": "end_turn",
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": null,
+      "outcome": "accepted"
+     }
+    },
+    "rules_v3_equal_saved": {
+     "action_sequence_equal": true,
+     "contract_sequence_equal": true,
+     "attempts_equal": true,
+     "attempts": [
+      212,
+      212
+     ],
+     "termination_equal": true,
+     "accepted_equal": true,
+     "swaps_equal": true,
+     "first_attempt_difference": null
+    }
+   },
+   {
+    "seed": 9024,
+    "rules_v2_saved": {
+     "termination": "game_over",
+     "turns": 34,
+     "accepted": 122,
+     "swaps_accepted": 9,
+     "max_swaps_accepted_in_a_turn": 4,
+     "returns": 8
+    },
+    "rules_v3": {
+     "termination": "game_over",
+     "turns": 36,
+     "accepted": 117,
+     "swaps_accepted": 5,
+     "max_swaps_accepted_in_a_turn": 3,
+     "returns": 4,
+     "loop_detections": 2,
+     "restricted_attempts": 0,
+     "restricted_accepted": 0,
+     "choices_with_deferred_all": 0,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 0,
+     "anomalies": 0
+    },
+    "rules_v4": {
+     "termination": "game_over",
+     "turns": 36,
+     "accepted": 124,
+     "swaps_accepted": 6,
+     "max_swaps_accepted_in_a_turn": 4,
+     "returns": 6,
+     "loop_detections": 3,
+     "restricted_attempts": 0,
+     "restricted_accepted": 0,
+     "choices_with_deferred_all": 6,
+     "no_alternative": 0,
+     "inputs_deferred_all": 0,
+     "policy_suppressed": 0,
+     "anomalies": 0
+    },
+    "rules_v4_top_turns": [
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       19
+      ],
+      "swaps": 4
+     },
+     {
+      "actor": 0,
+      "turn": [
+       0,
+       27
+      ],
+      "swaps": 2
+     }
+    ],
+    "first_deferral": {
+     "n": 80,
+     "actor": 0,
+     "position": 76,
+     "turn": null,
+     "kind": "retreat",
+     "reason": "rule4:priority5:retreat:tie2:deferred_all1",
+     "restriction": null,
+     "move_chosen": null,
+     "build": {
+      "stage": 2,
+      "unbuildable": "total_units_unreachable"
+     },
+     "policy_review": null,
+     "outcome": null,
+     "attempts_at_position": [
+      {
+       "n": 80,
+       "kind": "retreat",
+       "reason": "rule4:priority5:retreat:tie2:deferred_all1",
+       "restriction": null,
+       "excluded": null,
+       "move": null,
+       "build": "unbuildable",
+       "outcome": null
+      },
+      {
+       "n": 81,
+       "kind": "play_trainer",
+       "reason": "rule4:priority5:play_trainer:deferred_all1",
+       "restriction": null,
+       "excluded": null,
+       "move": null,
+       "build": "ok",
+       "outcome": "accepted"
+      }
+     ],
+     "accepted_instead": {
+      "kind": "play_trainer",
+      "move": null,
+      "reason": "rule4:priority5:play_trainer:deferred_all1"
+     }
+    },
+    "first_divergence_v3_v4": {
+     "attempt_index": 82,
+     "position": 77,
+     "v4": {
+      "actor": 0,
+      "kind": "use_power",
+      "reason": "rule4:priority5:use_power",
+      "move": [
+       10,
+       2
+      ],
+      "restriction": null,
+      "outcome": "accepted"
+     },
+     "v3": {
+      "actor": 0,
+      "kind": "end_turn",
+      "reason": "rule3:priority6:end_turn:loop_demoted1",
+      "move": null,
+      "outcome": "accepted"
+     }
+    },
+    "rules_v3_equal_saved": {
+     "action_sequence_equal": true,
+     "contract_sequence_equal": true,
+     "attempts_equal": true,
+     "attempts": [
+      125,
+      125
+     ],
+     "termination_equal": true,
+     "accepted_equal": true,
+     "swaps_equal": true,
+     "first_attempt_difference": null
+    }
+   }
+  ],
+  "budget": {
+   "program_tool_used_seconds": 29.417,
+   "program_outer_used_seconds": 121.478,
+   "program_evidence_bytes": 58494379,
+   "drive_free_bytes": 256342687744
+  },
+  "limits": {
+   "program": {
+    "tool_seconds": 1800.0,
+    "outer_seconds": 3600.0,
+    "evidence_bytes": 2147483648
+   },
+   "start": {
+    "plan_seconds": 150.0,
+    "program_tool_seconds": 150.0,
+    "program_outer_seconds": 600.0
+   },
+   "floor_bytes": 402653184,
+   "factor": 1.5,
+   "drive_bytes": 4294967296
+  }
+ },
+ "u1_judgement": {
+  "hold_condition": "9023 rules-v4 at the accepted limit: not met (game_over)",
+  "evidence": "9022: rules-v4 swaps above rules-v2 and per-turn max near rules-v2; detection by the full own view caught that turn once",
+  "candidates_not_implemented": [
+   "per-turn Damage Swap acceptance cap",
+   "detection by the own damage configuration",
+   "switch to the rules-v3 holder unit by detection count"
+  ],
+  "adoption": "not decided"
+ },
+ "not_done": [
+  "default change",
+  "push to main / merge / PR",
+  "engine / convention / judge / limit change",
+  "extra guard",
+  "retries / seed changes / extra games",
+  "kyuura"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v4-exp-run/ and plans vai-batch-tr8v4-v3, vai-batch-tr8v4-v4",
+ "followup": {
+  "doc": "docs/tr8-rules-v4-9022-guard-analysis.md",
+  "summary": "9022 turn 36: 17 swaps, configuration returned once (= detection); recommend per-turn Damage Swap count N = 6 (rank 7), keeping S5 1->3"
+ }
+}

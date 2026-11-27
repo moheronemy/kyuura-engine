@@ -114,9 +114,19 @@ def _kind_of(context: dict[str, Any]) -> str | None:
     return (context.get("candidate") or {}).get("kind")
 
 
-def build_choices(stages: list[dict[str, Any]], policy, context: dict[str, Any], allowed: frozenset[str] = DEEP_PROCESSABILITY):
+def build_choices(stages: list[dict[str, Any]], policy, context: dict[str, Any], allowed: frozenset[str] = DEEP_PROCESSABILITY, *,
+                  restriction: frozenset | None = None):
     """段の順に選び、(choices, picks, meaning) を返す。picks は段ごとの選択の記録（場面・選べる数・選んだ位置・理由）、meaning は入力の意味の表現
-    （``meaning_of`` と同じ形。再現の比べに使う）。"""
+    （``meaning_of`` と同じ形。再現の比べに使う）。
+
+    ``restriction``（TOOL_VERSION 15。rules-v4 だけが渡す）: 外す（移動元の場のポケモンの番号, 移動先の番号）の組の集合。``transition_pairs`` が組を返す段の形
+    （2 段の移動元・移動先）でだけ使い、移動元の段では外さない移動先が 1 つ以上残る移動元だけ、移動先の段では選んだ移動元と組にして外さないものだけを選べるものにする。
+    与えないとき（None）の動作は今までと同じ。
+
+    TOOL_VERSION 17（rules-v6 だけが渡す）: 3 段の移動（移動元 → エネルギー → 移動先。``transfer_moves`` が組を返す段の形）では、``restriction`` は外す
+    （移動元の場のポケモンの番号, エネルギーのカードの番号, 移動先の番号）の組の集合。各段では、外さない組が 1 つ以上残る選べるものだけにする。"""
+    if restriction is not None and transition_pairs(stages, allowed) is None and transfer_moves(stages, allowed) is None:
+        raise ContractUnknown("restriction given for stages without source/target pairs")
     choices: list[Any] = []
     picks: list[dict[str, Any]] = []
     meaning: list[dict[str, Any]] = []
@@ -135,7 +145,7 @@ def build_choices(stages: list[dict[str, Any]], policy, context: dict[str, Any],
             continue
         if kind != CHOOSE_OPTION:
             raise ContractUnknown(f"stage {number}: unknown input {kind!r}")
-        ids = _choose_options(stages, stage, selected, policy, context, picks, allowed)
+        ids = _choose_options(stages, stage, selected, policy, context, picks, allowed, restriction)
         selected[number] = ids
         choices.extend(ids)
         source = stages[stage["options_from_stage"] - 1] if "options_from_stage" in stage else stage
@@ -194,10 +204,118 @@ def _allowed_ids(stages, stage, selected, allowed) -> list[str]:
     return ids
 
 
-def _choose_options(stages, stage, selected, policy, context, picks, allowed) -> list[str]:
+def transition_pairs(stages: list[dict[str, Any]], allowed: frozenset[str] = DEEP_PROCESSABILITY) -> frozenset | None:
+    """TOOL_VERSION 15（rules-v4）: 2 段の移動の入力（段 1 が移動元、段 2 が ``depends_on_stage: 1`` と ``options_by_choice`` で移動元ごとの移動先を持つ）の、
+    組み立てられる（移動元の場のポケモンの番号, 移動先の番号）の組の集合。``build_choices`` と同じ ``_allowed_ids`` で選べるものを引く（段を独立に組み合わせない）。
+    形が違う・選べるものが場のポケモンの番号を持たないなら None（制限しない）。"""
+    if not isinstance(stages, list) or len(stages) != 2:
+        return None
+    first, second = stages
+    if (first.get("stage"), second.get("stage"), first.get("input"), second.get("input")) != (1, 2, CHOOSE_OPTION, CHOOSE_OPTION):
+        return None
+    if second.get("depends_on_stage") != 1 or not isinstance(second.get("options_by_choice"), dict):
+        return None
+    if any(k in s for s in stages for k in ("options_from_stage", "path_stages", "options_by_path", "total_units")):
+        return None
+    if first.get("count") != {"min": 1, "max": 1} or second.get("count") != {"min": 1, "max": 1}:
+        return None
+    by1 = {o["id"]: o for o in first.get("options", [])}
+    by2 = {o["id"]: o for o in second.get("options", [])}
+    out = set()
+    for sid in _allowed_ids(stages, first, {}, allowed):
+        source = by1[sid].get("pokemon")
+        if type(source) is not int:
+            return None
+        for tid in _allowed_ids(stages, second, {1: [sid]}, allowed):
+            target = by2[tid].get("pokemon")
+            if type(target) is not int:
+                return None
+            out.add((source, target))
+    return frozenset(out)
+
+
+TRANSFER_ROLES = ("source", "energy", "target")
+
+
+def transfer_moves(stages: list[dict[str, Any]], allowed: frozenset[str] = DEEP_PROCESSABILITY) -> frozenset | None:
+    """TOOL_VERSION 17（rules-v6）: 3 段の移動の入力（段 1 が移動元、段 2 が ``depends_on_stage: 1`` と ``options_by_choice`` で移動元ごとのエネルギー、
+    段 3 が ``depends_on_stage: 2`` と ``options_by_choice`` でエネルギーごとの移動先。段の役割 source・energy・target）の、組み立てられる
+    （移動元の場のポケモンの番号, エネルギーのカードの番号, 移動先の場のポケモンの番号）の組の集合。``build_choices`` と同じ ``_allowed_ids`` で、
+    前の段の選び方ごとに選べるものを引く（段を独立に組み合わせない。候補・選べるものの番号 c…・o… は使わない）。
+    形が違う・参照が整数でないなら None（制限しない）。"""
+    if not isinstance(stages, list) or len(stages) != 3:
+        return None
+    if [s.get("stage") for s in stages] != [1, 2, 3] or any(s.get("input") != CHOOSE_OPTION for s in stages):
+        return None
+    if tuple(s.get("role") for s in stages) != TRANSFER_ROLES:
+        return None
+    first, second, third = stages
+    if second.get("depends_on_stage") != 1 or third.get("depends_on_stage") != 2:
+        return None
+    if not isinstance(second.get("options_by_choice"), dict) or not isinstance(third.get("options_by_choice"), dict):
+        return None
+    if any(k in s for s in stages for k in ("options_from_stage", "path_stages", "options_by_path", "total_units", "distinct_across_stages")):
+        return None
+    if any(s.get("count") != {"min": 1, "max": 1} for s in stages):
+        return None
+    by1 = {o["id"]: o for o in first.get("options", [])}
+    by2 = {o["id"]: o for o in second.get("options", [])}
+    by3 = {o["id"]: o for o in third.get("options", [])}
+    out = set()
+    for sid in _allowed_ids(stages, first, {}, allowed):
+        source = by1[sid].get("pokemon")
+        if type(source) is not int:
+            return None
+        for eid in _allowed_ids(stages, second, {1: [sid]}, allowed):
+            energy = by2[eid].get("card")
+            if type(energy) is not int:
+                return None
+            for tid in _allowed_ids(stages, third, {1: [sid], 2: [eid]}, allowed):
+                target = by3[tid].get("pokemon")
+                if type(target) is not int:
+                    return None
+                out.add((source, energy, target))
+    return frozenset(out)
+
+
+def _restricted_ids(stages, stage, selected, allowed, ids, restriction) -> list[str]:
+    """``build_choices`` の ``restriction``: 外す組だけを選べるものから除く（API の並びのまま）。"""
+    if len(stages) == 3:  # rules-v6 の 3 段の移動（transfer_moves の形）
+        return _restricted_ids3(stages, stage, selected, allowed, ids, restriction)
+    by = {o["id"]: o for o in stage.get("options", [])}
+    if stage["stage"] == 1:
+        second = stages[1]
+        by2 = {o["id"]: o for o in second.get("options", [])}
+        return [i for i in ids
+                if any((by[i].get("pokemon"), by2[t].get("pokemon")) not in restriction for t in _allowed_ids(stages, second, {1: [i]}, allowed))]
+    source = {o["id"]: o for o in stages[0].get("options", [])}[selected[1][0]].get("pokemon")
+    return [i for i in ids if (source, by[i].get("pokemon")) not in restriction]
+
+
+def _restricted_ids3(stages, stage, selected, allowed, ids, restriction) -> list[str]:
+    """3 段の移動の ``restriction``: 選べるもののうち、その先に外さない（移動元, エネルギー, 移動先）の組が 1 つ以上残るものだけ（API の並びのまま）。"""
+    by1, by2, by3 = ({o["id"]: o for o in s.get("options", [])} for s in stages)
+    number = stage["stage"]
+
+    def keep_target(sid, eid, tid):
+        return (by1[sid].get("pokemon"), by2[eid].get("card"), by3[tid].get("pokemon")) not in restriction
+
+    def keep_energy(sid, eid):
+        return any(keep_target(sid, eid, tid) for tid in _allowed_ids(stages, stages[2], {1: [sid], 2: [eid]}, allowed))
+
+    if number == 1:
+        return [i for i in ids if any(keep_energy(i, eid) for eid in _allowed_ids(stages, stages[1], {1: [i]}, allowed))]
+    if number == 2:
+        return [i for i in ids if keep_energy(selected[1][0], i)]
+    return [i for i in ids if keep_target(selected[1][0], selected[2][0], i)]
+
+
+def _choose_options(stages, stage, selected, policy, context, picks, allowed, restriction=None) -> list[str]:
     number = stage["stage"]
     lo, hi = _count(stage)
     ids = _allowed_ids(stages, stage, selected, allowed)
+    if restriction is not None:
+        ids = _restricted_ids(stages, stage, selected, allowed, ids, restriction)
     sub = {**context, "stage": stage}
     if "total_units" in stage:
         return _choose_by_units(stage, ids, lo, hi, policy, sub, picks)

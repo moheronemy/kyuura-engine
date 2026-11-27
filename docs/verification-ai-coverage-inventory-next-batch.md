@@ -70,6 +70,7 @@
 | check_face_up_deck | 0（対戦） | | | | | | | | 表示だけの種類。構築盤面（V3-3 の C4）だけ |
 
 - 断り（refused）・failed は 0 です。
+- **訂正（2026-11-15）**: 上の表の数は、集計のスクリプトが同じ種類を 2 回たどったため、すべての種類・すべての列でちょうど 2 倍でした（決定の種類の 3.2 節の表は影響なし）。正しい値は半分です（例: `play_trainer` の提示 49,530 → 24,765・受理 9,898 → 4,949・`unresolved_ruling` 10,104 → 5,052、`discard_from_play` 634 → 317、`use_stadium` の `unresolved_ruling` 36 → 18）。元の表は残しています: [受理の前の未裁定の候補の内訳](prestop-ruling-breakdown.md) 1 章。
 - 拒否のコードは、記録がある範囲で次のとおりです。
   - s1: `WRONG_ENERGY_TYPE` 4・`WRONG_RETREAT_COST` 1・`INSUFFICIENT_ENERGY` 1。
   - C1: `UNRESOLVED_ENERGY_RETRIEVAL_ZERO_CHOICE` 15（決定への回答の拒否。evidence_missing_stop）。
@@ -106,7 +107,7 @@
 | 準備の停止 `UNRESOLVED_MULLIGAN_COMPENSATION` | b2（既定の規約集合・0.179.0・観測なし）で seed 2025 の 3 方式とも準備で停止（halted_known・`halt_condition_not_evidenced`＝evidence_missing_stop） |
 | 続行規約 `PC-SETUP-MULLIGAN-COUNT@1`（`CS-KYUURA-PLAY-S2A@1`） | C2（S2A・0.179.0・観測なし）で同じ seed 2025 の 3 方式とも game_over まで進んだ。記録に、規約を当てたログ `convention_applied` はない（C2 の道具は公開ログの観測を保存していない）。**規約が実際に処理を決めたことの直接の記録はない** |
 | 規約集合 PO | 対戦の記録なし |
-| 受理の前に未裁定で止める候補 | `play_trainer` 10,104・`discard_from_play` 634・`use_stadium` 36 は、どの方式でも範囲の外（`unresolved_ruling`）。送信していない |
+| 受理の前に未裁定で止める候補 | `play_trainer` 10,104・`discard_from_play` 634・`use_stadium` 36 は、どの方式でも範囲の外（`unresolved_ruling`）。送信していない（→ 2026-11-15 の訂正: 正しくは 5,052・317・18。内訳は [受理の前の未裁定の候補の内訳](prestop-ruling-breakdown.md)） |
 
 - **訂正（2026-11-14、実行の前の照合。10.1 節）**: 上の行の「記録に `convention_applied` はない」「直接の記録はない」は不正確でした。各局の保存ファイルに文字列はありませんが、当時の比較（`vai-batch-c/compare_c2_b2.json`）は、保存した完全な記録を `replay_run.replay` の observer で再実行した状態のログから、seed 2025 の 3 局で `convention_applied`（`PC-SETUP-MULLIGAN-COUNT`・版 1・場面 initial-setup）を 1 回ずつ読んでいました（[計画 3](verification-ai-batch-plan3.md) 10.5 節）。0.179.0・観測の記録なしの結果である点は同じです。
 
@@ -394,7 +395,7 @@ seed 2025 は、結果を見て選んだ回帰条件です。旧記録の再開�
 | ポケモン育て屋さん | 進化カード | 出た（`evolve`） | 場に出す。合う |
 
 - **訂正（2026-11-14、限定）**: 上の表の「出た」「合う」は、相手・観戦者の閲覧用記録の出来事に uid が出たことだけで判断していました（相手・観戦者が uid とカード ID の対応を知れるかは確かめていない）。識別の観点で確かめた結果（[verification-ai-w1-publication-audit.md](verification-ai-w1-publication-audit.md)）: ポケモン交換おじさんでもどしたカードは、相手・観戦者とも 4 件すべてで、その時点までに識別できる情報がありませんでした（公開不足の不具合候補）。ほかの行は、その単位では未調査です（uid の出現だけの判断のまま）。元の表は残しています。
-  - 2026-11-15 の追記: 化石の発掘の山札の側とスロットゲームの束は 0.185.0 で修正した（残り: GUI の束の表示と依存の更新）: [fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)。
+  - 2026-11-15 の追記: 化石の発掘の山札の側とスロットゲームの束は 0.185.0 で修正した（残り: GUI の束の表示と依存の更新）: [fossil-slot-reveal-v0.185.md](fossil-slot-reveal-v0.185.md)。→ GUI も 0.185.0 に追従した（GUI の `docs/engine-contract.md` 27・28 章。[現在の完了・未完了一覧](project-status-ledger-v0185.md)）。
   - 2026-11-15 の追記: 残りの化石の発掘・スロットゲームの束は、公開の要件と最小の修正仕様を設計した（未実装）: [fossil-slot-reveal-identification-design.md](fossil-slot-reveal-identification-design.md)。
   - 2026-11-15 の追記: D の 17 か所は 0.184.0 で修正した（残り: 化石の発掘の判断・スロットゲームの束・GUI の依存の更新）: [reveal-identify-v0.184.md](reveal-identify-v0.184.md)。
   - 2026-11-15 の追記: D の 17 か所は構築盤面で再現し、修正範囲を確定した（修正は次の単位）: [reveal-call-sites-repro-fix-design.md](reveal-call-sites-repro-fix-design.md)。

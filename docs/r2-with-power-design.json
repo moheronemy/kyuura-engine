@@ -1,0 +1,211 @@
+{
+ "format": "kyuura-r2-with-power-design/1",
+ "base": {
+  "branch": "claude/stop-ledger-sync-v0189",
+  "commit": "ca186b3796cb14bba1110f5648ceb17d5558bfd4",
+  "engine": "0.189.0",
+  "tool_version": 13,
+  "judge_rules_version": 10,
+  "plan_format": 7,
+  "gui_reference": "ae30f6c"
+ },
+ "date_check": {
+  "documents": "docs/stop-ledger-sync-v0.189.md ほか（2026-11-17）",
+  "commits": {
+   "604b018": "2026-11-17T00:30:26+09:00",
+   "ca186b3": "2026-11-17T00:49:52+09:00"
+  },
+  "timezone": "UTC+09:00",
+  "result": "現地の日付として正しい（変更しない）"
+ },
+ "current": {
+  "face_down_branch": "kyuura_engine/legal_actions.py _face_down_attack_candidate・_face_down_addon_specs（クチバシティジムのコインだけ）",
+  "face_up_branch": "kyuura_engine/legal_actions.py _addon_specs（コイン・attack_power・with_power）"
+ },
+ "types": [
+  {
+   "type": "ExtraEnergyDamageWithAttack",
+   "power": "すいりょくはつでん",
+   "field": "UseAttack.attack_power",
+   "holders": [
+    "neo1-040"
+   ],
+   "slot": "kyuura_engine/effects.py attack_power_slot（slot.key.card_id == key.card_id）",
+   "check": "kyuura_engine/effects.py attack_power_check",
+   "attacker_condition": "力を持つ同じカードが説明の名前のワザを使う",
+   "holder_basic": false,
+   "cases": [
+    "R4"
+   ],
+   "recommendation": "A",
+   "tests": [
+    "tests/test_type_energy_colors_v0_88.py",
+    "tests/test_legal_actions_u7_4.py"
+   ]
+  },
+  {
+   "type": "CommandBonusToNamedAttackers",
+   "power": "めいれい",
+   "field": "UseAttack.with_power / with_powers",
+   "holders": [
+    "PR1-068"
+   ],
+   "slot": "kyuura_engine/effects.py group_attack_power_slot（うらの持ち主は None）",
+   "check": "kyuura_engine/effects.py group_attack_power_check・usable_for（field_name_matches・うらの使い手は不可）",
+   "attacker_condition": "使い手の今の名前が names のどれか",
+   "attacker_cards": 2,
+   "attacker_cards_basic": 1,
+   "attacker_basic_with_powers": 0,
+   "uses_coins": false,
+   "cases": [
+    "R1"
+   ],
+   "recommendation": "B",
+   "tests": [
+    "tests/test_damage_reactions_poison_sleep_v0_119.py",
+    "tests/test_chemical_gas_v0_8.py",
+    "tests/test_effects.py"
+   ]
+  },
+  {
+   "type": "CoinsUntilTailsBonusToGroupAttack",
+   "power": "XXXXX",
+   "field": "UseAttack.with_power / with_powers",
+   "holders": [
+    "neo4-065"
+   ],
+   "slot": "kyuura_engine/effects.py group_attack_power_slot",
+   "check": "group_attack_power_check・usable_for（in_name_group・ワザの名前）・other_use_problem（この番の記録）",
+   "attacker_condition": "名前のグループ「アンノーン」・ワザ「めざめるパワー」",
+   "attacker_cards": 26,
+   "attacker_cards_basic": 26,
+   "attacker_power_types": 22,
+   "uses_coins": true,
+   "xp1": "kyuura_engine/resolution/flow.py group_power_coin_order（ワザの要素より先のコインと併存）",
+   "cases": [
+    "R2",
+    "R3"
+   ],
+   "recommendation": "C",
+   "tests": [
+    "tests/test_unbounded_coins_heal_allocation_v0_118.py",
+    "tests/test_legal_actions_u7_4.py"
+   ]
+  },
+  {
+   "type": "CounterBonusToGroupAttack",
+   "power": "ANGER",
+   "field": "UseAttack.with_power / with_powers",
+   "holders": [
+    "neo2-030"
+   ],
+   "slot": "kyuura_engine/effects.py group_attack_power_slot",
+   "check": "group_attack_power_check・usable_for（in_name_group・ワザの名前）",
+   "attacker_condition": "名前のグループ「アンノーン」・ワザ「めざめるパワー」",
+   "attacker_cards": 26,
+   "uses_coins": false,
+   "cases": [
+    "R2",
+    "R3"
+   ],
+   "recommendation": "C",
+   "tests": [
+    "tests/test_unown_fossil_retreat_reactions_v0_122.py"
+   ]
+  }
+ ],
+ "cases": {
+  "R1": {
+   "summary": "［めいれい］・持ち主はおもてのサカキのニドキング・使い手はうらのサカキのニドラン♂",
+   "now": "候補に出ない（入力が作れない）。直接のコマンドはおもてにしたあとの確かめで受け付ける見込み（未実行）"
+  },
+  "R2": {
+   "summary": "［XXXXX］・［ANGER］・持ち主はおもての別のアンノーン・使い手はうらのアンノーン",
+   "now": "同上"
+  },
+  "R3": {
+   "summary": "［XXXXX］・［ANGER］・持ち主は使い手自身",
+   "now": "同上（持ち主の力はおもてにしたあとに決まる）"
+  },
+  "R4": {
+   "summary": "［すいりょくはつでん］・本当のカードがメタモンで相手の対戦ポケモンがランターン",
+   "now": "候補に出ない。受け付けるかは TF1 の残る部分にかかり未確認"
+  },
+  "XP1": {
+   "summary": "［XXXXX］とクチバシティジムのコインなどの併存",
+   "now": "エンジンが group_power_coin_order で止める（既存の未裁定。A）"
+  }
+ },
+ "information": [
+  {
+   "item": "本当のカードの印刷の名前・特殊能力の有無",
+   "class": "本人が知る",
+   "r1": "使う"
+  },
+  {
+   "item": "持ち主とその力・場の番号",
+   "class": "公開",
+   "r1": "使う"
+  },
+  {
+   "item": "持ち主の力が消えている・使えない・この番の記録",
+   "class": "公開",
+   "r1": "使う（読むだけの既存の問い合わせ）"
+  },
+  {
+   "item": "公開のあとの今の名前・名前のグループ・変身",
+   "class": "公開のあとに決まる",
+   "r1": "特殊能力のない本当のカードは印刷の名前と同じ"
+  },
+  {
+   "item": "相手のうらのカード・山札・手札・サイド",
+   "class": "相手の秘密",
+   "r1": "使わない"
+  },
+  {
+   "item": "先読みの結果",
+   "class": "試さないと分からない",
+   "r1": "使わない"
+  }
+ ],
+ "recommendation": {
+  "next_unit": "R1（［めいれい］）の限定提示",
+  "conditions": [
+   "番のプレイヤーの main・本人のバトル場がうら",
+   "printed_def(active.card) が特殊能力を持たない",
+   "自分の場のおもてのポケモンが CommandBonusToNamedAttackers の力を持つ（group_attack_power_slot）",
+   "印刷の名前が力の names のどれかと完全に同じ",
+   "持ち主の力が消えていない・使えない効果を受けていない（power_suppressed・powers_use_prevented）",
+   "使い手と持ち主が別"
+  ],
+  "stage2": {
+   "options": "持ち主ごとに with_power（_addon_specs と同じ値・表示）",
+   "options_by_choice": "どのワザにも同じ",
+   "order": "significant",
+   "processability": "unverified",
+   "reasons": [
+    "face_down_reveal_not_evaluated"
+   ],
+   "exclusive": "同じ exclusive_key の 2 つは check が拒否"
+  },
+  "check": "形だけ（_not_checked と形の制約）",
+  "submit": "エンジンの今の順（変えない）",
+  "decline_moving_to_decision": true
+ },
+ "decisions_for_user": [
+  "D-R2W-1",
+  "D-R2W-2",
+  "D-R2W-3",
+  "D-R2W-4"
+ ],
+ "compatibility": {
+  "engine_version": "0.190.0 の見込み",
+  "behavior": "変わる",
+  "rule10_basis": "変わる（legal_actions.py）",
+  "instrumentation": "不変の見込み",
+  "p1_p2_p3": "不変の見込み",
+  "api_format": "不変",
+  "verification_ai": "方策は不変",
+  "gui": "既存の段 2 の扱いで表示できる見込み（未確認）"
+ }
+}

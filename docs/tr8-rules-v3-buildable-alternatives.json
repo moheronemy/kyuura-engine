@@ -1,0 +1,5405 @@
+{
+ "status": "board_check_done",
+ "doc": "docs/tr8-rules-v3-buildable-alternatives.md",
+ "date": "2026-11-24",
+ "base": "8c29488b0b434ac3dc5b873c4cf3b615f780fb53",
+ "policy_commit": "001210fa09dfd0e40512985fe95cf0a51cd5150b",
+ "branch": "claude/tr8-rules-v3-buildable-alternatives",
+ "previous": "docs/tr8-rules-v3-fresh-seed-comparison.md",
+ "runtime": {
+  "engine_version": "0.198.0",
+  "tool_version": 14,
+  "conventions": "CS-KYUURA-PLAY-TR8@1",
+  "turn": 7,
+  "seeds": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "limits": {
+   "operations": 300,
+   "accepted": 120,
+   "turns": 2,
+   "seconds": 60.0,
+   "rejections_per_position": 16,
+   "draws_per_position": 64
+  },
+  "profile": "deep",
+  "demoted_rank": 7,
+  "execution_worktree": "kyuura-engine-lt102r (detached 001210f, read only)",
+  "board_helper": "tests.helpers.build_test_state + conventions.registered_identity(CS-KYUURA-PLAY-TR8@1)",
+  "runner": "tools.verification_ai.fixtures_observe.FixtureRunner (runner.Runner with a fixture start; candidates / inputs / check / submit / policy hooks unchanged)",
+  "policies": "Config(policy=rules, rules_version=2|3) -> runner.make_policies (same as batches)",
+  "observation_recorder": false,
+  "prestop": false,
+  "prefix": "player 0 policy instance choose() returns the fixed Damage Swap and source / target while the prefix lasts; acceptance and history updates through the runner; policy RNG not used during the prefix",
+  "stop": "player 0 accepted end_turn or use_attack, or the turn changed"
+ },
+ "classification": {
+  "S1_retreat_payable": "confirmed",
+  "S2a_trainer_potion": "confirmed",
+  "S2b_trainer_switch": "confirmed",
+  "S3a_attack_no_prefix": "unreachable_by_priority (control: attack chosen first, no Damage Swap)",
+  "S3b_attack_after_constructed_loop": "constructed_only_control",
+  "S4_improving_no_return": "confirmed",
+  "S5_same_holder_other_move": "constraint_confirmed",
+  "S6a_retreat_unbuildable": "control_confirmed"
+ },
+ "scenarios": {
+  "S1_retreat_payable": {
+   "note": "往復のあと、にげる（費用 2・超 2 枚）を払える。交代先のフーディンは超 3 でワザを使える",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [
+      "PMCG1-101",
+      "PMCG1-101"
+     ],
+     "2": [
+      "PMCG1-101",
+      "PMCG1-101",
+      "PMCG1-101"
+     ]
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 2,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "retreat_chosen_built_checked_accepted": true,
+      "retreat_first_after_detection": true,
+      "retreat_paid_discard": [
+       "PMCG1-101",
+       "PMCG1-101"
+      ],
+      "retreat_new_active": [
+       2,
+       "PMCG1-049"
+      ],
+      "attack_after": true
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 3,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "retreat_chosen_built_checked_accepted": true,
+      "retreat_first_after_detection": true,
+      "retreat_paid_discard": [
+       "PMCG1-101",
+       "PMCG1-101"
+      ],
+      "retreat_new_active": [
+       2,
+       "PMCG1-049"
+      ],
+      "attack_after": true
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "retreat_chosen_built_checked_accepted": true,
+      "retreat_first_after_detection": true,
+      "retreat_paid_discard": [
+       "PMCG1-101",
+       "PMCG1-101"
+      ],
+      "retreat_new_active": [
+       2,
+       "PMCG1-049"
+      ],
+      "attack_after": true
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "retreat_chosen_built_checked_accepted": true,
+      "retreat_first_after_detection": true,
+      "retreat_paid_discard": [
+       "PMCG1-101",
+       "PMCG1-101"
+      ],
+      "retreat_new_active": [
+       2,
+       "PMCG1-049"
+      ],
+      "attack_after": true
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 2,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 20
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-101",
+        "PMCG1-101"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    }
+   ]
+  },
+  "S2a_trainer_potion": {
+   "note": "往復のあと、きずぐすりを使える（にげるはエネルギーがなく組み立てられない）",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [],
+     "2": []
+    },
+    "hand": [
+     "PMCG1-071"
+    ],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 0,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": {
+      "index": 3,
+      "rules_v2": {
+       "n": 6,
+       "position": 4,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 6,
+       "position": 4,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-071"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": false,
+      "tie_draws_before_trainer": []
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 7,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 2,
+      "unbuildable": 3,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-071"
+       ],
+       "reason": "rule2:priority5:play_trainer:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 3,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-071"
+       ],
+       "reason": "rule3:priority5:play_trainer:tie2:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-071"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": false,
+      "tie_draws_before_trainer": [
+       "retreat:total_units_unreachable"
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "play_trainer",
+       "answer_decision",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 2,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 20,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 4,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-071"
+       ],
+       "reason": "rule3:priority5:play_trainer:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-071"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": false,
+      "tie_draws_before_trainer": [
+       "retreat:total_units_unreachable"
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 7,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "play_trainer",
+       "answer_decision",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 2,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie3",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 4,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": {
+      "index": 3,
+      "rules_v2": {
+       "n": 6,
+       "position": 4,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 6,
+       "position": 4,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-071"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": false,
+      "tie_draws_before_trainer": []
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 7,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 2,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-071"
+       ],
+       "reason": "rule2:priority5:play_trainer:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 3,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-071"
+       ],
+       "reason": "rule3:priority5:play_trainer:tie2:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-071"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    }
+   ]
+  },
+  "S2b_trainer_switch": {
+   "note": "往復のあと、ポケモンいれかえを使える。交代先のフーディンは超 3 でワザを使える",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [],
+     "2": [
+      "PMCG1-101",
+      "PMCG1-101",
+      "PMCG1-101"
+     ]
+    },
+    "hand": [
+     "PMCG1-073"
+    ],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 2,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-073"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": true,
+      "tie_draws_before_trainer": []
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-073"
+       ],
+       "reason": "rule2:priority5:play_trainer:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-073"
+       ],
+       "reason": "rule3:priority5:play_trainer:tie2:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-073"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": true,
+      "tie_draws_before_trainer": [
+       "retreat:total_units_unreachable"
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 20
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 3,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-073"
+       ],
+       "reason": "rule3:priority5:play_trainer:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-073"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": true,
+      "tie_draws_before_trainer": [
+       "retreat:total_units_unreachable"
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie3",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 20
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 3,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:tie2:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "trainer_accepted": true,
+      "trainer_chosen_before_end_turn": true,
+      "trainer_card": [
+       "PMCG1-073"
+      ],
+      "board_after_trainer_and_answer": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      },
+      "attack_after": true,
+      "tie_draws_before_trainer": []
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-073"
+       ],
+       "reason": "rule2:priority5:play_trainer:tie3",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "play_trainer",
+       "answer_decision",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "play_trainer",
+       "power": null,
+       "input": [
+        "PMCG1-073"
+       ],
+       "reason": "rule3:priority5:play_trainer:tie2:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 30
+       },
+       "energy": {
+        "2": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-073"
+       ],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    }
+   ]
+  },
+  "S3a_attack_no_prefix": {
+   "note": "対照: バトル場のフーディンがワザ（超 3）を使える。前置きなし（方策の順位で往復に入れるか）",
+   "prefix": [],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-049"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [
+      "PMCG1-101",
+      "PMCG1-101",
+      "PMCG1-101"
+     ],
+     "2": []
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 4,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "first_choice_v2": "use_attack",
+      "first_choice_v3": "use_attack",
+      "swap_attempts_v2": 0,
+      "swap_attempts_v3": 0,
+      "opponent_damage_after": [
+       60,
+       60
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "first_choice_v2": "use_attack",
+      "first_choice_v3": "use_attack",
+      "swap_attempts_v2": 0,
+      "swap_attempts_v3": 0,
+      "opponent_damage_after": [
+       60,
+       60
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "first_choice_v2": "use_attack",
+      "first_choice_v3": "use_attack",
+      "swap_attempts_v2": 0,
+      "swap_attempts_v3": 0,
+      "opponent_damage_after": [
+       60,
+       60
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "first_choice_v2": "use_attack",
+      "first_choice_v3": "use_attack",
+      "swap_attempts_v2": 0,
+      "swap_attempts_v3": 0,
+      "opponent_damage_after": [
+       60,
+       60
+      ]
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 1,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 1,
+       "position": 0,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    }
+   ]
+  },
+  "S3b_attack_after_constructed_loop": {
+   "note": "構築だけの対照: ワザがある場面で前置きの往復を固定する（方策の順位では到達しない前置き）",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-049"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [
+      "PMCG1-101",
+      "PMCG1-101",
+      "PMCG1-101"
+     ],
+     "2": []
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 4,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "attack_first_after_prefix_v2": "use_attack",
+      "attack_first_after_prefix_v3": "use_attack"
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 1,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "attack_first_after_prefix_v2": "use_attack",
+      "attack_first_after_prefix_v3": "use_attack"
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 1,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "attack_first_after_prefix_v2": "use_attack",
+      "attack_first_after_prefix_v3": "use_attack"
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 1,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": true,
+      "attack_first_after_prefix_v2": "use_attack",
+      "attack_first_after_prefix_v3": "use_attack"
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule2:priority4:use_attack",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 1,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_attack",
+       "power": null,
+       "input": [
+        "PMCG1-049"
+       ],
+       "reason": "rule3:priority4:use_attack:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-049"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [
+         "PMCG1-101",
+         "PMCG1-101",
+         "PMCG1-101"
+        ],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 60,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=Confused())"
+      }
+     }
+    }
+   ]
+  },
+  "S4_improving_no_return": {
+   "note": "9024 の番 23 の型: バトル場のダメージを 10 減らす 1 回の移動のあと、にげる（費用 3）→ エビワラーのジャブへ進める",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-049"
+    ],
+    "damage": {
+     "1": 60,
+     "2": 0
+    },
+    "energy": {
+     "1": [
+      "PMCG1-102",
+      "PMCG1-102",
+      "PMCG1-102"
+     ],
+     "2": [
+      "PMCG1-102"
+     ]
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 2,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "detection_right_after_improving_move": false,
+      "detections_v3": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "detections_v2_offline": null,
+      "first_choice_same": true,
+      "retreat_then_attack_v2": [
+       "retreat",
+       "use_attack"
+      ],
+      "retreat_then_attack_v3": [
+       "retreat",
+       "use_attack"
+      ],
+      "final_active_damage_v2": {
+       "2": 0,
+       "1": 60
+      },
+      "final_active_damage_v3": {
+       "2": 0,
+       "1": 60
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 3,
+      "policy_suppressed": 2,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        2,
+        1
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 60
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        2,
+        1
+       ],
+       "reason": "rule3:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 60
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "detection_right_after_improving_move": false,
+      "detections_v3": [],
+      "detections_v2_offline": null,
+      "first_choice_same": true,
+      "retreat_then_attack_v2": [
+       "retreat",
+       "use_attack"
+      ],
+      "retreat_then_attack_v3": [
+       "retreat",
+       "use_attack"
+      ],
+      "final_active_damage_v2": {
+       "2": 10,
+       "1": 50
+      },
+      "final_active_damage_v3": {
+       "2": 10,
+       "1": 50
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 50
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule3:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 50
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": null,
+     "checks": {
+      "detected_v3": false,
+      "detection_right_after_improving_move": false,
+      "detections_v3": [],
+      "detections_v2_offline": null,
+      "first_choice_same": true,
+      "retreat_then_attack_v2": [
+       "retreat",
+       "use_attack"
+      ],
+      "retreat_then_attack_v3": [
+       "retreat",
+       "use_attack"
+      ],
+      "final_active_damage_v2": {
+       "2": 10,
+       "1": 50
+      },
+      "final_active_damage_v3": {
+       "2": 10,
+       "1": 50
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 50
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule3:priority5:retreat:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 10,
+        "1": 50
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [
+        2,
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "detection_right_after_improving_move": false,
+      "detections_v3": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "detections_v2_offline": null,
+      "first_choice_same": true,
+      "retreat_then_attack_v2": [
+       "retreat",
+       "use_attack"
+      ],
+      "retreat_then_attack_v3": [
+       "retreat",
+       "use_attack"
+      ],
+      "final_active_damage_v2": {
+       "2": 0,
+       "1": 60
+      },
+      "final_active_damage_v3": {
+       "2": 0,
+       "1": 60
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 3,
+      "policy_suppressed": 2,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        2,
+        1
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 60
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "retreat",
+       "use_attack"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 0,
+      "unbuildable": 0,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 2,
+       "position": 1,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        2,
+        1
+       ],
+       "reason": "rule3:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        2,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "2": 0,
+        "1": 60
+       },
+       "energy": {
+        "2": [
+         "PMCG1-102"
+        ],
+        "1": []
+       },
+       "hand": [],
+       "discard": [
+        "PMCG1-102",
+        "PMCG1-102",
+        "PMCG1-102"
+       ],
+       "opponent_active_damage": 20,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    }
+   ]
+  },
+  "S5_same_holder_other_move": {
+   "note": "往復のあとも、同じ持ち主の別の移動（エビワラー → ディグダ）を組み立てられる。にげるは組み立てられない",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0,
+     "3": 0
+    },
+    "energy": {
+     "1": [],
+     "2": [],
+     "3": []
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 0,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0,
+       "3": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 6,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 3,
+      "policy_suppressed": 4,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 20,
+        "2": 0,
+        "3": 10
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0,
+        "3": 0
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0,
+       "3": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 8,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 5,
+      "policy_suppressed": 3,
+      "unbuildable": 4,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 10,
+        "2": 0,
+        "3": 20
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0,
+        "3": 0
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        3
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0,
+       "3": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 7,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 4,
+      "policy_suppressed": 2,
+      "unbuildable": 4,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 20,
+        "2": 10,
+        "3": 0
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0,
+        "3": 0
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        3
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0,
+       "3": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 11,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 8,
+      "policy_suppressed": 3,
+      "unbuildable": 3,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        3
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 20,
+        "2": 0,
+        "3": 10
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0,
+        "3": 0
+       },
+       "energy": {
+        "1": [],
+        "2": [],
+        "3": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    }
+   ]
+  },
+  "S6a_retreat_unbuildable": {
+   "note": "対照: 往復のあと、にげるを組み立てられない（エネルギーなし）。ほかの手がない",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ]
+   ],
+   "initial_board": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 30,
+     "2": 0
+    },
+    "energy": {
+     "1": [],
+     "2": []
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "identical_pairs": 0,
+   "pairs": [
+    {
+     "seed": 1,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 3,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 2,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 2,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 3,
+     "first_difference": {
+      "index": 1,
+      "rules_v2": {
+       "n": 4,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 4,
+       "position": 2,
+       "kind": "end_turn",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority6:end_turn:loop_demoted1",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 5,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 2,
+      "policy_suppressed": 2,
+      "unbuildable": 2,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule2:priority5:retreat:tie2",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    },
+    {
+     "seed": 4,
+     "first_difference": {
+      "index": 0,
+      "rules_v2": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "rules_v3": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "checks": {
+      "detected_v3": true,
+      "v3_after_detection": [
+       "retreat:total_units_unreachable:None",
+       "end_turn:ok:accepted"
+      ],
+      "end_turn_with_demoted_swap_present": [
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "retreat",
+         5
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ],
+       [
+        [
+         "end_turn",
+         6
+        ],
+        [
+         "use_power",
+         7
+        ]
+       ]
+      ],
+      "net_damage_v3": {
+       "1": 30,
+       "2": 0
+      }
+     },
+     "rules_v2": {
+      "termination": "script_complete",
+      "accepted": 4,
+      "anomalies": 0,
+      "detections": [],
+      "accepted_after_prefix": [
+       "use_power/ダメージスワップ",
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 1,
+      "policy_suppressed": 2,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 0,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "use_power",
+       "power": "ダメージスワップ",
+       "input": [
+        1,
+        2
+       ],
+       "reason": "rule2:priority5:use_power:tie2",
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 20,
+        "2": 10
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     },
+     "rules_v3": {
+      "termination": "script_complete",
+      "accepted": 3,
+      "anomalies": 0,
+      "detections": [
+       {
+        "position": 2,
+        "returned_to": 0,
+        "cycle_length": 2,
+        "run_accepts": 2
+       }
+      ],
+      "accepted_after_prefix": [
+       "end_turn"
+      ],
+      "swaps_accepted_after_prefix": 0,
+      "policy_suppressed": 0,
+      "unbuildable": 1,
+      "choices_with_loop_demoted": 2,
+      "demoted_rank_choices": 0,
+      "first_after_prefix": {
+       "n": 3,
+       "position": 2,
+       "kind": "retreat",
+       "power": null,
+       "input": [],
+       "reason": "rule3:priority5:retreat:loop_demoted1",
+       "build": "total_units_unreachable",
+       "check_valid": null,
+       "outcome": null
+      },
+      "final_board": {
+       "active": [
+        1,
+        "PMCG1-058"
+       ],
+       "damage": {
+        "1": 30,
+        "2": 0
+       },
+       "energy": {
+        "1": [],
+        "2": []
+       },
+       "hand": [],
+       "discard": [],
+       "opponent_active_damage": 0,
+       "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+      }
+     }
+    }
+   ]
+  }
+ },
+ "probes": {
+  "S5_probe_other_move": {
+   "base": "S5_same_holder_other_move",
+   "prefix": [
+    [
+     "swap",
+     1,
+     2
+    ],
+    [
+     "swap",
+     2,
+     1
+    ],
+    [
+     "swap",
+     1,
+     3
+    ]
+   ],
+   "note": "同じ前置きのあと、別の移動（1 → 3）を前置きとして送り、受理と観測を確かめる",
+   "probe_step": {
+    "n": 3,
+    "position": 2,
+    "kind": "use_power",
+    "power": "ダメージスワップ",
+    "input": [
+     1,
+     3
+    ],
+    "reason": "prefix3:swap",
+    "build": "ok",
+    "check_valid": true,
+    "outcome": "accepted"
+   },
+   "probe_detections_v3": [
+    {
+     "position": 2,
+     "returned_to": 0,
+     "cycle_length": 2,
+     "run_accepts": 2
+    }
+   ],
+   "detected_at_probe_step": false,
+   "board_after_probe_step": {
+    "active": [
+     1,
+     "PMCG1-058"
+    ],
+    "damage": {
+     "1": 20,
+     "2": 0,
+     "3": 10
+    },
+    "energy": {
+     "1": [],
+     "2": [],
+     "3": []
+    },
+    "hand": [],
+    "discard": [],
+    "opponent_active_damage": 0,
+    "opponent_conditions": "SpecialConditions(poison=None, exclusive=None)"
+   },
+   "rules_v3_after": [
+    {
+     "n": 4,
+     "position": 3,
+     "kind": "retreat",
+     "power": null,
+     "input": [],
+     "reason": "rule3:priority5:retreat:loop_demoted1",
+     "build": "total_units_unreachable",
+     "check_valid": null,
+     "outcome": null
+    },
+    {
+     "n": 5,
+     "position": 3,
+     "kind": "end_turn",
+     "power": null,
+     "input": [],
+     "reason": "rule3:priority6:end_turn:loop_demoted1",
+     "build": "ok",
+     "check_valid": true,
+     "outcome": "accepted"
+    }
+   ],
+   "rules_v2_after": [
+    {
+     "n": 4,
+     "position": 3,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      3,
+      1
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "ok",
+     "check_valid": true,
+     "outcome": "accepted"
+    },
+    {
+     "n": 5,
+     "position": 4,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      1,
+      2
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "ok",
+     "check_valid": true,
+     "outcome": "accepted"
+    },
+    {
+     "n": 6,
+     "position": 5,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      2,
+      1
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "ok",
+     "check_valid": true,
+     "outcome": "accepted"
+    },
+    {
+     "n": 7,
+     "position": 6,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      1,
+      2
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "suppressed_by_policy",
+     "check_valid": null,
+     "outcome": null
+    },
+    {
+     "n": 8,
+     "position": 6,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      1,
+      3
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "ok",
+     "check_valid": true,
+     "outcome": "accepted"
+    },
+    {
+     "n": 9,
+     "position": 7,
+     "kind": "use_power",
+     "power": "ダメージスワップ",
+     "input": [
+      1,
+      2
+     ],
+     "reason": "rule2:priority5:use_power:tie2",
+     "build": "suppressed_by_policy",
+     "check_valid": null,
+     "outcome": null
+    }
+   ]
+  }
+ },
+ "totals": {
+  "runs": 66,
+  "anomalies": 0,
+  "terminations": {
+   "script_complete": 66
+  },
+  "swap_lists": 345,
+  "swap_lists_with_end_turn": 345
+ },
+ "only_demoted_choice": {
+  "reachable": false,
+  "reason": "in the main phase the candidate list always starts with end_turn (kyuura_engine/legal_actions.py, MAIN), and end_turn is not suppressible; rank 7 can be the best only without end_turn",
+  "candidate_lists_with_damage_swap": 345,
+  "of_which_with_end_turn": 345,
+  "demoted_candidate_kept_in_list": "yes (S5 / S6a: use_power at rank 7 next to end_turn 6 when end_turn was chosen)"
+ },
+ "conclusions": {
+  "valid_alternative_chosen": "yes: payable retreat (S1, 4/4), Potion (S2a, 4/4), Switch then attack (S2b, 4/4) were chosen, built, checked and accepted after the demotion",
+  "non_returning_move_kept": "yes: the improving move (S4) was not demoted in 4/4; v2 and v3 made the same next choice in 4/4; in 2 seeds the policy's own uniform input then reversed it and v3 demoted only after that return",
+  "valid_move_demoted": "yes: S5, the same holder's other non-returning move (1 -> 3; accepted and not a return in the probe) is demoted with the holder key and v3 ended the turn in 4/4",
+  "c2_c4": "can proceed; Damage Swap exists only in C1 (both) and C3 (seat 1, L67-U), so C2 and C4 are expected to be identical controls; count end_turn choices with a demoted Damage Swap present",
+  "rules_v3_default": "not changed (explicit selection only)"
+ },
+ "unconfirmed": [
+  "constructed boards at turn 7 only; not reached from new_game",
+  "the policy RNG for 4 policy seeds only",
+  "strategic value of the S5 alternative is not judged (only valid and non-returning)",
+  "whether S5-type scenes occur in real games (counting needed in C1 / C3 batches)",
+  "observation recorder and prestop were not attached (they do not feed the policy)"
+ ],
+ "not_done": [
+  "policy / engine / judge change",
+  "rules-v3 as default",
+  "new-seed batches",
+  "push to main / merge / PR"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v3-board-run/",
+ "failures": [
+  "F1: a version check run without -B wrote kyuura_engine/__pycache__ and kyuura_engine/resolution/__pycache__ (45 .pyc) into the read-only execution worktree lt102r; listed and removed; lt102r back to 0 entries incl. ignored; the board runs were repeated after the removal and matched (66 / 66)"
+ ],
+ "followup": {
+  "doc": "docs/tr8-rules-v3-c2-c4-comparison.md",
+  "summary": "C3 6 pairs, C2 and C4 identical under both policies; C1 re-read shows the holder-level constraint in 12 of 15 demoted end turns"
+ }
+}

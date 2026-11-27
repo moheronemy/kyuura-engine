@@ -34,7 +34,16 @@ REQ = {"contract": "kyuura-client-api", "format": 1}
 REALS = (H.RATTATA, H.ONIX, H.KADABRA, H.FIRE)  # たね（ワザ 1）・たね（ワザ 2）・1 進化（ワザ 2）・エネルギー（印刷のワザなし）
 # 0.179.0 の GUARANTEE_ATTACK（おもてのワザ。変えない）と、0.180.0 の GUARANTEE_FACE_DOWN_ATTACK の値（JSON・キーの順・区切りの空白なし）の sha256
 ATTACK_0179_SHA256 = "f1e79cef13b69200910504f90614393b2b2344d6dad71b47d25eff260ec5bc5b"
-FACE_DOWN_ATTACK_SHA256 = "aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c"
+# v0.188（R-2 の初回対応。docs/legal-actions-r2-face-down-declaration-design.md 10 章）: うらの分岐がクチバシティジムのコインを示すようになり、preconditions・acceptance の文を
+# 実装に合わせた（0.180.0〜0.187.0 の値は aa316b12cb9a79033e6d80685a4fbffacfa2e13b1af310bda57d76049b6f1d0c）。おもての GUARANTEE_ATTACK は変えていない
+# v0.190（R-2 の［めいれい］。docs/r2-with-power-design.md）: うらの分岐が［めいれい］（with_power）も示し、check が同じ力を 2 つ選ぶ組を拒否するようになり、preconditions・
+# acceptance の文を実装に合わせた（0.188.0〜0.189.0 の値は 37edd7c4884937ee2502341280afc124a58561495c52aa72bed20159185042cd）
+# v0.191（R-2 のアンノーンの［XXXXX］・［ANGER］。docs/r2-unown-design.md）: うらの分岐が、分類済みの型の使い手に、別のおもての持ち主の［XXXXX］・［ANGER］を対象のワザにだけ
+# 示すようになり、preconditions・acceptance の文を実装に合わせた（0.190.0 の値は 4accf876b58f005f94cb42710550fe6942252ca2311cd94f510f86240cadd376）
+# v0.192（R-2 のアンノーンの自己持ち主。docs/r2-unown-self-holder-design.md）: うらの分岐が、使い手自身の［XXXXX］・［ANGER］を本当のカードの登録の力で先に示し、check が
+# その力を登録から読むようになり、preconditions に 2 か所の文を加えた（acceptance・after_acceptance・supported_scope は同じ。0.191.0 の値は
+# 28f68001a145edb2d25ca70c2e8a8acbc73b74903a4ccbda75e4ba7c996bfba6。実装の途中の文 20b7aa61… は「たねポケモン」を含み、wording_problems が拒否したので直した）
+FACE_DOWN_ATTACK_SHA256 = "cee8fc938c5892f81cae606d4a79bebde2ac89cca386a9b2abd17b10f80aac67"
 
 
 def sha256(value):
@@ -48,7 +57,7 @@ def wording_problems(guarantees):
     if ("を候補の作成と入力の検査に使う" in pre or "resolution.flow.check_use_attack" not in pre
             or "含む）と宣言の前の先読みは、候補の作成でも入力の検査でも呼ばない" not in pre):
         problems.append("preconditions: check_use_attack を使うと読める")
-    if "入力の検査（check）は形（ワザの番号が 1 つで、ほかを選ばないこと）だけを確かめる" not in pre:
+    if "入力の検査（check）は形（ワザの番号が 1 つで、そのあとに示したものを重ねずに選ぶこと）だけを確かめる" not in pre:  # v0.188: コインを示す場合を含む形
         problems.append("preconditions: 構造の検査だけであることがない")
     if not acc.startswith("保証しない。") or "check が valid でも、エンジンの確かめを通したことを意味しない" not in acc:
         problems.append("acceptance: check と送信後の判定を分けていない")

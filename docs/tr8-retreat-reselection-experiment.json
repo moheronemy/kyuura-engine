@@ -1,0 +1,1609 @@
+{
+ "status": "experiment_done",
+ "doc": "docs/tr8-retreat-reselection-experiment.md",
+ "date": "2026-11-26",
+ "base": "480a9d20831fbde4e7d9f3e0f04aae7ce159e0f4",
+ "branch": "claude/tr8-rules-v7-retreat-defer",
+ "policy_commit": "24c572877b5e6bc391bccba0eac28472a105beb9",
+ "runtime": {
+  "engine": "0.198.0",
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "tool_version": 18,
+  "conventions": "CS-KYUURA-PLAY-TR8@1",
+  "decks": {
+   "0": "hitmonchan-dewgong-v2",
+   "1": "venusaur-parasect-v2"
+  },
+  "profile": "deep",
+  "exec_worktree": "C:/dev/kyuura-engine-lt122r (detached 24c5728)"
+ },
+ "policy": {
+  "mode": "rules-v7",
+  "default": false,
+  "base": "rules-v6",
+  "class": "RetreatDeferralRulePolicy",
+  "record_when": "own retreat build failed with total_units_unreachable",
+  "key": "own view minus outside ids and own bench energy / energy_units / energy_units_determined (+ retreat candidate content without evaluation fields)",
+  "defer": "rank 7 (after end_turn) while (key, candidate) recorded in the own (segment, turn); candidate kept; :retreat_no_alternative when only rank 7 remains",
+  "reenable": "any key change (active energy cards / units, active Pokemon, special conditions, markers, effects, trainers, stadium, opponent, bench identity, hand, ...); turn change clears",
+  "not_applicable": [
+   "view unavailable",
+   "own active missing",
+   "active energy units undetermined",
+   "no discard stage with total_units",
+   "other build-failure reason",
+   "non-retreat candidate"
+  ],
+  "unchanged": [
+   "rules-v2..rules-v6",
+   "default mode",
+   "rules-v6 Energy Trans handling",
+   "Damage Swap cap 6",
+   "input API",
+   "payment check in input build",
+   "engine 0.198.0",
+   "conventions",
+   "judge",
+   "single-game limits"
+  ]
+ },
+ "tests": {
+  "policy_module": "tests/test_verification_ai_rules_v7.py (14)",
+  "vai_modules": {
+   "count": 30,
+   "nonzero": [],
+   "tests_total": 523,
+   "git_status_unchanged": true
+  }
+ },
+ "boards": {
+  "runs": 72,
+  "seeds": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "all_pass": true,
+  "seconds": 13.666,
+  "gates": {
+   "M1_payable_from_start": {
+    "note": "最初から払える対照: バトル場に草 2 枚。にげるを選ぶと組み立て ok・check valid・受理（入力は方策の乱数）。rules-v6 と同じ列",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "2": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "3": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "4": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 1,
+     "2": 1,
+     "3": 1,
+     "4": 1
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "retreat": [
+      {
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 2,
+        "max": 2
+       }
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 1,
+        "max": 1
+       }
+      }
+     ],
+     "same_sequence_as_v6": true
+    }
+   },
+   "M2_bench_move": {
+    "note": "費用不足 → ベンチの間の移動（フシギソウ → フシギダネ）。同じ支払い条件のあいだは順位 7、ほかの手を先に選ぶ",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:retreat_deferred1"
+     },
+     "2": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:retreat_deferred1"
+     },
+     "3": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:retreat_deferred1"
+     },
+     "4": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:retreat_deferred1"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 7,
+     "2": 9,
+     "3": 8,
+     "4": 8
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "e53fa58d2c721ef8",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     }
+    }
+   },
+   "M3_onto_active": {
+    "note": "費用不足 → バトル場へ移す（草 2 枚）。通常の順位に戻り、にげるの組み立て ok・受理。続くワザは方策に任せる",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "use_attack",
+      "reason": "rule7:priority4:use_attack"
+     },
+     "2": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "3": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "4": {
+      "kind": "use_attack",
+      "reason": "rule7:priority4:use_attack"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 0,
+     "2": 6,
+     "3": 1,
+     "4": 0
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "attack_after_retreat_seeds": [
+     1,
+     4
+    ],
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "7e8b35c4858a8b04",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     },
+     "after_move_episode": {
+      "recorded_this_turn": 1,
+      "key_now": "f4a3f0b7dc64260d",
+      "key_now_missing": null,
+      "same_key_recorded": false
+     },
+     "retreat_after_move": [
+      {
+       "prefix": true,
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1,
+        1
+       ]
+      }
+     ]
+    }
+   },
+   "M3f_onto_active_free": {
+    "note": "M3 と同じで、移したあとの選択を方策に任せる（にげるは順位 5 で［エナジートランス］と同順位の抽選）",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "2": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat:tie2"
+     },
+     "3": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat:tie2"
+     },
+     "4": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 6,
+     "2": 0,
+     "3": 0,
+     "4": 4
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "retreat_accepted_seeds": [
+     2,
+     3,
+     4
+    ],
+    "attack_after_retreat_seeds": [
+     2,
+     3
+    ],
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "7e8b35c4858a8b04",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     },
+     "after_move_episode": {
+      "recorded_this_turn": 1,
+      "key_now": "f4a3f0b7dc64260d",
+      "key_now_missing": null,
+      "same_key_recorded": false
+     },
+     "retreat_after_move": [
+      {
+       "prefix": false,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": []
+      },
+      {
+       "prefix": false,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ]
+      },
+      {
+       "prefix": false,
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1,
+        1
+       ]
+      },
+      {
+       "prefix": false,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 1,
+        "max": 1
+       },
+       "option_units": []
+      },
+      {
+       "prefix": false,
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 1,
+        "max": 1
+       },
+       "option_units": [
+        1
+       ]
+      },
+      {
+       "prefix": false,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": []
+      },
+      {
+       "prefix": false,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ]
+      }
+     ]
+    }
+   },
+   "M4a_active_changes": {
+    "note": "バトル場の個体の変化: フシギソウ（にげる 1・エネルギー 0）で失敗 → バトル場をフシギバナに進化。再評価（失敗すれば新しい条件で記録）",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "2": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "3": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     },
+     "4": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 1,
+     "2": 1,
+     "3": 1,
+     "4": 1
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "38adf13ff8a1be59",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       1,
+       1
+      ],
+      "count": [
+       0,
+       0
+      ],
+      "option_units": [],
+      "new_active_options": 1,
+      "deferred_this_turn": 1
+     },
+     "after_change_first_reason": "rule7:priority5:retreat",
+     "retreat_after_change": [
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [],
+       "record": "recorded"
+      }
+     ]
+    }
+   },
+   "M4b_status_changes": {
+    "note": "特殊状態の変化: どくのフシギバナで失敗 → なんでもなおし。再評価",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat:tie2"
+     },
+     "2": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "3": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "4": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 10,
+     "2": 3,
+     "3": 8,
+     "4": 9
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "32474997de32d7b6",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     },
+     "after_change_first_reason": "rule7:priority5:retreat:tie2",
+     "retreat_after_change": [
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1,
+        1
+       ],
+       "record": null
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 1,
+        "max": 1
+       },
+       "option_units": [],
+       "record": "recorded"
+      }
+     ]
+    }
+   },
+   "M4c_stadium_changes": {
+    "note": "費用を変える効果: 失敗 → スタジアム（にげる費用 +1）。再評価（失敗すれば total_units 3 の新しい条件で記録）",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat:tie2"
+     },
+     "2": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "3": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "4": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 12,
+     "2": 3,
+     "3": 12,
+     "4": 11
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "0614126fc8e65154",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     },
+     "after_change_first_reason": "rule7:priority5:retreat:tie2",
+     "retreat_after_change": [
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 3,
+        "max": 3
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 3,
+        "max": 3
+       },
+       "option_units": [],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 3,
+        "max": 3
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 3,
+        "max": 3
+       },
+       "option_units": [
+        1,
+        1
+       ],
+       "record": "recorded"
+      }
+     ]
+    }
+   },
+   "M4d_bench_changes": {
+    "note": "交代先の適格性に関わる情報の変化: 失敗 → ベンチにフシギダネを出す。再評価",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "retreat",
+      "reason": "rule7:priority5:retreat:tie2"
+     },
+     "2": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "3": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     },
+     "4": {
+      "kind": "use_power(ET)",
+      "reason": "rule7:priority5:use_power:tie2"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 10,
+     "2": 3,
+     "3": 8,
+     "4": 9
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "56a6a367ff218023",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 1,
+      "deferred_this_turn": 1
+     },
+     "after_change_first_reason": "rule7:priority5:retreat:tie2",
+     "retreat_after_change": [
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [],
+       "record": "recorded"
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1
+       ],
+       "record": "recorded"
+      },
+      {
+       "build": "ok",
+       "outcome": "accepted",
+       "total_units": {
+        "min": 2,
+        "max": 2
+       },
+       "option_units": [
+        1,
+        1
+       ],
+       "record": null
+      },
+      {
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "outcome": null,
+       "total_units": {
+        "min": 1,
+        "max": 1
+       },
+       "option_units": [],
+       "record": "recorded"
+      }
+     ]
+    }
+   },
+   "M4e_next_turn": {
+    "note": "翌番: 失敗 → 番を終える。相手の番のあと、主体 0 の次の番では記録が消えている",
+    "pass_seeds": [
+     "1",
+     "2",
+     "3",
+     "4"
+    ],
+    "v7_first_free_choice": {
+     "1": {
+      "kind": "attach_energy",
+      "reason": "rule7:priority3:attach_energy"
+     },
+     "2": {
+      "kind": "attach_energy",
+      "reason": "rule7:priority3:attach_energy"
+     },
+     "3": {
+      "kind": "attach_energy",
+      "reason": "rule7:priority3:attach_energy"
+     },
+     "4": {
+      "kind": "attach_energy",
+      "reason": "rule7:priority3:attach_energy"
+     }
+    },
+    "v6_retreat_failures_after_prefix": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "v7_same_condition_reselected": {
+     "1": 0,
+     "2": 0,
+     "3": 0,
+     "4": 0
+    },
+    "seed1": {
+     "first_record": {
+      "result": "recorded",
+      "key": "e2f3c939e8e28fbe",
+      "candidate": "afdaa2d750b7efda",
+      "stage": 2,
+      "total_units": [
+       2,
+       2
+      ],
+      "count": [
+       0,
+       1
+      ],
+      "option_units": [
+       1
+      ],
+      "new_active_options": 2,
+      "deferred_this_turn": 1
+     },
+     "after_change_first_reason": "rule7:priority3:attach_energy",
+     "retreat_after_change": [],
+     "next_turn_episode": null,
+     "turn_resets_with_deferral": 1
+    }
+   }
+  },
+  "not_constructed": [
+   "unconfirmable key on a board (active energy units undetermined needs a CE1 / CE2 colour effect; covered by policy unit tests only)",
+   "retreat build failure for another reason on a board (no natural path; covered by policy unit tests only)"
+  ]
+ },
+ "plans": {
+  "v6": {
+   "batch": "vai-batch-tr8v7-v6",
+   "plan_sha256": "ec7aaa3456a81d81632fa462d1717b4cd2fb37fcf7a586f19769af6071785397",
+   "ok": true
+  },
+  "v7": {
+   "batch": "vai-batch-tr8v7-v7",
+   "plan_sha256": "d15f8e67337e3db61d1cbdc25ebddf7b6efe1ed9da86bf6c05e7c9e8c107a16a",
+   "ok": true
+  },
+  "compared_with": {
+   "9074": "vai-batch-tr8v6a-b4c2",
+   "9056": "vai-batch-tr8v6a-b1c2"
+  },
+  "limits_each": {
+   "tool_seconds": 900,
+   "evidence_mib": 1024
+  },
+  "program_limits": {
+   "tool_seconds": 1800,
+   "outer_seconds": 3600,
+   "evidence_mib": 2048
+  }
+ },
+ "execution": {
+  "order": [
+   "vai-batch-tr8v7-v6/g001-rules-v6-s9074",
+   "vai-batch-tr8v7-v7/g001-rules-v7-s9074",
+   "vai-batch-tr8v7-v6/g002-rules-v6-s9056",
+   "vai-batch-tr8v7-v7/g002-rules-v7-s9056"
+  ],
+  "codes": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "policy_stops": 0,
+  "outer_seconds": 145.925,
+  "tool_seconds_used": 50.138,
+  "evidence_bytes": 72546086,
+  "retries": 0,
+  "seed_substitutions": 0
+ },
+ "pairs": {
+  "9074": {
+   "old_game_same_sequence_as_new_v6": true,
+   "sequence": {
+    "old": {
+     "format": "action-meaning/v2",
+     "length": 238,
+     "sha256": "009dbe192bc38c75fbcd4143d1c78e5bb84422e745ffad6575b7f80ccbcc8aae"
+    },
+    "v6": {
+     "format": "action-meaning/v2",
+     "length": 238,
+     "sha256": "009dbe192bc38c75fbcd4143d1c78e5bb84422e745ffad6575b7f80ccbcc8aae"
+    },
+    "v7": {
+     "format": "action-meaning/v2",
+     "length": 179,
+     "sha256": "ecf774ecb899052ef8c465f28ffe182f781b8ea86df0e41eb2564484ca6c6b14"
+    }
+   },
+   "end": {
+    "v6_9074": {
+     "termination": "game_over",
+     "winner": 0,
+     "turns": 39,
+     "accepted": 193
+    },
+    "v7_9074": {
+     "termination": "game_over",
+     "winner": 0,
+     "turns": 37,
+     "accepted": 162
+    }
+   },
+   "first_deferral": {
+    "n": 79,
+    "actor": 1,
+    "turn": [
+     0,
+     20
+    ],
+    "position": 70,
+    "chosen": "use_power",
+    "power": "エナジートランス",
+    "result": "accepted",
+    "reason": "rule7:priority5:use_power:retreat_deferred1"
+   },
+   "v6_at_first_deferral_n": {
+    "kind": "retreat",
+    "reason": "rule6:priority5:retreat:tie2",
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    }
+   },
+   "attempts_equal_before_first_deferral": true,
+   "accepted_before_first_deferral": 70,
+   "first_accepted_difference_index": 80,
+   "deferral_choices": 10,
+   "deferral_choice_results": {
+    "use_power:accepted": 8,
+    "end_turn:accepted": 2
+   },
+   "reenabled_after_deferral": [
+    {
+     "n": 98,
+     "turn": [
+      0,
+      24
+     ],
+     "result": "accepted"
+    },
+    {
+     "n": 165,
+     "turn": [
+      0,
+      34
+     ],
+     "result": "accepted"
+    }
+   ],
+   "v7_retreat_accepted": [
+    {
+     "n": 98,
+     "turn": [
+      0,
+      24
+     ],
+     "next_accepted": "end_turn",
+     "attack_later_same_turn": false
+    },
+    {
+     "n": 165,
+     "turn": [
+      0,
+      34
+     ],
+     "next_accepted": "end_turn",
+     "attack_later_same_turn": false
+    }
+   ],
+   "retreat_by_actor": {
+    "v6": {
+     "0": {
+      "presented_rows": 28,
+      "selected": 1,
+      "build_failed": 0,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 1,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 0,
+      "changed_condition_failures": 0,
+      "first_failures_in_turn": 0
+     },
+     "1": {
+      "presented_rows": 153,
+      "selected": 41,
+      "build_failed": 40,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 1,
+      "same_condition_reselected": 21,
+      "same_condition_reselected_4items": 28,
+      "changed_condition_failures": 11,
+      "first_failures_in_turn": 8
+     }
+    },
+    "v7": {
+     "0": {
+      "presented_rows": 21,
+      "selected": 0,
+      "build_failed": 0,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 0,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 0,
+      "changed_condition_failures": 0,
+      "first_failures_in_turn": 0
+     },
+     "1": {
+      "presented_rows": 78,
+      "selected": 19,
+      "build_failed": 17,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 2,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 4,
+      "changed_condition_failures": 8,
+      "first_failures_in_turn": 9
+     }
+    }
+   },
+   "focus_turn": {
+    "actor": 1,
+    "turn": [
+     0,
+     24
+    ],
+    "v6": {
+     "reselect4:changed_payment": 1,
+     "reselect4:first": 1,
+     "reselect4:same_payment": 13,
+     "reselect:changed_payment": 2,
+     "reselect:first": 1,
+     "reselect:same_payment": 12,
+     "selected": 15,
+     "unbuildable:total_units_unreachable": 15
+    },
+    "v7": {
+     "accepted": 1,
+     "reselect4:changed_payment": 1,
+     "reselect4:first": 1,
+     "reselect4:same_payment": 1,
+     "reselect:changed_payment": 2,
+     "reselect:first": 1,
+     "selected": 4,
+     "unbuildable:total_units_unreachable": 3
+    },
+    "v7_same_state_as_v6": false,
+    "v6_accepted_kinds": {
+     "evolve": 1,
+     "use_power": 23,
+     "end_turn": 1
+    },
+    "v7_accepted_kinds": {
+     "evolve": 1,
+     "use_power": 7,
+     "retreat": 1,
+     "end_turn": 1
+    }
+   },
+   "old_states_after_divergence": {
+    "v6_own_views": 92,
+    "reached_in_v7": 17
+   },
+   "old_retreat_state_reached_in_v7": null,
+   "loop_counts_retreat": {
+    "0": {},
+    "1": {
+     "retreat_choices_deferred": 10,
+     "retreat_choices_reenabled": 20,
+     "retreat_failures_recorded": 17,
+     "retreat_turn_resets_with_deferral": 8
+    }
+   },
+   "not_applicable": 0,
+   "recorded_key_mismatch": 0
+  },
+  "9056": {
+   "old_game_same_sequence_as_new_v6": true,
+   "sequence": {
+    "old": {
+     "format": "action-meaning/v2",
+     "length": 320,
+     "sha256": "ba2499fffed13f597c65554e8a92bc6439be5f0e02796fb66a3d6c568f094a44"
+    },
+    "v6": {
+     "format": "action-meaning/v2",
+     "length": 320,
+     "sha256": "ba2499fffed13f597c65554e8a92bc6439be5f0e02796fb66a3d6c568f094a44"
+    },
+    "v7": {
+     "format": "action-meaning/v2",
+     "length": 324,
+     "sha256": "2d95930e3a706686eeb03d0aeebcfbfddf8c4d5eb8f7f1e763f4141a3123b0f3"
+    }
+   },
+   "end": {
+    "v6_9056": {
+     "termination": "game_over",
+     "winner": 1,
+     "turns": 51,
+     "accepted": 243
+    },
+    "v7_9056": {
+     "termination": "game_over",
+     "winner": 1,
+     "turns": 53,
+     "accepted": 272
+    }
+   },
+   "first_deferral": {
+    "n": 124,
+    "actor": 1,
+    "turn": [
+     0,
+     23
+    ],
+    "position": 91,
+    "chosen": "use_power",
+    "power": "エナジートランス",
+    "result": "accepted",
+    "reason": "rule7:priority5:use_power:retreat_deferred1"
+   },
+   "v6_at_first_deferral_n": {
+    "kind": "retreat",
+    "reason": "rule6:priority5:retreat:tie2",
+    "build": {
+     "stage": 2,
+     "unbuildable": "total_units_unreachable"
+    }
+   },
+   "attempts_equal_before_first_deferral": true,
+   "accepted_before_first_deferral": 91,
+   "first_accepted_difference_index": 91,
+   "deferral_choices": 70,
+   "deferral_choice_results": {
+    "use_power:accepted": 70
+   },
+   "reenabled_after_deferral": [
+    {
+     "n": 128,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "unbuildable:total_units_unreachable"
+    },
+    {
+     "n": 159,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "unbuildable:total_units_unreachable"
+    },
+    {
+     "n": 165,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "unbuildable:total_units_unreachable"
+    },
+    {
+     "n": 173,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "unbuildable:total_units_unreachable"
+    },
+    {
+     "n": 184,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "unbuildable:total_units_unreachable"
+    },
+    {
+     "n": 188,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "accepted"
+    },
+    {
+     "n": 200,
+     "turn": [
+      0,
+      23
+     ],
+     "result": "accepted"
+    },
+    {
+     "n": 322,
+     "turn": [
+      0,
+      53
+     ],
+     "result": "accepted"
+    }
+   ],
+   "v7_retreat_accepted": [
+    {
+     "n": 12,
+     "turn": [
+      0,
+      1
+     ],
+     "next_accepted": "play_trainer",
+     "attack_later_same_turn": false
+    },
+    {
+     "n": 188,
+     "turn": [
+      0,
+      23
+     ],
+     "next_accepted": "use_power",
+     "attack_later_same_turn": true
+    },
+    {
+     "n": 200,
+     "turn": [
+      0,
+      23
+     ],
+     "next_accepted": "use_power",
+     "attack_later_same_turn": true
+    },
+    {
+     "n": 318,
+     "turn": [
+      0,
+      53
+     ],
+     "next_accepted": "use_power",
+     "attack_later_same_turn": true
+    },
+    {
+     "n": 322,
+     "turn": [
+      0,
+      53
+     ],
+     "next_accepted": "use_power",
+     "attack_later_same_turn": true
+    }
+   ],
+   "retreat_by_actor": {
+    "v6": {
+     "0": {
+      "presented_rows": 71,
+      "selected": 20,
+      "build_failed": 20,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 0,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 7,
+      "changed_condition_failures": 7,
+      "first_failures_in_turn": 13
+     },
+     "1": {
+      "presented_rows": 191,
+      "selected": 61,
+      "build_failed": 57,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 4,
+      "same_condition_reselected": 30,
+      "same_condition_reselected_4items": 37,
+      "changed_condition_failures": 12,
+      "first_failures_in_turn": 15
+     }
+    },
+    "v7": {
+     "0": {
+      "presented_rows": 89,
+      "selected": 26,
+      "build_failed": 26,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 0,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 9,
+      "changed_condition_failures": 9,
+      "first_failures_in_turn": 17
+     },
+     "1": {
+      "presented_rows": 187,
+      "selected": 31,
+      "build_failed": 26,
+      "send_suppressed": 0,
+      "send_rejected": 0,
+      "accepted": 5,
+      "same_condition_reselected": 0,
+      "same_condition_reselected_4items": 7,
+      "changed_condition_failures": 12,
+      "first_failures_in_turn": 14
+     }
+    }
+   },
+   "focus_turn": {
+    "actor": 1,
+    "turn": [
+     0,
+     23
+    ],
+    "v6": {
+     "accepted": 1,
+     "reselect4:changed_payment": 1,
+     "reselect4:first": 1,
+     "reselect4:same_payment": 13,
+     "reselect:changed_payment": 2,
+     "reselect:first": 1,
+     "reselect:same_payment": 12,
+     "selected": 16,
+     "unbuildable:total_units_unreachable": 15
+    },
+    "v7": {
+     "accepted": 2,
+     "reselect4:changed_payment": 3,
+     "reselect4:first": 1,
+     "reselect4:same_payment": 4,
+     "reselect:changed_payment": 7,
+     "reselect:first": 1,
+     "selected": 10,
+     "unbuildable:total_units_unreachable": 8
+    },
+    "v7_same_state_as_v6": false,
+    "v6_accepted_kinds": {
+     "evolve": 1,
+     "use_power": 26,
+     "retreat": 1,
+     "use_attack": 1
+    },
+    "v7_accepted_kinds": {
+     "evolve": 1,
+     "use_power": 81,
+     "retreat": 2,
+     "use_attack": 1
+    }
+   },
+   "old_states_after_divergence": {
+    "v6_own_views": 108,
+    "reached_in_v7": 0
+   },
+   "old_retreat_state_reached_in_v7": false,
+   "loop_counts_retreat": {
+    "0": {
+     "retreat_choices_reenabled": 15,
+     "retreat_failures_recorded": 26,
+     "retreat_turn_resets_with_deferral": 17
+    },
+    "1": {
+     "retreat_choices_deferred": 70,
+     "retreat_choices_reenabled": 34,
+     "retreat_failures_recorded": 26,
+     "retreat_turn_resets_with_deferral": 13
+    }
+   },
+   "not_applicable": 0,
+   "recorded_key_mismatch": 0
+  }
+ },
+ "verdicts": {
+  "same_condition_reselection_reduced": {
+   "9074_turn_0_24": {
+    "old_and_v6": 12,
+    "old_and_v6_4items": 13,
+    "v7": 0,
+    "note": "v7 reached turn [0, 24] from a different state (diverged at turn [0, 20])"
+   },
+   "9074_game_actor1": [
+    21,
+    0
+   ],
+   "9056_game_actor1": [
+    30,
+    0
+   ]
+  },
+  "payable_retreat_kept": {
+   "boards": "M3 all seeds accepted after the move onto the active; M3f accepted in seeds [2, 3, 4]",
+   "9056_normal_game": "v7 accepted retreat twice in turn [0, 23] after re-enable; the old accepted state (old n163) was not reached: retreat + following attack at the old state unconfirmed in normal games"
+  },
+  "completed": {
+   "9074": {
+    "v6_9074": {
+     "termination": "game_over",
+     "winner": 0,
+     "turns": 39,
+     "accepted": 193
+    },
+    "v7_9074": {
+     "termination": "game_over",
+     "winner": 0,
+     "turns": 37,
+     "accepted": 162
+    }
+   },
+   "9056": {
+    "v6_9056": {
+     "termination": "game_over",
+     "winner": 1,
+     "turns": 51,
+     "accepted": 243
+    },
+    "v7_9056": {
+     "termination": "game_over",
+     "winner": 1,
+     "turns": 53,
+     "accepted": 272
+    }
+   }
+  },
+  "existing_policies_kept": {
+   "new_v6_equals_old": {
+    "9074": true,
+    "9056": true
+   },
+   "v7_equals_v6_before_first_deferral": {
+    "9074": true,
+    "9056": true
+   }
+  },
+  "not_generalized": "2 pairs only; no completion rate or default suitability is inferred"
+ },
+ "unconfirmed": [
+  "retreat and the following attack at the old 9056 accepted state (not reached after the divergence)",
+  "board-level unconfirmable key and other-reason build failure (unit tests only)",
+  "effect on other seeds, decks and conditions (C1 / C3 / C4)",
+  "Energy Trans accepted in 9056 turn [0, 23] rose 26 -> 81 under v7 (rules-v6 deferral only covers returns to the same view); not analysed further",
+  "whether the full-view key (attached card identity kept) is too strict for retreat (9074: 1 of 13 4-item same-condition failures had a different active energy card)"
+ ],
+ "not_done": [
+  "default policy change",
+  "rules-v2..v6 changes",
+  "engine / conventions / judge / input API / limits changes",
+  "retries or seed substitution",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge",
+  "Potion / Energy Retrieval convention decisions"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v7-run/ (+ vai-batch-tr8v7-v6, vai-batch-tr8v7-v7)",
+ "failures": []
+}

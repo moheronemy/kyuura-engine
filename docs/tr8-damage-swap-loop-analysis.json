@@ -1,0 +1,522 @@
+{
+ "status": "analysis_only",
+ "doc": "docs/tr8-damage-swap-loop-analysis.md",
+ "date": "2026-11-24",
+ "base": "1036e34839cede72b1d284d8357bbd209e38b7b8",
+ "branch": "claude/tr8-damage-swap-loop",
+ "runtime": {
+  "commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "engine": "0.198.0",
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+  "mode": "rules-v2",
+  "policy": "rules",
+  "rules_version": 2,
+  "repeat_threshold": 2,
+  "profile": "deep",
+  "limits": {
+   "accepted": 1000,
+   "operations": 2000,
+   "turns": 200,
+   "seconds": 120.0
+  }
+ },
+ "sources": {
+  "work_log": "vai-batch-tr8a-main-run",
+  "plan": "vai-batch-tr8a-m1",
+  "games": [
+   "g001-rules-v2-s9021",
+   "g002-rules-v2-s9022",
+   "g003-rules-v2-s9023",
+   "g004-rules-v2-s9024",
+   "g005-rules-v2-s9025",
+   "g006-rules-v2-s9026"
+  ]
+ },
+ "target_game": {
+  "game": "g003-rules-v2-s9023",
+  "termination": "limit_accepted",
+  "turns": 73,
+  "accepted": 1000,
+  "policy_suppressed": 161,
+  "swaps_accepted": 775,
+  "stages": {
+   "presented_rows": 1427,
+   "chosen": 932,
+   "submitted": 775,
+   "accepted": 775,
+   "chosen_unbuildable": 157,
+   "suppressed": 157,
+   "suppressed:repeat_suppressed": 115,
+   "suppressed:repeat_suppressed:candidate_demoted": 42
+  },
+  "classification": {
+   "reversal": 174,
+   "net": 173,
+   "cycle": 427,
+   "undetermined:truncated": 1
+  },
+  "net_led_to": {
+   "end_turn": 167,
+   "other:retreat": 1,
+   "other:play_trainer": 4,
+   "other:reveal_face_down": 1
+  },
+  "runs": {
+   "count": 43,
+   "lengths_top": [
+    84,
+    67,
+    66,
+    38,
+    31,
+    31,
+    30,
+    29,
+    27,
+    24
+   ],
+   "length_sum": 775,
+   "start_equals_end": 7
+  },
+  "run_ends": {
+   "next=end_turn|reason=rule2:priority6:end_turn|suppressed_between=repeat_suppressed+repeat_suppressed:candidate_demoted": 37,
+   "next=retreat|reason=rule2:priority5:retreat:tie3|suppressed_between=none": 1,
+   "next=play_trainer|reason=rule2:priority5:play_trainer:tie2|suppressed_between=none": 1,
+   "next=reveal_face_down|reason=rule2:priority5:reveal_face_down:tie3|suppressed_between=none": 1,
+   "next=play_trainer|reason=rule2:priority5:play_trainer:tie3|suppressed_between=none": 1,
+   "next=play_trainer|reason=rule2:priority5:play_trainer:tie4|suppressed_between=none": 1,
+   "game_end": 1
+  },
+  "stall": {
+   "last_attack_turn": 40,
+   "last_knock_out_turn": 34,
+   "final_turn": 73,
+   "swaps_after_last_attack_turn": 747,
+   "non_swap_accepted": 225,
+   "non_swap_accepted_after_last_attack_turn": 76,
+   "turns_with_two_swap_candidates": 4,
+   "accepted_beyond_one_key_per_pair": 48
+  },
+  "after_runs": {
+   "runs": 43,
+   "runs_with_net": 26,
+   "runs_start_equals_end": 7,
+   "runs_attack_later_same_turn": 0,
+   "runs_own_knock_out_next_opponent_turn": 0,
+   "net_runs_active_damage_down": 11,
+   "net_runs_active_damage_up": 10,
+   "net_runs_active_damage_same": 5,
+   "net_runs_min_remaining_hp_up": 4,
+   "net_runs_min_remaining_hp_down": 10
+  },
+  "rejected": 0,
+  "suppressed_all": {
+   "rows": 161,
+   "reasons": {
+    "repeat_suppressed": 117,
+    "repeat_suppressed:candidate_demoted": 44
+   },
+   "kinds": {
+    "retreat": 4,
+    "use_power": 157
+   }
+  },
+  "accepted_kinds": {
+   "place_starting": 2,
+   "mulligan_draw": 1,
+   "report_janken": 1,
+   "play_basic": 18,
+   "attach_energy": 43,
+   "retreat": 17,
+   "use_attack": 29,
+   "play_trainer": 27,
+   "end_turn": 43,
+   "answer_decision": 17,
+   "take_prize": 8,
+   "promote_active": 8,
+   "evolve": 8,
+   "reveal_face_down": 3,
+   "use_power": 775
+  },
+  "swaps_by_actor": {
+   "0": 265,
+   "1": 510
+  },
+  "chosen_summary": {
+   "reasons": {
+    "rule2:priority5:use_power:tie2": 418,
+    "rule2:priority5:use_power": 350,
+    "rule2:priority5:use_power:tie3": 163,
+    "rule2:priority5:use_power:tie4": 1
+   },
+   "with_better_rank_present": 0,
+   "better_rank_kinds": {},
+   "with_attack_candidate": 0,
+   "attack_processability": {},
+   "rank5_pool": {
+    "2": 674,
+    "3": 255,
+    "5": 1,
+    "4": 2
+   }
+  },
+  "two_candidate_turns": {
+   "turns": [
+    35,
+    69,
+    71,
+    73
+   ],
+   "accepted": 224,
+   "keys": 146,
+   "pairs": 88,
+   "beyond_two_per_pair": 48
+  },
+  "retreat_choices": {
+   "total": 423,
+   "unbuildable": 402,
+   "accepted": 17,
+   "suppressed": 4
+  },
+  "buckets": {
+   "return": 601,
+   "reversal": 174,
+   "cycle": 427,
+   "net_then_next_action": 173,
+   "undetermined": 1
+  },
+  "configuration_scope": "own-side damage per Pokemon from the actor's observation; full observation equal in 13 of 14 checked returns (turn 69)"
+ },
+ "controls": {
+  "g001-rules-v2-s9021": {
+   "termination": "game_over",
+   "turns": 38,
+   "accepted": 138,
+   "policy_suppressed": 0,
+   "swaps_accepted": 0,
+   "stages": {},
+   "classification": {},
+   "net_led_to": {},
+   "runs": {
+    "count": 0,
+    "lengths_top": [],
+    "length_sum": 0,
+    "start_equals_end": 0
+   },
+   "run_ends": {},
+   "stall": {
+    "last_attack_turn": 38,
+    "last_knock_out_turn": 38,
+    "final_turn": 38,
+    "swaps_after_last_attack_turn": 0,
+    "non_swap_accepted": 138,
+    "non_swap_accepted_after_last_attack_turn": 0,
+    "turns_with_two_swap_candidates": 0,
+    "accepted_beyond_one_key_per_pair": 0
+   },
+   "after_runs": {}
+  },
+  "g002-rules-v2-s9022": {
+   "termination": "game_over",
+   "turns": 38,
+   "accepted": 175,
+   "policy_suppressed": 17,
+   "swaps_accepted": 38,
+   "stages": {
+    "presented_rows": 83,
+    "chosen": 51,
+    "submitted": 38,
+    "accepted": 38,
+    "chosen_unbuildable": 13,
+    "suppressed": 13,
+    "suppressed:repeat_suppressed": 9,
+    "suppressed:repeat_suppressed:candidate_demoted": 4
+   },
+   "classification": {
+    "net": 18,
+    "reversal": 7,
+    "cycle": 13
+   },
+   "net_led_to": {
+    "end_turn": 18
+   },
+   "runs": {
+    "count": 4,
+    "lengths_top": [
+     18,
+     10,
+     6,
+     4
+    ],
+    "length_sum": 38,
+    "start_equals_end": 0
+   },
+   "run_ends": {
+    "next=end_turn|reason=rule2:priority6:end_turn|suppressed_between=repeat_suppressed+repeat_suppressed:candidate_demoted": 4
+   },
+   "stall": {
+    "last_attack_turn": 38,
+    "last_knock_out_turn": 38,
+    "final_turn": 38,
+    "swaps_after_last_attack_turn": 0,
+    "non_swap_accepted": 137,
+    "non_swap_accepted_after_last_attack_turn": 0,
+    "turns_with_two_swap_candidates": 0,
+    "accepted_beyond_one_key_per_pair": 0
+   },
+   "after_runs": {
+    "runs": 4,
+    "runs_with_net": 4,
+    "runs_start_equals_end": 0,
+    "runs_attack_later_same_turn": 0,
+    "runs_own_knock_out_next_opponent_turn": 0,
+    "net_runs_active_damage_down": 3,
+    "net_runs_active_damage_up": 0,
+    "net_runs_active_damage_same": 1,
+    "net_runs_min_remaining_hp_up": 2,
+    "net_runs_min_remaining_hp_down": 2
+   }
+  },
+  "g004-rules-v2-s9024": {
+   "termination": "game_over",
+   "turns": 34,
+   "accepted": 122,
+   "policy_suppressed": 4,
+   "swaps_accepted": 9,
+   "stages": {
+    "presented_rows": 29,
+    "chosen": 13,
+    "submitted": 9,
+    "accepted": 9,
+    "chosen_unbuildable": 4,
+    "suppressed": 4,
+    "suppressed:repeat_suppressed": 2,
+    "suppressed:repeat_suppressed:candidate_demoted": 2
+   },
+   "classification": {
+    "reversal": 8,
+    "net": 1
+   },
+   "net_led_to": {
+    "other:retreat": 1
+   },
+   "runs": {
+    "count": 4,
+    "lengths_top": [
+     4,
+     2,
+     2,
+     1
+    ],
+    "length_sum": 9,
+    "start_equals_end": 3
+   },
+   "run_ends": {
+    "next=play_trainer|reason=rule2:priority5:play_trainer:tie2|suppressed_between=none": 1,
+    "next=end_turn|reason=rule2:priority6:end_turn|suppressed_between=repeat_suppressed+repeat_suppressed:candidate_demoted": 2,
+    "next=retreat|reason=rule2:priority5:retreat:tie2|suppressed_between=none": 1
+   },
+   "stall": {
+    "last_attack_turn": 34,
+    "last_knock_out_turn": 34,
+    "final_turn": 34,
+    "swaps_after_last_attack_turn": 0,
+    "non_swap_accepted": 113,
+    "non_swap_accepted_after_last_attack_turn": 0,
+    "turns_with_two_swap_candidates": 0,
+    "accepted_beyond_one_key_per_pair": 0
+   },
+   "after_runs": {
+    "runs": 4,
+    "runs_with_net": 1,
+    "runs_start_equals_end": 3,
+    "runs_attack_later_same_turn": 1,
+    "runs_own_knock_out_next_opponent_turn": 2,
+    "net_runs_active_damage_down": 1,
+    "net_runs_active_damage_up": 0,
+    "net_runs_active_damage_same": 0,
+    "net_runs_min_remaining_hp_up": 0,
+    "net_runs_min_remaining_hp_down": 0
+   }
+  },
+  "g005-rules-v2-s9025": {
+   "termination": "game_over",
+   "turns": 12,
+   "accepted": 40,
+   "policy_suppressed": 0,
+   "swaps_accepted": 0,
+   "stages": {},
+   "classification": {},
+   "net_led_to": {},
+   "runs": {
+    "count": 0,
+    "lengths_top": [],
+    "length_sum": 0,
+    "start_equals_end": 0
+   },
+   "run_ends": {},
+   "stall": {
+    "last_attack_turn": 12,
+    "last_knock_out_turn": 12,
+    "final_turn": 12,
+    "swaps_after_last_attack_turn": 0,
+    "non_swap_accepted": 40,
+    "non_swap_accepted_after_last_attack_turn": 0,
+    "turns_with_two_swap_candidates": 0,
+    "accepted_beyond_one_key_per_pair": 0
+   },
+   "after_runs": {}
+  },
+  "g006-rules-v2-s9026": {
+   "termination": "game_over",
+   "turns": 28,
+   "accepted": 104,
+   "policy_suppressed": 7,
+   "swaps_accepted": 0,
+   "stages": {
+    "presented_rows": 9
+   },
+   "classification": {},
+   "net_led_to": {},
+   "runs": {
+    "count": 0,
+    "lengths_top": [],
+    "length_sum": 0,
+    "start_equals_end": 0
+   },
+   "run_ends": {},
+   "stall": {
+    "last_attack_turn": 28,
+    "last_knock_out_turn": 28,
+    "final_turn": 28,
+    "swaps_after_last_attack_turn": 0,
+    "non_swap_accepted": 104,
+    "non_swap_accepted_after_last_attack_turn": 0,
+    "turns_with_two_swap_candidates": 0,
+    "accepted_beyond_one_key_per_pair": 0
+   },
+   "after_runs": {}
+  }
+ },
+ "legit_example": {
+  "game": "g004-rules-v2-s9024",
+  "turn": 23,
+  "actor": 0,
+  "sequence": [
+   "attach_energy",
+   "use_power(Damage Swap, active damage -10)",
+   "retreat",
+   "use_attack",
+   "take_prize"
+  ]
+ },
+ "policy_code": {
+  "file": "tools/verification_ai/policies.py@a358378",
+  "priority_line": 76,
+  "repeat_lines": [
+   84,
+   85,
+   86,
+   187
+  ],
+  "action_key_line": 104,
+  "episode_reset_lines": [
+   143,
+   144
+  ],
+  "runner_episode_line": "runner.py:340",
+  "findings": [
+   "use_attack rank 4 < use_power rank 5 < end_turn rank 6",
+   "repeat key per (source, target) and per using Pokemon",
+   "demotion cleared at each new episode (each acceptance)",
+   "policy reads candidate kinds only, not the board"
+  ]
+ },
+ "options": {
+  "A_status_quo": {
+   "accepted_9023": 1000
+  },
+  "B_demote_immediate_reverse": {
+   "g003-rules-v2-s9023": {
+    "swaps_kept": 243,
+    "accepted_estimate": 468
+   },
+   "g002-rules-v2-s9022": {
+    "swaps_kept": 29,
+    "accepted_estimate": 166
+   },
+   "g004-rules-v2-s9024": {
+    "swaps_kept": 7,
+    "accepted_estimate": 120
+   }
+  },
+  "C_demote_confirmed_cycle": {
+   "g003-rules-v2-s9023": {
+    "swaps_kept": 190,
+    "accepted_estimate": 415
+   },
+   "g002-rules-v2-s9022": {
+    "swaps_kept": 21,
+    "accepted_estimate": 158
+   },
+   "g004-rules-v2-s9024": {
+    "swaps_kept": 7,
+    "accepted_estimate": 120
+   }
+  },
+  "estimate_note": "record-based count if each run had stopped at its first return; not a policy run"
+ },
+ "recommendation": {
+  "option": "C",
+  "observation": "actor's own view observation (canonical JSON) after each own-turn acceptance, incl. turn start",
+  "operations": "own-turn actions of any kind (not decisions / host)",
+  "condition": "observation equals one recorded earlier in the same turn",
+  "effect": "candidates (candidate_identity) accepted within the cycle ranked DEMOTED_RANK (after end_turn)",
+  "history_reset": "turn change (not episode start)",
+  "no_alternative": "if only demoted candidates remain, choose them (rule2:no_alternative)",
+  "unchanged": [
+   "legality",
+   "processability",
+   "existing repeat rules",
+   "single-game limits",
+   "uniform input choice"
+  ]
+ },
+ "next_unit_acceptance": {
+  "primary": "same 0.198.0 / TR8@1 / C1 / seed 9023 with only the policy changed, vs vai-batch-tr8a-m1 g003",
+  "compare": [
+   "termination (recorded, not a pass condition)",
+   "accepted < 1000 and not limit-terminated",
+   "returns per turn after first return",
+   "end_turn / attack reached (reason tags)",
+   "rejections and anomalies"
+  ],
+  "regression": [
+   "9024 turn 23 type not demoted",
+   "9022 net-move runs demoted only after a return"
+  ],
+  "optional": [
+   "9021",
+   "9025",
+   "9026"
+  ]
+ },
+ "unconfirmed": [
+  "state equality outside the observation",
+  "policy behaviour (code reading only)",
+  "estimates for accepted counts and deck-out turn",
+  "cause of the stall (deck composition and draws) not analysed",
+  "other conditions (C2-C4) not counted for this pattern"
+ ],
+ "not_done": [
+  "policy / engine / convention / judge change",
+  "new games or reruns",
+  "limit change",
+  "Good Deed (よいおこない) unresolved"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8-damage-swap-run/",
+ "failures": [
+  "F1: min remaining HP first counted Pokemon without HP (face-down) as 0; fixed before the kept outputs"
+ ]
+}

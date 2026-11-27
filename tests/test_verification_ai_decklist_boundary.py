@@ -303,7 +303,8 @@ class PlanDeckTest(Tmp):
     def test_cli_requires_an_explicit_observation_choice_and_refuses_ambiguous_decks(self):
         path = self.tmp / "d.json"
         path.write_bytes(json.dumps(preset_list("hitmonchan-dewgong")).encode())
-        base = ["plan", "--out", str(self.tmp), "--engine-commit", "test", "--tool-commit", "test", "--seeds", "12", "--modes", "boundary"]
+        base = ["plan", "--out", str(self.tmp), "--engine-commit", "test", "--tool-commit", "test", "--seeds", "12", "--modes", "boundary",
+                "--no-prestop-inputs"]  # TOOL_VERSION 11: prestop の記録の有無も明示が必要（旧の base にはなかった）
         quiet = contextlib.redirect_stdout(io.StringIO())
         quiet_err = contextlib.redirect_stderr(io.StringIO())
         quiet.__enter__(), quiet_err.__enter__()

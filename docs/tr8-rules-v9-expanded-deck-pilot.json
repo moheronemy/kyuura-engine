@@ -1,0 +1,532 @@
+{
+ "status": "pilot_done",
+ "doc": "docs/tr8-rules-v9-expanded-deck-pilot.md",
+ "date": "2026-11-27",
+ "base": "d3d008832ee5d30897a806f77ff71f1c52760459",
+ "branch": "claude/tr8-rules-v9-expanded-deck-pilot",
+ "execution_commit": "ef3891b561a07d4161252b1f01ddcd9c8ef3b697",
+ "code_equal_to_doc_base": true,
+ "runtime": {
+  "engine": "0.198.0",
+  "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+  "tool_version": 20,
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "conventions": 27,
+  "convention_digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+  "digest_pinned_equal": true,
+  "judge_rules_version": 10,
+  "plan_format": "kyuura-vai-batch-plan/7",
+  "complete_format": "kyuura-vai-batch-complete/7",
+  "identity_equal_to": "vai-tr8v9-run (identity_run.json, sets_and_formats.json byte-equal)",
+  "pyc_cache_files": 185
+ },
+ "conditions_order": [
+  "reference hitmonchan-dewgong-v2 vs venusaur-parasect-v2",
+  "different_colour C116 vs R58",
+  "special_energy E58 vs R58",
+  "no_ability A122 vs C121"
+ ],
+ "decks": {
+  "source": "vai-tr8v8x-run/decklists (C116, R58, E58, A122, C121) and preset decks for the reference",
+  "files_equal_to_saved": 5,
+  "content_and_expanded_hashes_equal": 5,
+  "cards_60": 5,
+  "legality_problems": 0
+ },
+ "seed": {
+  "selected": 9090,
+  "rule": "9090 以上で最初の未使用の値（4 条件で共通に使う）",
+  "files_scanned": 823,
+  "errors": 0,
+  "max_used": 9089,
+  "roots": 31
+ },
+ "plans": {
+  "reference": {
+   "batch": "vai-batch-tr8v9x-c1",
+   "plan_sha256": "7c65e52a08b1eae0a32d53bd2b0f8a0ae0af7eee11428a228ca8a5bd3009ca71"
+  },
+  "different_colour": {
+   "batch": "vai-batch-tr8v9x-c2",
+   "plan_sha256": "691edf7284ca39b7293fe8e20ab12a8e6d8b33c443f765bd9733af8b7ce63584"
+  },
+  "special_energy": {
+   "batch": "vai-batch-tr8v9x-c3",
+   "plan_sha256": "3b35a5b247a5e84eb807946553fbb4df1c8d74c10c2762b4b418b7cfbec36fd3"
+  },
+  "no_ability": {
+   "batch": "vai-batch-tr8v9x-c4",
+   "plan_sha256": "bcd9215b7746cd83ce55d9d18dca1f466713bfd52c5fe30609c7655e2a056e92"
+  }
+ },
+ "plans_check_ok": true,
+ "dry_run": {
+  "plans": 4,
+  "use_cache": true,
+  "not_started": true
+ },
+ "limits": {
+  "plan_tool_seconds": 300,
+  "plan_evidence_mib": 512,
+  "total_tool_seconds": 1200,
+  "total_wall_seconds": 3600,
+  "total_evidence_mib": 2048,
+  "start_conditions": {
+   "tool_seconds": 150,
+   "wall_seconds": 600,
+   "evidence_mib": 384,
+   "drive_mib": 4096
+  }
+ },
+ "start_checks": {
+  "call1": {
+   "ok": true,
+   "checks": {
+    "plan_remaining_seconds": true,
+    "program_remaining_tool_seconds": true,
+    "program_remaining_outer_seconds": true,
+    "plan_remaining_evidence": true,
+    "program_remaining_evidence": true,
+    "drive_free": true
+   },
+   "plan_remaining_seconds": 300.0,
+   "program_remaining_tool_seconds": 1200.0,
+   "program_remaining_outer_seconds": 3600.0,
+   "plan_remaining_evidence_bytes": 536848712,
+   "program_remaining_evidence_bytes": 2147380217,
+   "drive_free_bytes": 241360125952
+  },
+  "call2": {
+   "ok": true,
+   "checks": {
+    "plan_remaining_seconds": true,
+    "program_remaining_tool_seconds": true,
+    "program_remaining_outer_seconds": true,
+    "plan_remaining_evidence": true,
+    "program_remaining_evidence": true,
+    "drive_free": true
+   },
+   "plan_remaining_seconds": 300.0,
+   "program_remaining_tool_seconds": 1191.036,
+   "program_remaining_outer_seconds": 3567.645,
+   "plan_remaining_evidence_bytes": 536843704,
+   "program_remaining_evidence_bytes": 2134289503,
+   "drive_free_bytes": 241344286720
+  },
+  "call3": {
+   "ok": true,
+   "checks": {
+    "plan_remaining_seconds": true,
+    "program_remaining_tool_seconds": true,
+    "program_remaining_outer_seconds": true,
+    "plan_remaining_evidence": true,
+    "program_remaining_evidence": true,
+    "drive_free": true
+   },
+   "plan_remaining_seconds": 300.0,
+   "program_remaining_tool_seconds": 1187.45,
+   "program_remaining_outer_seconds": 3541.18,
+   "plan_remaining_evidence_bytes": 536843885,
+   "program_remaining_evidence_bytes": 2129818665,
+   "drive_free_bytes": 241337737216
+  },
+  "call4": {
+   "ok": true,
+   "checks": {
+    "plan_remaining_seconds": true,
+    "program_remaining_tool_seconds": true,
+    "program_remaining_outer_seconds": true,
+    "plan_remaining_evidence": true,
+    "program_remaining_evidence": true,
+    "drive_free": true
+   },
+   "plan_remaining_seconds": 300.0,
+   "program_remaining_tool_seconds": 1184.937,
+   "program_remaining_outer_seconds": 3515.892,
+   "plan_remaining_evidence_bytes": 536843916,
+   "program_remaining_evidence_bytes": 2127700897,
+   "drive_free_bytes": 241335554048
+  }
+ },
+ "aggregation_reproduced_on_9083": {
+  "v8_rb3_continuable": true,
+  "v8_reselect_63_no_accept": true,
+  "v8_no_progress_stopped_policy": true,
+  "v9_rb3_continuable": true,
+  "v9_retreat_accepted_next": true,
+  "v9_game_over_completed": true,
+  "ok": true
+ },
+ "results": {
+  "total": {
+   "started": 4,
+   "game_over": 4,
+   "terminations": {
+    "game_over": 4
+   },
+   "plan_status": {
+    "completed": 4
+   },
+   "refusals": 0,
+   "refusals_by_code": {},
+   "refusals_followed_by_acceptance": 0,
+   "energy_trans_choices": 52
+  },
+  "games": {
+   "reference": {
+    "batch": "vai-batch-tr8v9x-c1",
+    "termination": "game_over",
+    "winner": 0,
+    "game_over": true,
+    "plan_status": "completed",
+    "counters": {
+     "accepted": 208,
+     "rejected": 0,
+     "operations": 208,
+     "attempts": 246,
+     "turns": 48,
+     "retry_same_input": 0,
+     "unbuildable": 38,
+     "policy_suppressed": 0,
+     "check_invalid": 0
+    },
+    "refusals": [],
+    "refused_records": {},
+    "tool_seconds": 8.964,
+    "outer_seconds": 32.355,
+    "plan_dir_bytes": 13112918,
+    "energy_trans": {
+     "et_choices": 48,
+     "et_accepted": 48,
+     "progress_result": {
+      "tier1": 16,
+      "tier3": 30,
+      "tier2": 2
+     },
+     "goal_rows": 31,
+     "goal_status": {
+      "retreat:met_after_1": 7,
+      "attack:0:met_after_1": 1,
+      "attack:1:unreached_active_left": 5,
+      "retreat:unreached_active_left": 4,
+      "attack:0:unreached_active_left": 12,
+      "retreat:met_after_2": 1,
+      "retreat:met_with_0": 1
+     },
+     "after_goal_met": {
+      "retreat:selected": 19,
+      "retreat:built_ok": 8,
+      "retreat:sent": 8,
+      "retreat:accepted": 8,
+      "attack:0:selected": 1,
+      "attack:0:built_ok": 1,
+      "attack:0:sent": 1,
+      "attack:0:accepted": 1
+     },
+     "goals_evaluated": {
+      "attack": 60,
+      "retreat": 48
+     },
+     "goals_met_at_choice": {
+      "attack": 0,
+      "retreat": 10
+     },
+     "restricted": 17,
+     "d4_summary": {
+      "restricted_d4_None": 16,
+      "unrestricted_d4_None": 22,
+      "unrestricted_d4_none_keep": 8,
+      "kept": 1,
+      "unrestricted_d4_all_keep": 1
+     },
+     "d4_rows": [
+      {
+       "n": 101,
+       "position": 88,
+       "tier": "tier3",
+       "tier_sizes": [
+        0,
+        0,
+        3
+       ],
+       "chosen_set": 1,
+       "break_moves_existed": true,
+       "keep_moves_existed": true,
+       "chosen_in_keep_set": true,
+       "outcome": "accepted",
+       "built": true
+      }
+     ],
+     "skipped_with_attached": {},
+     "unevaluable_with_attached": {},
+     "rows_attached": [],
+     "actor0_et_choices": 0
+    }
+   },
+   "different_colour": {
+    "batch": "vai-batch-tr8v9x-c2",
+    "termination": "game_over",
+    "winner": 0,
+    "game_over": true,
+    "plan_status": "completed",
+    "counters": {
+     "accepted": 78,
+     "rejected": 0,
+     "operations": 78,
+     "attempts": 85,
+     "turns": 24,
+     "retry_same_input": 0,
+     "unbuildable": 7,
+     "policy_suppressed": 0,
+     "check_invalid": 0
+    },
+    "refusals": [],
+    "refused_records": {},
+    "tool_seconds": 3.586,
+    "outer_seconds": 26.465,
+    "plan_dir_bytes": 4498050,
+    "energy_trans": {
+     "et_choices": 4,
+     "et_accepted": 4,
+     "progress_result": {
+      "unevaluable:moved_card_not_basic": 3,
+      "tier3": 1
+     },
+     "goal_rows": 5,
+     "goal_status": {
+      "retreat:unreached_active_left": 1,
+      "attack:0:unreached_active_left": 1,
+      "attack:1:unreached_active_left": 1,
+      "retreat:unevaluable": 1,
+      "attack:0:unevaluable": 1
+     },
+     "after_goal_met": {},
+     "goals_evaluated": {
+      "retreat": 1
+     },
+     "goals_met_at_choice": {
+      "retreat": 1
+     },
+     "restricted": 0,
+     "d4_summary": {
+      "unrestricted_d4_None": 3,
+      "unrestricted_d4_all_keep": 1
+     },
+     "d4_rows": [],
+     "skipped_with_attached": {
+      "attack_special_energy_on_active|PMCG4-064": 1
+     },
+     "unevaluable_with_attached": {
+      "unevaluable:moved_card_not_basic|PMCG4-065|movable_nonbasic=PMCG4-065": 1,
+      "unevaluable:moved_card_not_basic|-|movable_nonbasic=PMCG4-065": 2
+     },
+     "rows_attached": [
+      {
+       "n": 33,
+       "active": "PMCG1-011",
+       "active_energy": [
+        "PMCG4-065"
+       ],
+       "movable_nonbasic": [
+        "PMCG4-065"
+       ],
+       "result": "unevaluable:moved_card_not_basic",
+       "skipped": null
+      },
+      {
+       "n": 34,
+       "active": "PMCG1-011",
+       "active_energy": [],
+       "movable_nonbasic": [
+        "PMCG4-065"
+       ],
+       "result": "unevaluable:moved_card_not_basic",
+       "skipped": null
+      },
+      {
+       "n": 35,
+       "active": "PMCG1-011",
+       "active_energy": [
+        "PMCG1-097"
+       ],
+       "movable_nonbasic": [
+        "PMCG4-065"
+       ],
+       "result": "unevaluable:moved_card_not_basic",
+       "skipped": null
+      },
+      {
+       "n": 57,
+       "active": "PMCG1-011",
+       "active_energy": [
+        "PMCG4-064",
+        "PMCG1-097",
+        "PMCG1-097"
+       ],
+       "movable_nonbasic": [],
+       "result": "tier3",
+       "skipped": {
+        "attack_special_energy_on_active": 1
+       }
+      }
+     ],
+     "actor0_et_choices": 0
+    }
+   },
+   "special_energy": {
+    "batch": "vai-batch-tr8v9x-c3",
+    "termination": "game_over",
+    "winner": 0,
+    "game_over": true,
+    "plan_status": "completed",
+    "counters": {
+     "accepted": 43,
+     "rejected": 0,
+     "operations": 43,
+     "attempts": 46,
+     "turns": 14,
+     "retry_same_input": 0,
+     "unbuildable": 3,
+     "policy_suppressed": 0,
+     "check_invalid": 0
+    },
+    "refusals": [],
+    "refused_records": {},
+    "tool_seconds": 2.513,
+    "outer_seconds": 25.288,
+    "plan_dir_bytes": 2144799,
+    "energy_trans": {
+     "et_choices": 0,
+     "et_accepted": 0,
+     "progress_result": {},
+     "goal_rows": 0,
+     "goal_status": {},
+     "after_goal_met": {},
+     "goals_evaluated": {},
+     "goals_met_at_choice": {},
+     "restricted": 0,
+     "d4_summary": {},
+     "d4_rows": [],
+     "skipped_with_attached": {},
+     "unevaluable_with_attached": {},
+     "rows_attached": [],
+     "actor0_et_choices": 0
+    }
+   },
+   "no_ability": {
+    "batch": "vai-batch-tr8v9x-c4",
+    "termination": "game_over",
+    "winner": 1,
+    "game_over": true,
+    "plan_status": "completed",
+    "counters": {
+     "accepted": 12,
+     "rejected": 0,
+     "operations": 12,
+     "attempts": 12,
+     "turns": 3,
+     "retry_same_input": 0,
+     "unbuildable": 0,
+     "policy_suppressed": 0,
+     "check_invalid": 0
+    },
+    "refusals": [],
+    "refused_records": {},
+    "tool_seconds": 2.048,
+    "outer_seconds": 24.449,
+    "plan_dir_bytes": 681604,
+    "energy_trans": {
+     "et_choices": 0,
+     "et_accepted": 0,
+     "progress_result": {},
+     "goal_rows": 0,
+     "goal_status": {},
+     "after_goal_met": {},
+     "goals_evaluated": {},
+     "goals_met_at_choice": {},
+     "restricted": 0,
+     "d4_summary": {},
+     "d4_rows": [],
+     "skipped_with_attached": {},
+     "unevaluable_with_attached": {},
+     "rows_attached": [],
+     "actor0_et_choices": 0
+    }
+   }
+  },
+  "per_game_checks": "complete record and hashes, observation, prestop, judge, final-state replay, gates, per-game aggregate consistency, cache unchanged (4/4)",
+  "final_aggregate_diff": "derived counts only (files 2 per plan); game files unchanged"
+ },
+ "refusal_continuation": {
+  "refusals": 0,
+  "observed": false,
+  "other_move_accepted_after_refusal": "not applicable",
+  "game_over": 4,
+  "started": 4
+ },
+ "budget_after": {
+  "ok_for_next_game": true,
+  "plan_remaining_seconds": 297.952,
+  "program_tool_used_seconds": 17.111,
+  "program_remaining_tool_seconds": 1182.889,
+  "program_outer_used_seconds": 108.557,
+  "program_remaining_outer_seconds": 3491.443,
+  "plan_remaining_evidence_bytes": 536189308,
+  "program_evidence_bytes": 20437371,
+  "program_remaining_evidence_bytes": 2127046277,
+  "required_bytes": 402653184,
+  "reference_1_5x_biggest_bytes": 19603182,
+  "max_complete_attempt_bytes": 13068788,
+  "drive_free_bytes": 241331965952
+ },
+ "progress_decision": {
+  "all_checks_ok": true,
+  "policy_stop": false,
+  "budget_for_next_game": true,
+  "can_plan_main_audit": true,
+  "not_conditions": [
+   "RB3 or cost evaluation appearance",
+   "completion rate"
+  ],
+  "main_audit_plan_created": false,
+  "v7_v8_effect_estimated": false
+ },
+ "old_audit": {
+  "plans": 16,
+  "plan_hashes_equal": 16,
+  "lock": 0,
+  "not_started_games": 53,
+  "pilot_not_started": 5,
+  "main_not_started": 48
+ },
+ "unconfirmed": [
+  "continuation after a refusal (0 refusals in these games)",
+  "cost evaluation in the special-energy condition (no Energy Trans choice)",
+  "no-ability control sequence vs v7 / v8 (only v9 run)",
+  "trends per condition (1 seed, 1 game each)"
+ ],
+ "failures": [
+  {
+   "id": "F1",
+   "what": "plan check compared policy records including the seed strings (9083 vs 9090); fixed to exclude seed and check the seed separately; rerun ok"
+  },
+  {
+   "id": "F2",
+   "what": "budget summary snippet read a missing key (failed); nothing written; corrected to checks and rerun"
+  }
+ ],
+ "not_done": [
+  "old audit plans run / release / restart",
+  "retry",
+  "seed substitution",
+  "extra games",
+  "budget extension",
+  "policy / engine / convention / judge / limit / default changes",
+  "main audit plan",
+  "kyuura",
+  "PR",
+  "push to main",
+  "merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v9x-run/"
+}

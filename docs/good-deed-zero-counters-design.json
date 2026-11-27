@@ -1,0 +1,1480 @@
+{
+ "status": "design_only",
+ "doc": "docs/good-deed-zero-counters-design.md",
+ "date": "2026-11-25",
+ "base": "273fcc10dd326d6fa0e152b5b01c20755b49745d",
+ "branch": "claude/good-deed-zero-counters-design",
+ "audit_distribution": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+ "engine_version": "0.198.0",
+ "engine_diff_from_distribution": 0,
+ "scene": {
+  "card_id": "PMCG6-052",
+  "attack_index": 0,
+  "decision": "remove_counters",
+  "answer": 0,
+  "stop_code": "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+  "engine_ruling": "HC5 (also GR5)",
+  "kyuura_issue": "UQ-UP-TO-ZERO-CHOICE"
+ },
+ "answers": {
+  "zero_answer_in_two_positions": "option 0 shown as unresolved_ruling and excluded by the policy; value 2 chosen from {1, 2}; check ok, accepted, judge expected",
+  "measured_send_rejections": 0,
+  "where_zero_would_go": "attack ends after target selection: no counter removed, no draw, decision ends, then the normal end of turn (design expectation, not executed)",
+  "what_increases": "one answer per remove_counters decision; no new continuable position",
+  "missing_evidence": [
+   "Japanese Q&A / ruling of the period on whether 'any number' includes 0",
+   "minimal boards S1-S8 run on an implementation",
+   "whether copy / transform paths reach this attack",
+   "research_links / kyuura cases lack the v0.42 application"
+  ]
+ },
+ "main_positions": [
+  {
+   "game": {
+    "termination": {
+     "class": "game_over",
+     "halt": null,
+     "reasons": [],
+     "verdict": "expected"
+    },
+    "judge_counts": {
+     "expected": 103
+    },
+    "rejected_in_game": 0,
+    "winner": 0
+   },
+   "seed": 9024,
+   "header": {
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "distribution_matches": true,
+    "convention_set": {
+     "id": "CS-KYUURA-PLAY-TR8",
+     "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+     "completeness": "halts_at_undecided"
+    },
+    "mode": "rules-v2",
+    "rules_version": 2,
+    "policy_distribution": "rules-v2-candidate+uniform-stage",
+    "profile": "deep",
+    "decks": {
+     "0": "P42（v0.42 の決まった手順の対戦のデッキ。改変なし）",
+     "1": "L67-U（L67 + フーディン 2・超エネルギー 14 → 12）"
+    }
+   },
+   "card": {
+    "card_id": "PMCG6-052",
+    "name_ja": "ナツメのルージュラ",
+    "attack": "PMCG6-052#0",
+    "attack_name_ja": "よいおこない"
+   },
+   "user": 0,
+   "route": "form",
+   "attacker": {
+    "owner": 0,
+    "card_id": "PMCG6-052",
+    "name_ja": "ナツメのルージュラ",
+    "damage": 0,
+    "hp": 60,
+    "pokemon_id": 1
+   },
+   "declare": {
+    "position": 29,
+    "turn": 7,
+    "candidate_reason": "rule2:priority4:use_attack",
+    "check_ok": true,
+    "outcome": "accepted",
+    "accepted_index": 30,
+    "judge": "expected"
+   },
+   "select_pokemon": {
+    "position": 30,
+    "options": [
+     {
+      "pokemon_id": 6,
+      "card_id": "PMCG1-058",
+      "name_ja": "エビワラー",
+      "counters": 2
+     },
+     {
+      "pokemon_id": 3,
+      "card_id": "PMCG1-043",
+      "name_ja": "ケーシィ",
+      "counters": 0
+     },
+     {
+      "pokemon_id": 4,
+      "card_id": "PMCG1-043",
+      "name_ja": "ケーシィ",
+      "counters": 0
+     },
+     {
+      "pokemon_id": 5,
+      "card_id": "PMCG1-043",
+      "name_ja": "ケーシィ",
+      "counters": 0
+     },
+     {
+      "pokemon_id": 2,
+      "card_id": "PMCG1-052",
+      "name_ja": "ディグダ",
+      "counters": 0
+     },
+     {
+      "pokemon_id": 7,
+      "card_id": "PMCG1-052",
+      "name_ja": "ディグダ",
+      "counters": 0
+     }
+    ],
+    "chosen_pokemon_id": 6,
+    "check_ok": true,
+    "outcome": "accepted",
+    "accepted_index": 31,
+    "judge": "expected"
+   },
+   "remove_counters": {
+    "position": 31,
+    "target": {
+     "owner": 1,
+     "card_id": "PMCG1-058",
+     "name_ja": "エビワラー",
+     "damage": 20,
+     "hp": 70,
+     "pokemon_id": 6
+    },
+    "counters": 2,
+    "value_range": [
+     0,
+     2
+    ],
+    "count": {
+     "max": 1,
+     "min": 1
+    },
+    "options": [
+     {
+      "id": "o1",
+      "value": 0,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "id": "o2",
+      "value": 1,
+      "processability": "may_stop_later"
+     },
+     {
+      "id": "o3",
+      "value": 2,
+      "processability": "may_stop_later"
+     }
+    ],
+    "candidate": {
+     "id": "c1",
+     "kind": "answer_decision",
+     "processability": "may_stop_later",
+     "reasons": [
+      "continuation_not_evaluated"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "scope": {
+     "excluded": {},
+     "fallback_unverified": false,
+     "in_scope": 1
+    },
+    "picks": [
+     {
+      "index": 1,
+      "items": 2,
+      "purpose": "option",
+      "reason": "uniform:option",
+      "stage": 1
+     }
+    ],
+    "chosen_value": 2,
+    "command": {
+     "choices": [
+      2
+     ],
+     "decision": 4,
+     "player": 0,
+     "type": "resolve_decision"
+    },
+    "check": {
+     "ok": true,
+     "response": {
+      "refusal": null,
+      "valid": true
+     }
+    },
+    "submit": {
+     "ok": true,
+     "outcome": "accepted",
+     "refusal": null,
+     "next": [
+      {
+       "kind": "turn_action",
+       "player": 1
+      }
+     ],
+     "operation_id": "g004-rules-v2-s9024-000032"
+    },
+    "accepted_index": 32,
+    "judge": {
+     "kind": "answer_decision",
+     "outcome": "accepted",
+     "verdict": "expected",
+     "engine_code": null
+    }
+   },
+   "after": {
+    "public_events": [
+     {
+      "log_index": 80,
+      "attack": "よいおこない",
+      "kind": "attack",
+      "player": 0,
+      "pokemon": 2,
+      "turn": 7
+     },
+     {
+      "log_index": 81,
+      "amount": 20,
+      "attacker": 0,
+      "counters": 2,
+      "damage_before": 20,
+      "effect": "PMCG6-052#0",
+      "kind": "attack_heal",
+      "player": 1,
+      "pokemon": 64,
+      "pokemon_id": 6,
+      "total_damage": 0,
+      "turn": 7
+     },
+     {
+      "log_index": 82,
+      "kind": "draw",
+      "player": 0,
+      "turn": 7
+     },
+     {
+      "log_index": 83,
+      "kind": "turn_end",
+      "player": 0,
+      "turn": 7
+     },
+     {
+      "log_index": 84,
+      "kind": "pokemon_check",
+      "turn": 7
+     },
+     {
+      "log_index": 85,
+      "kind": "turn_start",
+      "player": 1,
+      "turn": 8
+     },
+     {
+      "log_index": 86,
+      "kind": "draw",
+      "player": 1,
+      "turn": 8
+     },
+     {
+      "log_index": 87,
+      "kind": "attach_energy",
+      "player": 1,
+      "turn": 8
+     }
+    ],
+    "next_accepted": [
+     {
+      "position": 32,
+      "actor": 1,
+      "turn": [
+       0,
+       8
+      ],
+      "kind": "attach_energy",
+      "outcome": "accepted",
+      "accepted_index": 33
+     }
+    ]
+   },
+   "zero_answers_sent": 0
+  },
+  {
+   "game": {
+    "termination": {
+     "class": "game_over",
+     "halt": null,
+     "reasons": [],
+     "verdict": "expected"
+    },
+    "judge_counts": {
+     "expected": 52
+    },
+    "rejected_in_game": 0,
+    "winner": 0
+   },
+   "seed": 9025,
+   "header": {
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "distribution_matches": true,
+    "convention_set": {
+     "id": "CS-KYUURA-PLAY-TR8",
+     "digest": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+     "completeness": "halts_at_undecided"
+    },
+    "mode": "rules-v2",
+    "rules_version": 2,
+    "policy_distribution": "rules-v2-candidate+uniform-stage",
+    "profile": "deep",
+    "decks": {
+     "0": "P42（v0.42 の決まった手順の対戦のデッキ。改変なし）",
+     "1": "L67-U（L67 + フーディン 2・超エネルギー 14 → 12）"
+    }
+   },
+   "card": {
+    "card_id": "PMCG6-052",
+    "name_ja": "ナツメのルージュラ",
+    "attack": "PMCG6-052#0",
+    "attack_name_ja": "よいおこない"
+   },
+   "user": 0,
+   "route": "form",
+   "attacker": {
+    "owner": 0,
+    "card_id": "PMCG6-052",
+    "name_ja": "ナツメのルージュラ",
+    "damage": 40,
+    "hp": 60,
+    "pokemon_id": 2
+   },
+   "declare": {
+    "position": 31,
+    "turn": 12,
+    "candidate_reason": "rule2:priority4:use_attack",
+    "check_ok": true,
+    "outcome": "accepted",
+    "accepted_index": 32,
+    "judge": "expected"
+   },
+   "select_pokemon": {
+    "position": 32,
+    "options": [
+     {
+      "pokemon_id": 3,
+      "card_id": "PMCG1-052",
+      "name_ja": "ディグダ",
+      "counters": 2
+     },
+     {
+      "pokemon_id": 4,
+      "card_id": "PMCG1-043",
+      "name_ja": "ケーシィ",
+      "counters": 0
+     }
+    ],
+    "chosen_pokemon_id": 3,
+    "check_ok": true,
+    "outcome": "accepted",
+    "accepted_index": 33,
+    "judge": "expected"
+   },
+   "remove_counters": {
+    "position": 33,
+    "target": {
+     "owner": 1,
+     "card_id": "PMCG1-052",
+     "name_ja": "ディグダ",
+     "damage": 20,
+     "hp": 30,
+     "pokemon_id": 3
+    },
+    "counters": 2,
+    "value_range": [
+     0,
+     2
+    ],
+    "count": {
+     "max": 1,
+     "min": 1
+    },
+    "options": [
+     {
+      "id": "o1",
+      "value": 0,
+      "processability": "unresolved_ruling"
+     },
+     {
+      "id": "o2",
+      "value": 1,
+      "processability": "may_stop_later"
+     },
+     {
+      "id": "o3",
+      "value": 2,
+      "processability": "may_stop_later"
+     }
+    ],
+    "candidate": {
+     "id": "c1",
+     "kind": "answer_decision",
+     "processability": "may_stop_later",
+     "reasons": [
+      "continuation_not_evaluated"
+     ],
+     "input_disclosure": "confirmed"
+    },
+    "scope": {
+     "excluded": {},
+     "fallback_unverified": false,
+     "in_scope": 1
+    },
+    "picks": [
+     {
+      "index": 1,
+      "items": 2,
+      "purpose": "option",
+      "reason": "uniform:option",
+      "stage": 1
+     }
+    ],
+    "chosen_value": 2,
+    "command": {
+     "choices": [
+      2
+     ],
+     "decision": 2,
+     "player": 0,
+     "type": "resolve_decision"
+    },
+    "check": {
+     "ok": true,
+     "response": {
+      "refusal": null,
+      "valid": true
+     }
+    },
+    "submit": {
+     "ok": true,
+     "outcome": "accepted",
+     "refusal": null,
+     "next": [
+      {
+       "kind": "turn_action",
+       "player": 1
+      }
+     ],
+     "operation_id": "g005-rules-v2-s9025-000034"
+    },
+    "accepted_index": 34,
+    "judge": {
+     "kind": "answer_decision",
+     "outcome": "accepted",
+     "verdict": "expected",
+     "engine_code": null
+    }
+   },
+   "after": {
+    "public_events": [
+     {
+      "log_index": 101,
+      "attack": "よいおこない",
+      "kind": "attack",
+      "player": 0,
+      "pokemon": 2,
+      "turn": 12
+     },
+     {
+      "log_index": 102,
+      "amount": 20,
+      "attacker": 0,
+      "counters": 2,
+      "damage_before": 20,
+      "effect": "PMCG6-052#0",
+      "kind": "attack_heal",
+      "player": 1,
+      "pokemon": 61,
+      "pokemon_id": 3,
+      "total_damage": 0,
+      "turn": 12
+     },
+     {
+      "log_index": 103,
+      "kind": "draw",
+      "player": 0,
+      "turn": 12
+     },
+     {
+      "log_index": 104,
+      "kind": "turn_end",
+      "player": 0,
+      "turn": 12
+     },
+     {
+      "log_index": 105,
+      "kind": "pokemon_check",
+      "turn": 12
+     },
+     {
+      "log_index": 106,
+      "kind": "turn_start",
+      "player": 1,
+      "turn": 13
+     },
+     {
+      "log_index": 107,
+      "kind": "draw",
+      "player": 1,
+      "turn": 13
+     },
+     {
+      "log_index": 108,
+      "kind": "attach_energy",
+      "player": 1,
+      "turn": 13
+     }
+    ],
+    "next_accepted": [
+     {
+      "position": 34,
+      "actor": 1,
+      "turn": [
+       0,
+       13
+      ],
+      "kind": "attach_energy",
+      "outcome": "accepted",
+      "accepted_index": 35
+     }
+    ]
+   },
+   "zero_answers_sent": 0
+  }
+ ],
+ "classification": {
+  "measured_diagnosis": "option 0 processability unresolved_ruling in the fetched input; excluded from the policy scope (2 rows, 2 games)",
+  "static": "the code on option 0 is UNRESOLVED_DISCARD_ANY_NUMBER_ZERO (resolution/programs.py 6571-6574 at 0.198.0)",
+  "unconfirmed": "actual refusal when 0 is sent (never sent)"
+ },
+ "reference_past_audits": {
+  "note": "not added to the two main positions",
+  "by_plan": [
+   {
+    "plan": "vai-batch-p2n1",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "rows": 6,
+    "games": 2,
+    "chosen": [
+     1,
+     2,
+     1,
+     1,
+     2,
+     2
+    ],
+    "zero_sent": 0,
+    "zero_option_unresolved": 6,
+    "class": "measured_diagnosis (source of that version not matched)",
+    "in_main_audit": false
+   },
+   {
+    "plan": "vai-batch-tr3u1-m3",
+    "engine_version": "0.194.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "rules-v2",
+    "rows": 4,
+    "games": 1,
+    "chosen": [
+     1,
+     1,
+     2,
+     2
+    ],
+    "zero_sent": 0,
+    "zero_option_unresolved": 4,
+    "class": "measured_diagnosis (source of that version not matched)",
+    "in_main_audit": false
+   },
+   {
+    "plan": "vai-batch-tr8a-m3",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "rows": 2,
+    "games": 2,
+    "chosen": [
+     2,
+     2
+    ],
+    "zero_sent": 0,
+    "zero_option_unresolved": 2,
+    "class": "measured_diagnosis+static",
+    "in_main_audit": true
+   },
+   {
+    "plan": "vai-batch-tr8v3-c3-r2",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "rows": 2,
+    "games": 1,
+    "chosen": [
+     1,
+     2
+    ],
+    "zero_sent": 0,
+    "zero_option_unresolved": 2,
+    "class": "measured_diagnosis+static",
+    "in_main_audit": false
+   },
+   {
+    "plan": "vai-batch-tr8v3-c3-r3",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v3",
+    "rows": 2,
+    "games": 1,
+    "chosen": [
+     1,
+     2
+    ],
+    "zero_sent": 0,
+    "zero_option_unresolved": 2,
+    "class": "measured_diagnosis+static",
+    "in_main_audit": false
+   }
+  ],
+  "rows": [
+   {
+    "rel": "vai-batch-p2n1/games/g001-boundary-s9004/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 196,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-p2n1/games/g002-boundary-s9005/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 95,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-p2n1/games/g002-boundary-s9005/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 169,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-p2n1/games/g002-boundary-s9005/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 175,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-p2n1/games/g002-boundary-s9005/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 225,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ],
+     [
+      3,
+      "may_stop_later"
+     ],
+     [
+      4,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-p2n1/games/g002-boundary-s9005/attempt-001",
+    "engine_commit": "00690294c64ad99e7ca43c83bcb22e8cc2be02e3",
+    "engine_version": "0.187.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "boundary",
+    "actor": 0,
+    "position": 236,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr3u1-m3/games/g006-rules-v2-s9012/attempt-001",
+    "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+    "engine_version": "0.194.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 204,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr3u1-m3/games/g006-rules-v2-s9012/attempt-001",
+    "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+    "engine_version": "0.194.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 343,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr3u1-m3/games/g006-rules-v2-s9012/attempt-001",
+    "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+    "engine_version": "0.194.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 376,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr3u1-m3/games/g006-rules-v2-s9012/attempt-001",
+    "engine_commit": "891e1fbe146a275be1ccc6d37ec2091656b48e7e",
+    "engine_version": "0.194.0",
+    "convention_set": "CS-KYUURA-PLAY-TR3",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 406,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8a-m3/games/g004-rules-v2-s9024/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 31,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8a-m3/games/g005-rules-v2-s9025/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 33,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8v3-c3-r2/games/g005-rules-v2-s9041/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 72,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8v3-c3-r2/games/g005-rules-v2-s9041/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v2",
+    "actor": 0,
+    "position": 231,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ],
+     [
+      3,
+      "may_stop_later"
+     ],
+     [
+      4,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8v3-c3-r3/games/g005-rules-v3-s9041/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v3",
+    "actor": 0,
+    "position": 72,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     1
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   },
+   {
+    "rel": "vai-batch-tr8v3-c3-r3/games/g005-rules-v3-s9041/attempt-001",
+    "engine_commit": "a3583786cf93ee67ce95b94a5b94505f5fcef1b0",
+    "engine_version": "0.198.0",
+    "convention_set": "CS-KYUURA-PLAY-TR8",
+    "mode": "rules-v3",
+    "actor": 0,
+    "position": 231,
+    "attack": {
+     "card_id": "PMCG6-052",
+     "name_ja": "よいおこない",
+     "route": "form"
+    },
+    "options": [
+     [
+      0,
+      "unresolved_ruling"
+     ],
+     [
+      1,
+      "may_stop_later"
+     ],
+     [
+      2,
+      "may_stop_later"
+     ],
+     [
+      3,
+      "may_stop_later"
+     ],
+     [
+      4,
+      "may_stop_later"
+     ]
+    ],
+    "chosen": [
+     2
+    ],
+    "sent": true,
+    "outcome": "accepted",
+    "check_ok": true
+   }
+  ],
+  "good_deed_uses": {
+   "uses": 111,
+   "by_class": {
+    "no_decision": 78,
+    "remove_counters_decision": 16,
+    "target_without_counters": 17
+   },
+   "games": 27,
+   "routes": [
+    "form"
+   ]
+  }
+ },
+ "sources": {
+  "printed_text_ja": "相手の場にいるポケモンを1匹選び、そのポケモンにのっているダメージカウンターを、好きなだけとりのぞく。とりのぞいた数ぶんのカードを自分の山札から引いて、手札に加える。",
+  "adopted": "kyuura printed text (research / card data commit 71d1728938fb4c8fefde9b82779cdef74beb612d; latest_descriptions.adopted_printed_text)",
+  "latest_description_errata_ruling": null,
+  "engine_rulings": [
+   "HC5 (docs/held-cards-v0.31.md)",
+   "GR5 (docs/count-condition-switch-return-v0.40.md)",
+   "docs/power-decisions-v0.42.md ch. 7"
+  ],
+  "kyuura_issue": {
+   "id": "UQ-UP-TO-ZERO-CHOICE",
+   "status": "UNRESOLVED",
+   "official_material": "insufficient",
+   "cases": 10,
+   "pmcg6_052_in_cases": false
+  },
+  "research_links_engine_rulings": [
+   "v0.31 HC5",
+   "v0.54 HC5",
+   "v0.63 HC5"
+  ],
+  "v0_42_application_listed": false,
+  "decides_zero_with_removable_counters": false
+ },
+ "current_processing": {
+  "registration": "effects.py 26102 AttackKey(PMCG6-052, 0) -> HealChosenOpponentThenDraw",
+  "no_counters_anywhere": "programs.py 6555-6556: no decision, nothing happens",
+  "select_pokemon": "programs.py 6557: all opponent Pokemon (also without counters), 1 of them",
+  "target_without_counters": "programs.py 6569-6570: no second decision",
+  "remove_counters": "programs.py 6571-6574: options range(counters + 1), unresolved_choices (0,), code UNRESOLVED_DISCARD_ANY_NUMBER_ZERO",
+  "common_check": "decisions.py 694-727 check_choices: UnsupportedError for an unresolved choice; state unchanged, decision kept",
+  "resume": "programs.py 6576-6587: requires 1 <= value <= counters (else RuntimeError); reaches(heal); attack_heal; draw removed (as many as the deck has)",
+  "dry_choices": "programs.py 6589-6591: answers with a blocked choice are not tried",
+  "decision_problems": "effects.py 7548-7549: unresolved_choices must be (0,)",
+  "distinguished": {
+   "zero_after_target": "this scene (stop)",
+   "no_target_answer": "select_pokemon is 1..1 (0 is INVALID_CHOICE_COUNT)",
+   "no_counters_from_start": "no decision (78 uses in records)",
+   "target_without_counters": "no second decision (17 uses)"
+  }
+ },
+ "options": {
+  "A": {
+   "name": "keep",
+   "answers_added": 0,
+   "zero_direct_command": "UnsupportedError(UNRESOLVED_DISCARD_ANY_NUMBER_ZERO); decision kept (static)",
+   "log": "unchanged"
+  },
+  "B": {
+   "name": "accept 0 for this attack only (continuation convention)",
+   "answers_added": "1 per decision",
+   "zero_direct_command": "new set: accepted, attack ends; existing sets: as A",
+   "log": "+ convention_applied; no attack_heal, no draw",
+   "policy_effect": "options 2 -> 3 in the two positions; rng mapping changes from that position",
+   "needed_changes": [
+    "decide unresolved_choices at suspend time (programs.py 6571-6574) via a case-scoped lookup",
+    "resume accepts 0 only under the convention (6577)",
+    "decision_problems (effects.py 7548)",
+    "dry_choices then also tries 0"
+   ]
+  },
+  "C": {
+   "name": "require 1 or more",
+   "answers_added": 0,
+   "zero_direct_command": "IllegalActionError(INVALID_CHOICE)",
+   "log": "unchanged",
+   "policy_effect": "none (policy already avoids 0)",
+   "why_not": "decides the open question the strict way; changes the rejection class"
+  }
+ },
+ "expected_on_zero_B": {
+  "already_fixed": "attack declaration, cost (none discarded), target selection",
+  "counters": "not moved",
+  "draw": "none",
+  "decision": "ends",
+  "rest_of_attack": "none (no other element)",
+  "knockout_check": "normal pokemon_check; no new knockout expected",
+  "turn": "normal end of turn",
+  "public_log": [
+   "attack",
+   "convention_applied",
+   "turn_end",
+   "pokemon_check",
+   "turn_start (opponent)"
+  ],
+  "reuse": [
+   "programs.py 6569-6570 / 6580-6581 early ends",
+   "programs.py 2950-2969 H4 RecoverEnergy.resume (continuation_for / record_application)"
+  ],
+  "executed": false
+ },
+ "recommendation": {
+  "now": "A",
+  "if_a_convention_is_adopted": "limited B",
+  "not": "C",
+  "limited_B": {
+   "convention": "PC-GOOD-DEED-ZERO@1 (name proposed)",
+   "layer": "continuation",
+   "scene": "UNRESOLVED_DISCARD_ANY_NUMBER_ZERO#good-deed-remove-counters",
+   "applies_when": [
+    "element ChosenOpponentHealThenDraw",
+    "declared attack == processed attack and the attacker's printed card is the attack's card (H4 original-attack test; no card ID constants)",
+    "target has 1 or more counters"
+   ],
+   "not_applied": [
+    "Ditto transform and other held attacks",
+    "Metronome / other copies",
+    "other attacks / trainers with the same code",
+    "ER9 / H4",
+    "other up-to-N scenes",
+    "strict side / existing sets"
+   ],
+   "on_zero": "no removal, no draw, decision ends, attack ends",
+   "new_set": "e.g. CS-KYUURA-PLAY-TR9@1 = CS-KYUURA-PLAY-TR8@1 (27) + this convention; explicit selection only",
+   "kept_sets": [
+    "CS-KYUURA-CURRENT@1 (default)",
+    "CS-KYUURA-LEGACY-UNRECORDED@1",
+    "S2A",
+    "PO",
+    "TR3",
+    "TR4",
+    "TR6",
+    "TR7",
+    "TR8 (sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01)"
+   ],
+   "log_minimum": [
+    "convention id / version / scene / code",
+    "player",
+    "target",
+    "available"
+   ]
+  },
+  "source_vs_play_rule": "source: unresolved (UQ-UP-TO-ZERO-CHOICE); B is a play rule, not an official ruling or a kyuura resolution",
+  "more_verification": true
+ },
+ "minimal_boards": [
+  {
+   "id": "S1",
+   "board": "opponent active with 2 counters",
+   "do": "answer 0",
+   "strict": "0 unresolved_ruling; direct 0 -> code; state / log / rng unchanged; re-answer 1 accepted",
+   "convention": "0 selectable; check ok; accepted; one convention_applied; no attack_heal / draw; turn ends"
+  },
+  {
+   "id": "S2",
+   "board": "same",
+   "do": "answer 1, 2 (control)",
+   "strict": "attack_heal n and draw n",
+   "convention": "same as strict"
+  },
+  {
+   "id": "S3",
+   "board": "no counters anywhere / target without counters",
+   "do": "use the attack",
+   "strict": "no decision / no second decision",
+   "convention": "same"
+  },
+  {
+   "id": "S4",
+   "board": "same code elsewhere (やまやき, カツラのギャンブル, 挑戦状, ようせいのきせき, しんかのほうし, ファイヤーラッシュ)",
+   "do": "answer 0",
+   "strict": "current stop",
+   "convention": "current stop"
+  },
+  {
+   "id": "S5",
+   "board": "copy / transform (Ditto, Metronome); check reachability first",
+   "do": "answer 0",
+   "strict": "current stop",
+   "convention": "current stop"
+  },
+  {
+   "id": "S6",
+   "board": "target protected (ワザをうけない / とうめい), 2 counters",
+   "do": "answer 0 and 1",
+   "strict": "0 stops; 1 accepted without removal / draw",
+   "convention": "both accepted without removal / draw; convention_applied only for 0"
+  },
+  {
+   "id": "S7",
+   "board": "deck 1, 2 counters",
+   "do": "answer 2",
+   "strict": "draw 1",
+   "convention": "same"
+  },
+  {
+   "id": "S8",
+   "board": "set definitions",
+   "do": "compute digests",
+   "strict": "CURRENT / TR8 digests unchanged",
+   "convention": "fix the new set digest"
+  }
+ ],
+ "board_checks": [
+  "candidate API: processability / eligible of option 0, check response",
+  "direct command resolve_decision choices [0]",
+  "public log order and fields; no secret information",
+  "state: target damage, hand, deck",
+  "re-answer after the strict rejection",
+  "judge: strict 0 = unresolved rejection, convention 0 = expected"
+ ],
+ "unconfirmed": [
+  "actual refusal of 0 (never sent)",
+  "copy / transform reachability",
+  "static matching for 0.187.0 / 0.194.0 records",
+  "Japanese Q&A / rulings of the period (not searched; guidebook not reread)"
+ ],
+ "report_candidates": [
+  "research_links HC5 engine_rulings and kyuura UQ-UP-TO-ZERO-CHOICE cases lack the v0.42 application (PMCG6-052, ようせいのきせき)"
+ ],
+ "not_done": [
+  "convention adoption",
+  "board runs",
+  "new games",
+  "judge / replay reruns of old records",
+  "code / policy / GUI / version changes",
+  "kyuura",
+  "push to main / PR / merge"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-gooddeed-zero-run/",
+ "correction_2026_11_25": {
+  "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v5-audit-plan-run/out/gooddeed_counts.json",
+  "finding": "reference_past_audits (16 decisions) and good_deed_uses (111 uses) both include the 2 main positions / 10 main-audit uses",
+  "same_population": true,
+  "decisions": {
+   "main_audit": {
+    "decisions": 2,
+    "games": 2,
+    "plans": 1
+   },
+   "past_only": {
+    "decisions": 14,
+    "games": 5,
+    "plans": 4,
+    "by_plan": {
+     "vai-batch-p2n1": 6,
+     "vai-batch-tr3u1-m3": 4,
+     "vai-batch-tr8v3-c3-r2": 2,
+     "vai-batch-tr8v3-c3-r3": 2
+    }
+   },
+   "total": {
+    "decisions": 16,
+    "games": 7,
+    "plans": 5
+   }
+  },
+  "uses": {
+   "total": 111,
+   "games": 27,
+   "main_audit": {
+    "uses": 10,
+    "games": 4,
+    "by_class": {
+     "no_decision": 7,
+     "remove_counters_decision": 2,
+     "target_without_counters": 1
+    }
+   },
+   "past_only": {
+    "uses": 101,
+    "games": 23
+   }
+  },
+  "correct_wording": "past records 14 decisions + main audit 2 decisions = 16 decisions",
+  "wrong_wording": "16 past decisions + 2 main (double counts the 2 main positions; in the commit message of 3b449b2 and that unit's report)",
+  "population": "vai store verifier/runs, trace.jsonl only (attempt dirs)",
+  "attempt_dirs_without_trace": 0,
+  "other_store_remove_counters_files": 0,
+  "conclusions_changed": false
+ }
+}
