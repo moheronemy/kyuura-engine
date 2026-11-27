@@ -1,0 +1,2673 @@
+{
+ "status": "plan_draft",
+ "doc": "docs/tr8-rules-v8-expanded-deck-audit-plan.md",
+ "date": "2026-11-27",
+ "base": "9bbfc3ed86fb7e32c7d39ef1991f29a37b37b6fc",
+ "branch": "claude/tr8-rules-v8-expanded-deck-audit-plan",
+ "execution_candidate": "280660be69630d5a9007e11e1022db3f221630b1",
+ "runtime": {
+  "engine": "0.198.0",
+  "implementation": {
+   "version": "0.198.0",
+   "method": "kyuura-package-files-sha256/1",
+   "behavior_digest": "c9912dd81eca81f572030c32b8de0993820b53eb1e07f11b43186cd2361b8b06",
+   "behavior_files": 58,
+   "instrumentation_digest": "61f09812b1a330ad14c0080c41612c5c405a7fec3ae0a42609981bc39270ff67",
+   "instrumentation_files": 4
+  },
+  "tool_version": 19,
+  "conventions": {
+   "key": "CS-KYUURA-PLAY-TR8@1",
+   "count": 27,
+   "pinned": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "computed": "sha256:27dfe27ac1fcc1d25639cecd4bb7d2f95d96f60ddb07e6f32262c7ad01085b01",
+   "validate_problems": []
+  },
+  "profile": "deep",
+  "single_game_limits": {
+   "operations": 2000,
+   "accepted": 1000,
+   "turns": 200,
+   "seconds": 120.0,
+   "rejections_per_position": 16,
+   "draws_per_position": 64
+  },
+  "observation": true,
+  "prestop": true,
+  "negative": false,
+  "policies": {
+   "rules-v7": {
+    "version": 7,
+    "distribution": "rules-v7-candidate+uniform-stage",
+    "threshold": 2,
+    "demote_after": 2,
+    "swap_cap": 6
+   },
+   "rules-v8": {
+    "version": 8,
+    "distribution": "rules-v8-candidate+uniform-stage",
+    "threshold": 2,
+    "demote_after": 2,
+    "swap_cap": 6,
+    "default": false
+   }
+  }
+ },
+ "deck_search": {
+  "presets": 4,
+  "engine_tool_decks": 264,
+  "json_files_scanned": 5735,
+  "json_errors": 12,
+  "distinct_decks": 272,
+  "energy_trans_holders": [
+   "IPH-001",
+   "PMCG1-011",
+   "PR1-029"
+  ],
+  "decks_with_energy_trans": [
+   [
+    "venusaur-parasect"
+   ],
+   [
+    "venusaur-parasect-v2"
+   ],
+   [
+    "tool:E50"
+   ],
+   [
+    "tool:G71"
+   ],
+   [
+    "tool:R58"
+   ]
+  ],
+  "colour_candidates_without_colourless_part": [
+   "G71"
+  ]
+ },
+ "selection_rule": [
+  "condition cards clearly identified",
+  "saved pair source (tools/existing_effect_games.py BATCHES)",
+  "both decks legal",
+  "pair not used in saved / running verification-AI plans (seats swapped counted)",
+  "not the pair of another new condition (table order)",
+  "pair identifier (seat 0, seat 1) in code point order"
+ ],
+ "conditions": {
+  "reference": {
+   "seats": {
+    "0": {
+     "identifier": "hitmonchan-dewgong-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "hitmonchan-dewgong-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "37fa81e11efd1a79a6cdd2cbba5d0f0520a1a14d38efc749b227282d13d6ac4a",
+     "expanded_sha256": "66e569289363117ecc7f978ac994818116e04707a5b506fb90c653b22716ba1e",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-058",
+       "name": "エビワラー",
+       "attack": "スペシャルパンチ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "オーロラビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "れいとうビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--deck0 hitmonchan-dewgong-v2",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "venusaur-parasect-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "venusaur-parasect-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "ff4ae4f236078fadcc0864e5b6beea1a332c4d41e62c5edf0a9a82dcf509fd7b",
+     "expanded_sha256": "a0831f9d5ac0c094b2a20709c7ca128d544ac8ef51160d59de3e08bb4e9cbd38",
+     "energy_trans_cards": {
+      "PMCG1-011": 3
+     },
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--deck1 venusaur-parasect-v2",
+     "decklist_path": null
+    }
+   },
+   "pair_source": null,
+   "candidates": null,
+   "eligible": null
+  },
+  "different_colour": {
+   "seats": {
+    "0": {
+     "identifier": "C116",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C116",
+      "file": "tools/existing_effect_games.py",
+      "line": 1783,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+     "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   },
+   "pair_source": "v0.116",
+   "candidates": 6,
+   "eligible": 6
+  },
+  "special_energy": {
+   "seats": {
+    "0": {
+     "identifier": "E58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "E58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1204,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+     "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       4
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       3
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       3
+      ],
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       3
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG5-047",
+       "name": "タケシのイシツブテ",
+       "attack": "スパイラルショット",
+       "cost": [
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "いわなだれ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "ランドクラッシュ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   },
+   "pair_source": "v0.58",
+   "candidates": 6,
+   "eligible": 5
+  },
+  "no_ability": {
+   "seats": {
+    "0": {
+     "identifier": "A122",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "A122",
+      "file": "tools/existing_effect_games.py",
+      "line": 1864,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+     "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "C121",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C121",
+      "file": "tools/existing_effect_games.py",
+      "line": 1852,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+     "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "neo2-043",
+       "name": "コイル",
+       "attack": "でんじほう",
+       "cost": [
+        "lightning",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   },
+   "pair_source": "v0.122",
+   "candidates": 540,
+   "eligible": 540
+  }
+ },
+ "decklist_files": {
+  "status": "to be written by the execution unit from DECKS verbatim (same entries and order); content_sha256 must equal this plan",
+  "decision": "if this copy counts as adding a deck definition, the three new conditions cannot run",
+  "paths": null
+ },
+ "seeds": {
+  "rule": "9083 から上へ、連続 7 値がすべて未使用の最初の組（先頭 1 値が先行・残り 6 値が本実行）",
+  "files": 784,
+  "errors": [],
+  "used_count": 176,
+  "max_used": 9082,
+  "pilot": 9083,
+  "main": [
+   9084,
+   9085,
+   9086,
+   9087,
+   9088,
+   9089
+  ],
+  "recheck_before_run": null
+ },
+ "plans": [
+  {
+   "batch": "vai-batch-tr8v8x-p1-v7",
+   "stage": "pilot",
+   "condition": "reference",
+   "mode": "rules-v7",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "hitmonchan-dewgong-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "hitmonchan-dewgong-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "37fa81e11efd1a79a6cdd2cbba5d0f0520a1a14d38efc749b227282d13d6ac4a",
+     "expanded_sha256": "66e569289363117ecc7f978ac994818116e04707a5b506fb90c653b22716ba1e",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-058",
+       "name": "エビワラー",
+       "attack": "スペシャルパンチ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "オーロラビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "れいとうビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--deck0 hitmonchan-dewgong-v2",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "venusaur-parasect-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "venusaur-parasect-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "ff4ae4f236078fadcc0864e5b6beea1a332c4d41e62c5edf0a9a82dcf509fd7b",
+     "expanded_sha256": "a0831f9d5ac0c094b2a20709c7ca128d544ac8ef51160d59de3e08bb4e9cbd38",
+     "energy_trans_cards": {
+      "PMCG1-011": 3
+     },
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--deck1 venusaur-parasect-v2",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p1-v8",
+   "stage": "pilot",
+   "condition": "reference",
+   "mode": "rules-v8",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "hitmonchan-dewgong-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "hitmonchan-dewgong-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "37fa81e11efd1a79a6cdd2cbba5d0f0520a1a14d38efc749b227282d13d6ac4a",
+     "expanded_sha256": "66e569289363117ecc7f978ac994818116e04707a5b506fb90c653b22716ba1e",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-058",
+       "name": "エビワラー",
+       "attack": "スペシャルパンチ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "オーロラビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "れいとうビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--deck0 hitmonchan-dewgong-v2",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "venusaur-parasect-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "venusaur-parasect-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "ff4ae4f236078fadcc0864e5b6beea1a332c4d41e62c5edf0a9a82dcf509fd7b",
+     "expanded_sha256": "a0831f9d5ac0c094b2a20709c7ca128d544ac8ef51160d59de3e08bb4e9cbd38",
+     "energy_trans_cards": {
+      "PMCG1-011": 3
+     },
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--deck1 venusaur-parasect-v2",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p2-v7",
+   "stage": "pilot",
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "C116",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C116",
+      "file": "tools/existing_effect_games.py",
+      "line": 1783,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+     "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p2-v8",
+   "stage": "pilot",
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "C116",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C116",
+      "file": "tools/existing_effect_games.py",
+      "line": 1783,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+     "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p3-v7",
+   "stage": "pilot",
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "E58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "E58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1204,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+     "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       4
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       3
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       3
+      ],
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       3
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG5-047",
+       "name": "タケシのイシツブテ",
+       "attack": "スパイラルショット",
+       "cost": [
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "いわなだれ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "ランドクラッシュ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p3-v8",
+   "stage": "pilot",
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "E58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "E58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1204,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+     "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       4
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       3
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       3
+      ],
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       3
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG5-047",
+       "name": "タケシのイシツブテ",
+       "attack": "スパイラルショット",
+       "cost": [
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "いわなだれ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "ランドクラッシュ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p4-v7",
+   "stage": "pilot",
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "A122",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "A122",
+      "file": "tools/existing_effect_games.py",
+      "line": 1864,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+     "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "C121",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C121",
+      "file": "tools/existing_effect_games.py",
+      "line": 1852,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+     "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "neo2-043",
+       "name": "コイル",
+       "attack": "でんじほう",
+       "cost": [
+        "lightning",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-p4-v8",
+   "stage": "pilot",
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "seeds": [
+    9083
+   ],
+   "max_games": 1,
+   "budget_seconds": 300,
+   "evidence_max_mb": 512,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "A122",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "A122",
+      "file": "tools/existing_effect_games.py",
+      "line": 1864,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+     "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "C121",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C121",
+      "file": "tools/existing_effect_games.py",
+      "line": 1852,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+     "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "neo2-043",
+       "name": "コイル",
+       "attack": "でんじほう",
+       "cost": [
+        "lightning",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m1-v7",
+   "stage": "main",
+   "condition": "reference",
+   "mode": "rules-v7",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "hitmonchan-dewgong-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "hitmonchan-dewgong-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "37fa81e11efd1a79a6cdd2cbba5d0f0520a1a14d38efc749b227282d13d6ac4a",
+     "expanded_sha256": "66e569289363117ecc7f978ac994818116e04707a5b506fb90c653b22716ba1e",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-058",
+       "name": "エビワラー",
+       "attack": "スペシャルパンチ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "オーロラビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "れいとうビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--deck0 hitmonchan-dewgong-v2",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "venusaur-parasect-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "venusaur-parasect-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "ff4ae4f236078fadcc0864e5b6beea1a332c4d41e62c5edf0a9a82dcf509fd7b",
+     "expanded_sha256": "a0831f9d5ac0c094b2a20709c7ca128d544ac8ef51160d59de3e08bb4e9cbd38",
+     "energy_trans_cards": {
+      "PMCG1-011": 3
+     },
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--deck1 venusaur-parasect-v2",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m1-v8",
+   "stage": "main",
+   "condition": "reference",
+   "mode": "rules-v8",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "hitmonchan-dewgong-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "hitmonchan-dewgong-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "37fa81e11efd1a79a6cdd2cbba5d0f0520a1a14d38efc749b227282d13d6ac4a",
+     "expanded_sha256": "66e569289363117ecc7f978ac994818116e04707a5b506fb90c653b22716ba1e",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-058",
+       "name": "エビワラー",
+       "attack": "スペシャルパンチ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "オーロラビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-030",
+       "name": "ジュゴン",
+       "attack": "れいとうビーム",
+       "cost": [
+        "water",
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--deck0 hitmonchan-dewgong-v2",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "venusaur-parasect-v2",
+     "kind": "preset",
+     "source": {
+      "kind": "preset",
+      "deck_id": "venusaur-parasect-v2",
+      "file": "kyuura_engine/decks.py"
+     },
+     "legal": true,
+     "content_sha256": "ff4ae4f236078fadcc0864e5b6beea1a332c4d41e62c5edf0a9a82dcf509fd7b",
+     "expanded_sha256": "a0831f9d5ac0c094b2a20709c7ca128d544ac8ef51160d59de3e08bb4e9cbd38",
+     "energy_trans_cards": {
+      "PMCG1-011": 3
+     },
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--deck1 venusaur-parasect-v2",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m2-v7",
+   "stage": "main",
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "C116",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C116",
+      "file": "tools/existing_effect_games.py",
+      "line": 1783,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+     "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m2-v8",
+   "stage": "main",
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "C116",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C116",
+      "file": "tools/existing_effect_games.py",
+      "line": 1783,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "e614fe77a3a2fee8bfcdf45ce506df9c43847538903eefa383ac28f9a2fad19b",
+     "expanded_sha256": "1e215fec1e65e1770c1b5e5d984c0a6577a6a8ef03bc34ee7e0ade2442afbfcb",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m3-v7",
+   "stage": "main",
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "E58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "E58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1204,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+     "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       4
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       3
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       3
+      ],
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       3
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG5-047",
+       "name": "タケシのイシツブテ",
+       "attack": "スパイラルショット",
+       "cost": [
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "いわなだれ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "ランドクラッシュ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m3-v8",
+   "stage": "main",
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "E58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "E58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1204,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "a4f0067fc0d3780d41f24cdf28ea5afb9a56f4511f0af211dc08a1d19100b650",
+     "expanded_sha256": "be2d63057f0d697799d25e3cdeb482c6526990b8d24589a610c8a42f37893db7",
+     "energy_trans_cards": {},
+     "special_energy": {
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       4
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       3
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       3
+      ],
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       3
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG5-047",
+       "name": "タケシのイシツブテ",
+       "attack": "スパイラルショット",
+       "cost": [
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "いわなだれ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG5-053",
+       "name": "タケシのゴローニャ",
+       "attack": "ランドクラッシュ",
+       "cost": [
+        "fighting",
+        "fighting",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "R58",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "R58",
+      "file": "tools/existing_effect_games.py",
+      "line": 1208,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "3265d2bdab33adbf8cced828eb8927a07c1587009a47b8220a73e29b091d3ae7",
+     "expanded_sha256": "154d094ef71517c05b2b2e67750c9de14e5c6e93286d3aee67b798ca1aa0cf75",
+     "energy_trans_cards": {
+      "PMCG1-011": 2
+     },
+     "special_energy": {
+      "PMCG4-065": [
+       "レインボーエネルギー",
+       4
+      ],
+      "PMCG1-096": [
+       "無色2個エネルギー",
+       3
+      ],
+      "PMCG4-063": [
+       "きずぐすり配合エネルギー",
+       2
+      ],
+      "PMCG4-064": [
+       "なんでもなおし配合エネルギー",
+       2
+      ]
+     },
+     "colour_and_colorless_attacks": [
+      {
+       "card": "PMCG1-023",
+       "name": "ゼニガメ",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "からにこもる",
+       "cost": [
+        "water",
+        "colorless"
+       ]
+      },
+      {
+       "card": "PMCG1-027",
+       "name": "カメール",
+       "attack": "かみつく",
+       "cost": [
+        "water",
+        "colorless",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m4-v7",
+   "stage": "main",
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "A122",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "A122",
+      "file": "tools/existing_effect_games.py",
+      "line": 1864,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+     "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "C121",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C121",
+      "file": "tools/existing_effect_games.py",
+      "line": 1852,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+     "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "neo2-043",
+       "name": "コイル",
+       "attack": "でんじほう",
+       "cost": [
+        "lightning",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  },
+  {
+   "batch": "vai-batch-tr8v8x-m4-v8",
+   "stage": "main",
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "seeds": [
+    9084,
+    9085,
+    9086,
+    9087,
+    9088,
+    9089
+   ],
+   "max_games": 6,
+   "budget_seconds": 900,
+   "evidence_max_mb": 1024,
+   "plan_sha256": null,
+   "decks": {
+    "0": {
+     "identifier": "A122",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "A122",
+      "file": "tools/existing_effect_games.py",
+      "line": 1864,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "d6677b7b6adbefe8be65c1730eb22489965c2c2a0e76cb4c31c77df4465046c2",
+     "expanded_sha256": "4c864b456ad3af84afd9c484da5a8dc7bc37162d4dbfa6c54cafcb5533ed91bc",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [],
+     "cli": "--decklist0 <path>",
+     "decklist_path": null
+    },
+    "1": {
+     "identifier": "C121",
+     "kind": "engine_tool_deck",
+     "source": {
+      "kind": "engine_tool_deck",
+      "key": "C121",
+      "file": "tools/existing_effect_games.py",
+      "line": 1852,
+      "file_sha256": "bf3b3a302c9d28d7b82c0ee5e0dedd70db0c6e68679e1ecbf1955d23aee592ac"
+     },
+     "legal": true,
+     "content_sha256": "1a8878600e91599cd909f2265bce3921c7f7ca66e7bc795cc242416d23a349e6",
+     "expanded_sha256": "80b6618bba549febd34d5dfaa6fb7a57f7493c2070b0951444e1c39b4c635003",
+     "energy_trans_cards": {},
+     "special_energy": {},
+     "colour_and_colorless_attacks": [
+      {
+       "card": "neo2-043",
+       "name": "コイル",
+       "attack": "でんじほう",
+       "cost": [
+        "lightning",
+        "colorless"
+       ]
+      }
+     ],
+     "cli": "--decklist1 <path>",
+     "decklist_path": null
+    }
+   }
+  }
+ ],
+ "order": [
+  {
+   "seed": 9083,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-p1-v7"
+  },
+  {
+   "seed": 9083,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-p1-v8"
+  },
+  {
+   "seed": 9083,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-p2-v7"
+  },
+  {
+   "seed": 9083,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-p2-v8"
+  },
+  {
+   "seed": 9083,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-p3-v7"
+  },
+  {
+   "seed": 9083,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-p3-v8"
+  },
+  {
+   "seed": 9083,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-p4-v7"
+  },
+  {
+   "seed": 9083,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-p4-v8"
+  },
+  {
+   "seed": 9084,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9084,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9084,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9084,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9084,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9084,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9084,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9084,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  },
+  {
+   "seed": 9085,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9085,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9085,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9085,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9085,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9085,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9085,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9085,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  },
+  {
+   "seed": 9086,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9086,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9086,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9086,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9086,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9086,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9086,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9086,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  },
+  {
+   "seed": 9087,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9087,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9087,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9087,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9087,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9087,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9087,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9087,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  },
+  {
+   "seed": 9088,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9088,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9088,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9088,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9088,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9088,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9088,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9088,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  },
+  {
+   "seed": 9089,
+   "condition": "reference",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m1-v7"
+  },
+  {
+   "seed": 9089,
+   "condition": "reference",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m1-v8"
+  },
+  {
+   "seed": 9089,
+   "condition": "different_colour",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m2-v7"
+  },
+  {
+   "seed": 9089,
+   "condition": "different_colour",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m2-v8"
+  },
+  {
+   "seed": 9089,
+   "condition": "special_energy",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m3-v7"
+  },
+  {
+   "seed": 9089,
+   "condition": "special_energy",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m3-v8"
+  },
+  {
+   "seed": 9089,
+   "condition": "no_ability",
+   "mode": "rules-v7",
+   "batch": "vai-batch-tr8v8x-m4-v7"
+  },
+  {
+   "seed": 9089,
+   "condition": "no_ability",
+   "mode": "rules-v8",
+   "batch": "vai-batch-tr8v8x-m4-v8"
+  }
+ ],
+ "games": {
+  "pilot": 8,
+  "main": 48,
+  "total": 56
+ },
+ "cli_common": "--engine-commit a3583786cf93ee67ce95b94a5b94505f5fcef1b0 --tool-commit 280660be69630d5a9007e11e1022db3f221630b1 --conventions CS-KYUURA-PLAY-TR8@1 --observation --prestop-inputs --undetermined-evidence-missing continue",
+ "budget": {
+  "plans": {
+   "pilot": {
+    "tool_seconds": 300,
+    "evidence_mib": 512
+   },
+   "main": {
+    "tool_seconds": 900,
+    "evidence_mib": 1024
+   }
+  },
+  "total": {
+   "tool_seconds": 7200,
+   "outer_seconds": 14400,
+   "evidence_mib": 4096
+  },
+  "start_conditions": {
+   "plan_tool_remaining_s": 150,
+   "total_tool_remaining_s": 150,
+   "total_outer_remaining_s": 600,
+   "plan_evidence_remaining_mib": 384,
+   "total_evidence_remaining_mib": 384,
+   "drive_free_mib": 4096
+  },
+  "estimate": {
+   "source_games": 124,
+   "terminations": [
+    "game_over"
+   ],
+   "per_game": {
+    "normal": {
+     "reference": {
+      "tool_seconds": 8.048,
+      "outer_seconds": 32.09,
+      "bytes": 11305689.347
+     },
+     "new": {
+      "tool_seconds": 7.94,
+      "outer_seconds": 31.618,
+      "bytes": 10667737.831
+     }
+    },
+    "observed_max": {
+     "reference": {
+      "tool_seconds": 35.369,
+      "outer_seconds": 65.48,
+      "bytes": 53308970
+     },
+     "new": {
+      "tool_seconds": 35.369,
+      "outer_seconds": 65.48,
+      "bytes": 53308970
+     }
+    },
+    "single_game_limit": {
+     "reference": {
+      "tool_seconds": 122.0,
+      "outer_seconds": 149.265,
+      "bytes": 97559788
+     },
+     "new": {
+      "tool_seconds": 122.0,
+      "outer_seconds": 149.265,
+      "bytes": 97559788
+     }
+    }
+   },
+   "fits": {
+    "normal": {
+     "pilot_reference_plan_games_startable": 1,
+     "pilot_new_plan_games_startable": 1,
+     "main_reference_plan_games_startable": 6,
+     "main_new_plan_games_startable": 6,
+     "total_games_startable_of_56": 56,
+     "total_if_all_56": {
+      "tool_seconds": 446.152,
+      "outer_seconds": 1777.216,
+      "bytes": 608895695
+     }
+    },
+    "observed_max": {
+     "pilot_reference_plan_games_startable": 1,
+     "pilot_new_plan_games_startable": 1,
+     "main_reference_plan_games_startable": 6,
+     "main_new_plan_games_startable": 6,
+     "total_games_startable_of_56": 56,
+     "total_if_all_56": {
+      "tool_seconds": 1980.664,
+      "outer_seconds": 3666.88,
+      "bytes": 2987873376
+     }
+    },
+    "single_game_limit": {
+     "pilot_reference_plan_games_startable": 1,
+     "pilot_new_plan_games_startable": 1,
+     "main_reference_plan_games_startable": 6,
+     "main_new_plan_games_startable": 6,
+     "total_games_startable_of_56": 40,
+     "total_if_all_56": {
+      "tool_seconds": 6832.0,
+      "outer_seconds": 8358.84,
+      "bytes": 5465919184
+     }
+    }
+   }
+  },
+  "after_pilot": {
+   "procedure": "recompute with the pilot games; new conditions use max(pilot, all past games); record the main outlook; limits unchanged",
+   "values": null
+  }
+ },
+ "progress_conditions": {
+  "pilot_to_main": [
+   "plan and identity",
+   "completion record",
+   "observation and prestop",
+   "judge",
+   "existing final-state replay check",
+   "aggregate consistency",
+   "cache unchanged",
+   "next game startable"
+  ],
+  "not_required": [
+   "cost evaluation",
+   "D4",
+   "Energy Trans"
+  ],
+  "stop": [
+   "stop policy",
+   "execution / verification anomaly",
+   "budget shortage"
+  ],
+  "count_separately": [
+   "incomplete",
+   "not started"
+  ],
+  "separate_decisions": [
+   "retry",
+   "stop release",
+   "extra games",
+   "limit extension"
+  ]
+ },
+ "measurements": {
+  "completion": "game_over / started, per condition and policy, with termination classes",
+  "cost_evaluation": [
+   "evaluated count per goal (attack / retreat)",
+   "fallback reasons (unevaluable:*, skipped)",
+   "moves until first met",
+   "accepted follow-up operations (selected / built / submitted / accepted)",
+   "not appeared / not reached / unevaluable separately"
+  ],
+  "d4": "kept count separated from tier restriction; when kept: both sets in the same tier, chosen move, acceptance; board results not counted",
+  "first_difference": "first candidate and first submit difference per pair; operations and winner after divergence as reference",
+  "not_decided": [
+   "completion rate of all decks",
+   "rules-v8 default"
+  ]
+ },
+ "runtime_values": {
+  "plan_sha256": null,
+  "decklist_paths": null,
+  "cache": null,
+  "per_game": null,
+  "results": null
+ },
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8x-plan-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "first deck search did not include tools/existing_effect_games.py DECKS; extended and rerun",
+   "kept": "raw/F1/"
+  }
+ ]
+}
