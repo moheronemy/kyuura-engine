@@ -19954,16 +19954,17 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 7,
+    "mention_lines": 8,
     "files": [
      "tests/helpers.py",
      "tests/test_energy_movement_attachment_devolution_v0_116.py",
      "tests/test_stadium_reuse_special_energy_v0_58.py",
      "tests/test_type_energy_colors_v0_88.py",
      "tests/test_unresolved_boundaries_v0_4e.py",
+     "tests/test_verification_ai_rules_v9.py",
      "tests/v017_games.py"
     ],
-    "files_total": 6,
+    "files_total": 7,
     "meaning": "静的な行の分類（表明らしい行・それ以外）。行の実行・発生・隣の受理枝は計測していない（v0.136 の全体のテスト 7,282 件・失敗 0 は同じ指紋のコード）",
     "adjacent_accept_branch": "unknown"
    },

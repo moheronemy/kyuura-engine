@@ -24,7 +24,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import DEFER_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, RULES8_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransProgressRulePolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, REFUSED_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, RULES8_VERSION, RULES9_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransProgressRulePolicy, RefusedInputRulePolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -255,6 +255,54 @@ class Runner:
         except Exception as error:  # noqa: BLE001
             recorder.fail("on_fetch", error, counts_complete=False)
 
+    @staticmethod
+    def _input_tuples(candidate, stages, allowed):
+        """rules-v9（TOOL_VERSION 20）: 候補の取得済みの段から作れる入力の組 (choices, meaning, 署名) をすべて返す（``actions.enumerate_inputs``。乱数を使わない）。
+        署名は試みの比べ（``tried``）と同じ ``canonical([candidate_key, meaning])``。列挙できない（上限・作れる組の範囲の大きさ・契約の形）なら (None, 理由)。"""
+        try:
+            tuples = B.enumerate_inputs(stages, allowed, kind=candidate.get("kind"))
+        except B.TupleLimit as over:
+            return None, over.reason
+        except (B.Unbuildable, B.ContractUnknown) as error:
+            return None, type(error).__name__
+        key = candidate_key(candidate)
+        return [(c, m, canonical([key, m])) for c, m in tuples], None
+
+    def _input_signatures(self, candidate, stages, allowed) -> list[str] | None:
+        """rules-v9: 拒否のあとに方策へ渡す、同じ応答で作れる入力の署名の一覧（列挙できなければ None）。入力のない候補は空の入力 1 つ。"""
+        if not stages:
+            return [canonical([candidate_key(candidate), []])]
+        tuples, _why = self._input_tuples(candidate, stages, allowed)
+        return None if tuples is None else [s for _c, _m, s in tuples]
+
+    def _refused_filter(self, candidate, stages, allowed, refused, restriction, policy, own_view, entry):
+        """rules-v9（TOOL_VERSION 20）: 同じ局面で拒否済みの入力がある候補の入力を、作れる入力の組から拒否済みを除いて選ぶ。
+
+        返す値: ``REFUSED_ALL``（作れる組がすべて拒否済み）・(choices, picks, meaning)（残りの組から 1 つ。2 つ以上なら方策の均等な選択）・None（列挙できない・
+        rules-v4〜rules-v8 の制限がある: 今までの組み立て。拒否済みの署名は ``tried`` で送らない）。記録は試みの行の ``refused_filter``。"""
+        record: dict[str, Any] = {"refused": len(refused)}
+        entry["refused_filter"] = record
+        if restriction is not None:
+            record["result"] = "not_applied:restriction"
+            return None
+        tuples, why = self._input_tuples(candidate, stages, allowed)
+        if tuples is None:
+            record["result"] = f"not_applied:{why}"
+            return None
+        remaining = [t for t in tuples if t[2] not in refused]
+        record.update({"buildable": len(tuples), "remaining": len(remaining)})
+        if not remaining:
+            record["result"] = "all_refused"
+            return REFUSED_ALL
+        picks: list[dict[str, Any]] = []
+        index = 0
+        if len(remaining) > 1:
+            index, reason = policy.choose("refused_filter", [m for _c, m, _s in remaining], {"view": own_view, "candidate": candidate})
+            picks.append({"stage": None, "purpose": "refused_filter", "items": len(remaining), "index": index, "reason": reason})
+        record["result"] = "chosen_from_remaining"
+        choices, meaning, _s = remaining[index]
+        return list(choices), picks, list(meaning)
+
     def _progress_fetch(self, actor, endpoint, policy, cands, in_scope, reasons, handle_base, log) -> dict[str, Any]:
         """rules-v8（TOOL_VERSION 19。D1）: ［エナジートランス］を選んだ試みで、同じ候補の応答（同じ取っ手）にある「にげる」の候補の inputs を読み取り専用で取り、方策へ渡す。
 
@@ -481,8 +529,17 @@ class Runner:
                         entry["build"] = DEFER_ALL
                         continue
                 method = None
+                prebuilt = None
+                if hasattr(policy, "refused_signatures") and policy.refused_signatures(candidate):  # rules-v9（TOOL_VERSION 20）: 拒否済みの入力を除いて選ぶ
+                    prebuilt = self._refused_filter(candidate, stages, allowed, policy.refused_signatures(candidate), restriction, policy, own_view, entry)
+                    if prebuilt == REFUSED_ALL:  # 作れる入力がすべて拒否済み: 組み立てずに、この候補をエピソードの残りで順位 8 にして選び直す（何も送らない）
+                        policy.mark_refused_all(candidate)
+                        entry["build"] = REFUSED_ALL
+                        continue
                 try:
-                    if policy.distribution == TUPLE:
+                    if prebuilt is not None:
+                        choices, picks, meaning = prebuilt
+                    elif policy.distribution == TUPLE:
                         choices, picks, meaning, method = B.build_choices_tuple(stages, policy, {"view": own_view, "candidate": candidate}, allowed)
                         entry["build_method"] = method
                     else:
@@ -617,6 +674,9 @@ class Runner:
                 raise _Stop(API_CONTRACT_UNKNOWN, {"reason": "unknown_outcome", "outcome": outcome, "attempt": entry["n"]})
             if self.game.state is not before_state or checks(self.game.state) != self.game.last_check():
                 self._anomaly("state_changed_on_rejection", entry, {})
+            if outcome == D.REJECTED and hasattr(policy, "input_refused"):  # rules-v9（TOOL_VERSION 20）: 公開の結果（未裁定・continuable）と、同じ応答で作れる入力の署名を方策へ
+                entry["refused_input"] = policy.input_refused(candidate, signature, sent.get("result"),
+                                                              self._input_signatures(candidate, stages, allowed))
             tried.add(signature)
             rejections += 1
             self._after_refusal_like(entry, actor)
@@ -798,6 +858,10 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES9_VERSION:  # rules-v9（試験。明示的に選んだときだけ。rules-v8 + 同じ局面で未裁定として拒否された入力を避ける）
+        cards = progress_card_table()
+        players = {p: RefusedInputRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold, cards=cards) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES8_VERSION:  # rules-v8（試験。明示的に選んだときだけ。rules-v7 + ［エナジートランス］の入力で費用に近づく移動を優先）
         cards = progress_card_table()

@@ -172,7 +172,7 @@ class RunnerAndBatchTest(unittest.TestCase):
         self.assertEqual((v5["0"]["version"], v5["0"]["distribution"], v5["0"]["swap_cap"]["cap"], v5["0"]["transition_deferral"]["version"]),
                          (5, RULES5_DISTRIBUTION, 6, 1))
         self.assertNotIn("swap_cap", v4["0"])
-        self.assertEqual(B.TOOL_VERSION, 19)  # 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）
+        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）
 
 
 class SequenceTest(unittest.TestCase):

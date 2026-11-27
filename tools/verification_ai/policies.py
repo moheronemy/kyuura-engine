@@ -1262,6 +1262,107 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
                 "energy_trans_progress": self.energy_trans_progress, "counts": dict(sorted(self.loop_counts.items()))}
 
 
+# ---------------------------------------------------------------- rules-v9（試験の方策）: rules-v8 に、同じ局面で未裁定として拒否された入力を避けて、別の入力・別の候補へ進む規則を加える
+# （docs/tr8-rainbow-as-basic-energy-stop-analysis.md 7 章の案 C・8 章・docs/tr8-rules-v9-refused-input-experiment.md）。対象は、submit の拒否のうち、公開の結果の
+# 分類が未裁定（RULING_UNRESOLVED）で continuable が真のものだけ。check の invalid・組み立ての失敗・続けられない拒否は対象にしない（今までどおり）。
+# 記録は同じ主体・同じエピソード（同じ局面。受理で新しいエピソードになると消える）の (候補の中身, 入力の意味の署名) で、候補・選べるものの番号は使わない。
+# 入力を選ぶのはランナー（runner._refused_filter）: 拒否済みの署名がある候補では、作れる入力をすべて列挙して拒否済みを除いた組から選ぶ（同じワザの別の入力を残す）。
+# 作れる入力がすべて拒否済みと確かめた候補だけを、そのエピソードの残りで順位 8（end_turn・順位 7 より後ろ）にする。候補を消さず、ほかがなければ選ばれ、
+# 入力を送らずに既存の上限（draws_per_position）で終わる。エンジンの拒否・judge の分類・停止方針は変えない
+
+RULES9_VERSION = 9
+RULES9_DISTRIBUTION = "rules-v9-candidate+uniform-stage"
+RULING_UNRESOLVED = "unresolved_ruling"  # kyuura_engine.diagnostics.RULING_UNRESOLVED と同じ値（方策は kyuura_engine を import しない。テストで一致を確かめる）
+REFUSED_ALL = "refused_inputs_all"  # 試みの build の値: 組み立ての前の列挙で、作れる入力がすべて同じ局面で拒否済み（組み立てず、送らない）
+REFUSED_RANK = 8
+REFUSED_INPUT_AVOIDANCE = {
+    "version": 1,
+    "target": "submit outcome rejected whose public result category is unresolved_ruling and continuable is true "
+              "(check invalid, build failures and non-continuable rejections are not recorded)",
+    "key": "same actor, same episode (position); (candidate identity without ids, canonical input meaning signature); option ids are not used",
+    "inputs": "for a candidate with refused signatures, every buildable input is enumerated (actions.enumerate_inputs) and the choice is drawn uniformly "
+              "from the unrefused ones (other inputs of the same attack stay selectable)",
+    "candidate": f"rank {REFUSED_RANK} (after end_turn and rank 7) only when every buildable input of the fetched inputs is refused; candidate kept; "
+                 "when only such candidates remain it is chosen, nothing is sent, and the existing draws_per_position limit applies",
+    "not_evaluable": "enumeration limit or a restriction from rules-v4..v8 on the same inputs: the existing build (refused signatures still not resent)",
+    "reset": "new episode (acceptance or a new decision)",
+    "unchanged": "engine refusal, judge classification, stop policy, candidate ranks otherwise"}
+
+
+class RefusedInputRulePolicy(EnergyTransProgressRulePolicy):
+    """rules-v9: rules-v8 に、同じ局面で未裁定として拒否された入力を避ける規則を加える（``REFUSED_INPUT_AVOIDANCE``）。
+
+    - ランナーの差し込み口（この方策だけが持つ）: ``input_refused(candidate, signature, result, signatures)``（拒否のあと。``signatures`` はその応答で作れる入力の
+      署名の一覧、作れなければ None）、``refused_signatures(candidate)``（組み立ての前）、``mark_refused_all(candidate)``（組み立ての前の列挙で全部が拒否済み）
+    - 候補の順位: 作れる入力がすべて拒否済みの候補を順位 ``REFUSED_RANK`` にする。ほかの順位・同順位の抽選・理由の接頭辞は rules-v8 のまま（当たったときだけ注記）"""
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP,
+                 cards: dict[str, dict[str, Any]] | None = None):
+        super().__init__(seed, STAGE, threshold=threshold, cap=cap, cards=cards)
+        self.version = RULES9_VERSION
+        self.distribution = RULES9_DISTRIBUTION
+        self.refused_input_avoidance = REFUSED_INPUT_AVOIDANCE
+        self._refused: dict[str, set[str]] = {}
+        self._refused_all: set[str] = set()
+        self._refused_demoted_now = False
+
+    def begin_episode(self) -> dict[str, Any]:
+        info = super().begin_episode()
+        if self._refused:
+            info["refused_inputs_cleared"] = sum(len(s) for s in self._refused.values())
+        self._refused, self._refused_all, self._refused_demoted_now = {}, set(), False
+        return info
+
+    def input_refused(self, candidate: dict[str, Any], signature: str, result: dict[str, Any] | None,
+                      signatures: list[str] | None) -> dict[str, Any]:
+        result = result if isinstance(result, dict) else {}
+        category, continuable = result.get("category"), result.get("continuable")
+        if category != RULING_UNRESOLVED or continuable is not True:
+            self.loop_counts["refused_not_recorded"] += 1
+            return {"result": "not_recorded", "category": category, "continuable": continuable}
+        cid = candidate_identity(candidate)
+        refused = self._refused.setdefault(cid, set())
+        refused.add(signature)
+        self.loop_counts["refused_recorded"] += 1
+        record: dict[str, Any] = {"result": "recorded", "refused_for_candidate": len(refused)}
+        if signatures is None:
+            record["all_refused"] = None  # 作れる入力を列挙できない（上限など）: 候補は下げない
+        else:
+            remaining = [s for s in signatures if s not in refused]
+            record.update({"buildable": len(signatures), "remaining": len(remaining), "all_refused": not remaining})
+            if not remaining:
+                self._refused_all.add(cid)
+                self.loop_counts["refused_all_inputs"] += 1
+        return record
+
+    def refused_signatures(self, candidate: dict[str, Any]) -> frozenset:
+        return frozenset(self._refused.get(candidate_identity(candidate), ()))
+
+    def mark_refused_all(self, candidate: dict[str, Any]) -> None:
+        self._refused_all.add(candidate_identity(candidate))
+        self.loop_counts["refused_all_inputs_at_build"] += 1
+
+    def _adjust_ranks(self, items, ranks, prefix) -> tuple[list, str, str]:
+        ranks, prefix, note = super()._adjust_ranks(items, ranks, prefix)
+        hit = [r is not None and isinstance(c, dict) and candidate_identity(c) in self._refused_all for r, c in zip(ranks, items)]
+        n = sum(hit)
+        self._refused_demoted_now = bool(n)
+        if n:
+            self.loop_counts["refused_choices_excluded"] += 1
+        return [REFUSED_RANK if x else r for r, x in zip(ranks, hit)], prefix, note + (f":refused_excluded{n}" if n else "")
+
+    def _rule_candidate(self, items, context) -> tuple[int, str]:
+        index, reason = super()._rule_candidate(items, context)
+        chosen = items[index]
+        if self._refused_demoted_now and isinstance(chosen, dict) and candidate_identity(chosen) in self._refused_all:
+            self.loop_counts["refused_no_alternative"] += 1
+            reason += ":refused_no_alternative"
+        return index, reason
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**super().loop_summary(), "refused_input_avoidance": self.refused_input_avoidance}
+
+
 def mix_seed(policy_seed: int, player: int) -> str:
     """混合の判定の乱数の種（候補・入力の選択の乱数と別。ゲームの乱数とも別）。"""
     return f"kyuura-vai-v2:mix:{policy_seed}:{player}"

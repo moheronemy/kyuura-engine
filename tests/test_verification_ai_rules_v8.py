@@ -329,7 +329,7 @@ class RunnerAndBatchTest(unittest.TestCase):
         v7 = adapter.policies_of(small(policy="rules", rules_version=7))
         self.assertEqual((v8["0"]["version"], v8["0"]["energy_trans_progress"], v8["0"]["retreat_deferral"]["version"]), (8, ENERGY_TRANS_PROGRESS, 1))
         self.assertNotIn("energy_trans_progress", v7["0"])
-        self.assertEqual(B.TOOL_VERSION, 19)
+        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）
 
     def test_card_table_from_the_engine_registry(self):
         self.assertEqual(CARDS[VEN]["attacks"], [["grass"] * 4])

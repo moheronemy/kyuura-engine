@@ -233,7 +233,7 @@ class RunnerAndBatchTest(unittest.TestCase):
         self.assertEqual((v7["0"]["version"], v7["0"]["distribution"], v7["0"]["retreat_deferral"], v7["0"]["energy_trans_deferral"]["version"]),
                          (7, RULES7_DISTRIBUTION, RETREAT_DEFERRAL, 1))
         self.assertNotIn("retreat_deferral", v6["0"])
-        self.assertEqual(B.TOOL_VERSION, 19)  # 19: rules-v8（旧の期待は 18）
+        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）
 
 
 class SequenceTest(unittest.TestCase):
