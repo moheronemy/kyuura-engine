@@ -1,0 +1,519 @@
+{
+ "format": "kyuura-energy-control-v0199-game-verification/1",
+ "date": "2026-11-28",
+ "base": {
+  "doc_commit": "d1979a476ad316c4cf4c8822a3329ed057c53051",
+  "branch_of_base": "claude/energy-control-rainbow-v0199",
+  "execution_commit": "3d1f3ba3146c2a597e8137a71c8b02d5e60bc9e9",
+  "engine_version": "0.199.0",
+  "execution_code_equal_to_doc_base": "kyuura_engine/ and tools/ have no difference between 3d1f3ba and d1979a4",
+  "work_branch": "claude/energy-control-rainbow-v0199-game"
+ },
+ "fixed_conditions": {
+  "plan": {
+   "batch": "vai-batch-energy-control-v0199",
+   "plan_sha256": "e862716f57203999e869a6a0ff4d5304a5595210a270b6363a5b315170f278a4",
+   "games": 1,
+   "game_id": "g001-rules-v9-s9083",
+   "seed": 9083,
+   "mode": "rules-v9",
+   "limits": {
+    "budget_seconds": 300.0,
+    "evidence_max_bytes": 536870912,
+    "evidence_reserve_bytes": 67108864,
+    "game_reserve_seconds": 150.0,
+    "max_attempts_per_game": 3,
+    "max_games": 1
+   },
+   "compared_with": "vai-batch-tr8v9-v9",
+   "differences_from_old_plan": [
+    "/batch_id",
+    "/commits/engine",
+    "/commits/tool",
+    "/games/0/decks/0/legality/engine/behavior_digest",
+    "/games/0/decks/0/legality/engine/version",
+    "/games/0/decks/1/legality/engine/behavior_digest",
+    "/games/0/decks/1/legality/engine/version",
+    "/identity/engine/implementation/behavior_digest",
+    "/identity/engine/implementation/version",
+    "/identity/engine/version",
+    "/written"
+   ],
+   "outside_allowed": [],
+   "not_started_before_run": true
+  },
+  "inherited_from_old_game": [
+   "decks C116 (seat 0) vs R58 (seat 1), same explicit list files and hashes",
+   "seed 9083 for game, policies and host",
+   "CS-KYUURA-PLAY-TR8@1",
+   "rules-v9",
+   "profile deep",
+   "per-game limits",
+   "observation",
+   "prestop inputs",
+   "evidence-missing undetermined continues"
+  ],
+  "identity": {
+   "engine_version": "0.199.0",
+   "behavior_digest": "9c0b6f182972b4f9b54c81169d92b9dd34eaa318e43eee004afc6cda17796a49",
+   "changed_from_old": [
+    "engine version 0.198.0 -> 0.199.0",
+    "behavior_digest c9912dd8... -> 9c0b6f18...",
+    "basis digests of lost_target_p1 / p2 / p3 and recover_zero (they include effects.py)",
+    "worktree path"
+   ],
+   "unchanged": [
+    "tool version 20 and digest",
+    "judge rules",
+    "formats",
+    "TR8@1 27 members and pinned digest",
+    "instrumentation digest"
+   ]
+  },
+  "dry_run": {
+   "use_cache": true,
+   "checks": {
+    "record_ok": true,
+    "python_same": true,
+    "commit_same": true,
+    "worktree_same": true,
+    "worktree_clean": true,
+    "cache_dir_same": true,
+    "pyc_files_same_count": true
+   },
+   "capacity_ok": true
+  },
+  "pyc_cache": {
+   "files": 185,
+   "bytes": 14041475,
+   "same_at_each_check": true,
+   "checks": 5
+  }
+ },
+ "budget": {
+  "limits": {
+   "tool_seconds": 300.0,
+   "outer_seconds": 1800.0,
+   "evidence_bytes": 536870912
+  },
+  "start_conditions": {
+   "plan_seconds": 150.0,
+   "program_tool_seconds": 150.0,
+   "program_outer_seconds": 600.0
+  },
+  "before_game": {
+   "plan_remaining_seconds": 300.0,
+   "program_tool_used_seconds": 0.0,
+   "program_remaining_tool_seconds": 300.0,
+   "program_outer_used_seconds": 0.0,
+   "program_remaining_outer_seconds": 1800.0,
+   "plan_remaining_evidence_bytes": 536843693,
+   "program_evidence_bytes": 27219,
+   "program_remaining_evidence_bytes": 536843693,
+   "required_bytes": 402653184,
+   "reference_1_5x_biggest_bytes": 0,
+   "max_complete_attempt_bytes": 0,
+   "drive_free_bytes": 245235802112
+  },
+  "after_game": {
+   "plan_remaining_seconds": 261.108,
+   "program_tool_used_seconds": 38.892,
+   "program_remaining_tool_seconds": 261.108,
+   "program_outer_used_seconds": 65.023,
+   "program_remaining_outer_seconds": 1734.977,
+   "plan_remaining_evidence_bytes": 484805866,
+   "program_evidence_bytes": 52065046,
+   "program_remaining_evidence_bytes": 484805866,
+   "required_bytes": 402653184,
+   "reference_1_5x_biggest_bytes": 78023776,
+   "max_complete_attempt_bytes": 52015851,
+   "drive_free_bytes": 244946649088
+  },
+  "start_ok": true,
+  "used": {
+   "tool_seconds": 38.892,
+   "outer_seconds": 65.023,
+   "evidence_bytes": 52065046
+  }
+ },
+ "run": {
+  "end": "completed",
+  "code": 0,
+  "policy_stop": false,
+  "outer_seconds": 65.023
+ },
+ "checks_after_game": {
+  "gate_conditions": {
+   "one_attempt": true,
+   "complete": true,
+   "verify_problems_0": true,
+   "r2_r5": true,
+   "observation_complete": true,
+   "replay": true,
+   "prestop_status_ok": true,
+   "stop_reasons_policy_only": true,
+   "correspondence_problems_0": true,
+   "no_anomalies": true,
+   "sets_expected": true,
+   "analysis_inputs_ok": true,
+   "analysis_one_game": true,
+   "judge_termination_matches_record": true,
+   "judge_undetermined_allowed": true,
+   "p5_contract_and_conventions": true,
+   "p6_readable": true,
+   "p7_consistent": true
+  },
+  "gate_go": true,
+  "rules_v9_conditions": {
+   "analysis_one_game": true,
+   "p2_mode_identity": true,
+   "p6_v5_readable": true,
+   "p7_v5_loop_counts": true,
+   "swap_cap_respected": true
+  },
+  "replay": {
+   "expected": "succeeded",
+   "matches_expectation": true,
+   "status": "succeeded"
+  },
+  "observation": {
+   "status": "complete",
+   "rows": 575,
+   "problems_total": 0
+  },
+  "prestop": {
+   "status": "complete",
+   "offered": 2,
+   "ok": 2,
+   "offered_by_kind": {
+    "use_power": 2
+   }
+  },
+  "judge": {
+   "expected": 575
+  },
+  "judge_termination": "expected",
+  "stop": []
+ },
+ "games": {
+  "old": {
+   "batch": "vai-batch-tr8v9-v9",
+   "plan_sha256": "69de22892086b2faa30df1ce0db372e5e1d641ed596200f274197f2d38a63dd7",
+   "engine_version": "0.198.0",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 81,
+   "accepted": 535,
+   "rejected": 1,
+   "attempts": 620,
+   "unbuildable": 66,
+   "policy_suppressed": 18,
+   "refused": 0,
+   "stop": [],
+   "judge_counts": {
+    "expected": 535,
+    "undetermined": 1
+   },
+   "known_stop": [],
+   "undetermined": [
+    {
+     "attempt": 116,
+     "category": "evidence_missing_stop",
+     "kind": "use_attack",
+     "reasons": [
+      "stop_condition_not_evidenced:UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+     ],
+     "source": "submit"
+    }
+   ]
+  },
+  "new": {
+   "batch": "vai-batch-energy-control-v0199",
+   "plan_sha256": "e862716f57203999e869a6a0ff4d5304a5595210a270b6363a5b315170f278a4",
+   "engine_version": "0.199.0",
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 81,
+   "accepted": 575,
+   "rejected": 0,
+   "attempts": 660,
+   "unbuildable": 74,
+   "policy_suppressed": 11,
+   "refused": 0,
+   "stop": [],
+   "judge_counts": {
+    "expected": 575
+   },
+   "known_stop": [],
+   "undetermined": []
+  }
+ },
+ "first_difference": {
+  "operation_seq": 97,
+  "operations_equal_before": true,
+  "accepted_before": 96,
+  "public_log_equal_before": true,
+  "public_log_events_before": 251,
+  "observation_before_equal": true,
+  "attempts_equal_before": 115,
+  "turn": [
+   0,
+   28
+  ],
+  "actor": 0,
+  "old": {
+   "outcome": "rejected",
+   "command": {
+    "attack_index": 0,
+    "card": 20,
+    "player": 0,
+    "type": "use_attack"
+   }
+  },
+  "new": {
+   "outcome": "accepted",
+   "command": {
+    "attack_index": 0,
+    "card": 20,
+    "player": 0,
+    "type": "use_attack"
+   }
+  },
+  "excluded_from_comparison": {
+   "header_paths_differing": [
+    "/engine/git_commit",
+    "/engine/implementation/behavior_digest",
+    "/engine/implementation/version",
+    "/engine/version",
+    "/finished",
+    "/policies/0/draws",
+    "/policies/0/loop/counts/refused_all_inputs",
+    "/policies/0/loop/counts/refused_choices_excluded",
+    "/policies/0/loop/counts/refused_recorded",
+    "/policies/1/draws",
+    "/policies/1/loop/counts/et_choices_with_deferred_all",
+    "/policies/1/loop/counts/et_deferred_keys",
+    "/policies/1/loop/counts/et_detections",
+    "/policies/1/loop/counts/et_restricted_builds",
+    "/policies/1/loop/counts/et_turn_resets_with_deferral",
+    "/policies/1/loop/counts/progress_tier1",
+    "/policies/1/loop/counts/progress_tier2",
+    "/policies/1/loop/counts/progress_tier3",
+    "/policies/1/loop/counts/retreat_choices_deferred",
+    "/policies/1/loop/counts/retreat_choices_reenabled",
+    "/policies/1/loop/counts/retreat_failures_recorded",
+    "/started"
+   ],
+   "note": "batch names, attempt paths, times, elapsed seconds, engine version and identity, plan id; operation_id is equal (same game id)"
+  }
+ },
+ "target_declaration": {
+  "actor": 0,
+  "turn": [
+   0,
+   28
+  ],
+  "attack": "エナジーコントロール",
+  "card_id": "PR1-022",
+  "choices_equal": true,
+  "declaration_options": [],
+  "opponent_field_energy": [
+   {
+    "pokemon_card_id": "PMCG1-027",
+    "zone": "active",
+    "energy": []
+   },
+   {
+    "pokemon_card_id": "PMCG1-001",
+    "zone": "bench",
+    "energy": [
+     [
+      "PMCG1-096",
+      "special"
+     ],
+     [
+      "PMCG4-065",
+      "special"
+     ]
+    ]
+   },
+   {
+    "pokemon_card_id": "PMCG1-001",
+    "zone": "bench",
+    "energy": []
+   }
+  ],
+  "opponent_field_energy_equal_to_old": true,
+  "old": {
+   "check_valid": true,
+   "submit": "rejected",
+   "diagnostic_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD",
+   "continuable": true,
+   "judge": {
+    "kind": "use_attack",
+    "outcome": "rejected",
+    "verdict": "undetermined",
+    "category": "unresolved_ruling",
+    "diagnostic_id": "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
+   },
+   "next_accepted": {
+    "attempt_n": 117,
+    "actor": 0,
+    "kind": "retreat",
+    "turn": [
+     0,
+     28
+    ],
+    "candidate_reason": "rule7:priority5:retreat:refused_excluded1",
+    "judge": {
+     "kind": "retreat",
+     "outcome": "accepted",
+     "verdict": "expected",
+     "category": null,
+     "diagnostic_id": null
+    }
+   }
+  },
+  "new": {
+   "check_valid": true,
+   "submit": "accepted",
+   "judge": {
+    "kind": "use_attack",
+    "outcome": "accepted",
+    "verdict": "expected",
+    "category": null,
+    "diagnostic_id": null
+   },
+   "coin": [
+    "tails"
+   ],
+   "attack_failed_reason": [
+    "coin"
+   ],
+   "decision_after": null,
+   "move_opponent_energy_events": 0,
+   "opponent_field_energy_unchanged": true,
+   "events": [
+    "attack",
+    "coin_flip",
+    "attack_failed",
+    "turn_end",
+    "pokemon_check",
+    "turn_start",
+    "draw"
+   ],
+   "next_accepted": {
+    "accepted_index": 98,
+    "actor": 1,
+    "command_type": "attach_energy",
+    "attempt_n": 117,
+    "turn": [
+     0,
+     29
+    ],
+    "check_valid": true,
+    "judge": {
+     "kind": "attach_energy",
+     "outcome": "accepted",
+     "verdict": "expected",
+     "category": null,
+     "diagnostic_id": null
+    }
+   }
+  }
+ },
+ "judgements": {
+  "attack_accepted": true,
+  "next_operation_accepted": true,
+  "game_finished": true,
+  "branch_verified_in_normal_game": "tails",
+  "heads_on_this_board_in_normal_game": "not observed"
+ },
+ "energy_control_in_the_whole_game": {
+  "old": {
+   "declarations": 3,
+   "accepted": 2,
+   "rejected": 1,
+   "tails": 0,
+   "tails_attack_failed_coin": 0,
+   "heads": 2,
+   "heads_zero_energy": 1,
+   "heads_special_only": 1,
+   "heads_special_only_with_rainbow": 0,
+   "heads_with_basic": 0,
+   "heads_decision_issued": 0,
+   "heads_without_basic_decision_issued": 0,
+   "heads_with_basic_moved": 0,
+   "moved_energy_kinds": [],
+   "offered_special_in_decision": 0,
+   "decision_answers_judged_expected": 0,
+   "decision_answers": 0,
+   "with_rainbow_on_opponent_field": 0,
+   "judge_expected": 2
+  },
+  "new": {
+   "declarations": 23,
+   "accepted": 23,
+   "rejected": 0,
+   "tails": 14,
+   "tails_attack_failed_coin": 14,
+   "heads": 9,
+   "heads_zero_energy": 1,
+   "heads_special_only": 1,
+   "heads_special_only_with_rainbow": 0,
+   "heads_with_basic": 7,
+   "heads_decision_issued": 7,
+   "heads_without_basic_decision_issued": 0,
+   "heads_with_basic_moved": 7,
+   "moved_energy_kinds": [
+    "basic"
+   ],
+   "offered_special_in_decision": 0,
+   "decision_answers_judged_expected": 14,
+   "decision_answers": 14,
+   "with_rainbow_on_opponent_field": 11,
+   "judge_expected": 23
+  },
+  "new_after_first_difference": {
+   "declarations": 20,
+   "accepted": 20,
+   "rejected": 0,
+   "tails": 13,
+   "tails_attack_failed_coin": 13,
+   "heads": 7,
+   "heads_zero_energy": 0,
+   "heads_special_only": 0,
+   "heads_special_only_with_rainbow": 0,
+   "heads_with_basic": 7,
+   "heads_decision_issued": 7,
+   "heads_without_basic_decision_issued": 0,
+   "heads_with_basic_moved": 7,
+   "moved_energy_kinds": [
+    "basic"
+   ],
+   "offered_special_in_decision": 0,
+   "decision_answers_judged_expected": 14,
+   "decision_answers": 14,
+   "with_rainbow_on_opponent_field": 10,
+   "judge_expected": 20
+  },
+  "heads_with_basic_and_rainbow": 2,
+  "prestop_offered_use_power": {
+   "use_power": 2
+  },
+  "same_pokemon_reattach": 2,
+  "moved_to_other_pokemon": 5
+ },
+ "unconfirmed": [
+  "heads on a normal-game board whose opponent field energy is only Rainbow Energy and Double Colorless Energy (only the constructed board)",
+  "the direct ruling of the time (card text and card classification based implementation interpretation)",
+  "the expanded main audit (next unit)",
+  "GUI display"
+ ],
+ "not_done": [
+  "rerun of the old game",
+  "retry, seed substitution, extra games, stop release",
+  "engine, tool, policy, judge or stop policy changes",
+  "kyuura, PR, push to main, merge"
+ ]
+}
