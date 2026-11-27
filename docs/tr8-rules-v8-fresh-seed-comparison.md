@@ -5,6 +5,7 @@
 - 実行の固定: `280660b`（エンジン 0.198.0・道具の版 19・CS-KYUURA-PLAY-TR8@1）
 - 証跡: `kyuura-engine-verification-vai/verifier/runs/vai-tr8v8f-run/`、計画 `vai-batch-tr8v8-fresh-v7`・`vai-batch-tr8v8-fresh-v8`
 - 機械可読: [同名の JSON](tr8-rules-v8-fresh-seed-comparison.json)
+- 続き: D4 の構築盤面での確認は [tr8-rules-v8-d4-board-verification](tr8-rules-v8-d4-board-verification.md)
 
 ## 0. 結論
 

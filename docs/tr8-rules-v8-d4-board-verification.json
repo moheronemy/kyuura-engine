@@ -1,0 +1,1941 @@
+{
+ "status": "board_verification_done",
+ "doc": "docs/tr8-rules-v8-d4-board-verification.md",
+ "date": "2026-11-27",
+ "base": "fd4fd66f97545af3226356a8adfa5ad5a9a73efb",
+ "branch": "claude/tr8-rules-v8-d4-board-verification",
+ "execution_commit": "280660be69630d5a9007e11e1022db3f221630b1",
+ "runtime": {
+  "engine": "0.198.0",
+  "tool_version": 19,
+  "conventions": "CS-KYUURA-PLAY-TR8@1"
+ },
+ "setup": {
+  "seeds": [
+   1,
+   2,
+   3,
+   4
+  ],
+  "policies": [
+   "rules-v7",
+   "rules-v8"
+  ],
+  "limits": {
+   "operations": 400,
+   "accepted": 160,
+   "turns": 2,
+   "seconds": 60.0,
+   "rejections_per_position": 16,
+   "draws_per_position": 64
+  },
+  "prelude": "fixed: the first candidate choice of player 0 in the turn is the Energy Trans candidate (both policies, no policy draw for that choice). Source, energy and target of every Energy Trans, and every later candidate, are chosen by the policy itself",
+  "stop": "player 0 accepts end_turn or use_attack, or the turn / current player changes (limits: 400 operations, 160 accepted, 2 turns, 60 s)",
+  "expectations_sha256": "0ef1dfe0f7b10eaf0bef114d7f7ec0407a296d466c9c3addd30270f5470f11ff",
+  "runs": 24,
+  "all_script_complete": true
+ },
+ "six_cases": {
+  "source": "vai-tr8v8f-run 9077 rules-v7 (actor 1)",
+  "count": 6,
+  "matches_compare": true,
+  "retreat_inputs": "reconstructed from the printed retreat cost and the view's active energy (rules-v7 does not fetch them)",
+  "any_both_in_same_tier": false,
+  "rows": [
+   {
+    "n": 131,
+    "turn": [
+     0,
+     30
+    ],
+    "active_card": "PMCG2-003",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 36,
+    "excluded_v6": 0,
+    "v8_tier": "tier1",
+    "v8_state": "reachable",
+    "tier_sizes": [
+     8,
+     0,
+     28
+    ],
+    "d4": "all_keep",
+    "break_in_tier": 0,
+    "keep_in_tier": 8,
+    "both_in_same_tier": false
+   },
+   {
+    "n": 139,
+    "turn": [
+     0,
+     30
+    ],
+    "active_card": "PMCG2-003",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 36,
+    "excluded_v6": 0,
+    "v8_tier": "tier1",
+    "v8_state": "reachable",
+    "tier_sizes": [
+     8,
+     0,
+     28
+    ],
+    "d4": "all_keep",
+    "break_in_tier": 0,
+    "keep_in_tier": 8,
+    "both_in_same_tier": false
+   },
+   {
+    "n": 235,
+    "turn": [
+     0,
+     42
+    ],
+    "active_card": "PMCG2-010",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 10,
+    "excluded_v6": 0,
+    "v8_tier": "tier1",
+    "v8_state": "reachable",
+    "tier_sizes": [
+     1,
+     0,
+     9
+    ],
+    "d4": "all_keep",
+    "break_in_tier": 0,
+    "keep_in_tier": 1,
+    "both_in_same_tier": false
+   },
+   {
+    "n": 242,
+    "turn": [
+     0,
+     42
+    ],
+    "active_card": "PMCG2-010",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 10,
+    "excluded_v6": 0,
+    "v8_tier": "tier1",
+    "v8_state": "reachable",
+    "tier_sizes": [
+     1,
+     0,
+     9
+    ],
+    "d4": "all_keep",
+    "break_in_tier": 0,
+    "keep_in_tier": 1,
+    "both_in_same_tier": false
+   },
+   {
+    "n": 248,
+    "turn": [
+     0,
+     42
+    ],
+    "active_card": "PMCG2-010",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 10,
+    "excluded_v6": 0,
+    "v8_tier": "tier1",
+    "v8_state": "reachable",
+    "tier_sizes": [
+     1,
+     0,
+     9
+    ],
+    "d4": "all_keep",
+    "break_in_tier": 0,
+    "keep_in_tier": 1,
+    "both_in_same_tier": false
+   },
+   {
+    "n": 287,
+    "turn": [
+     0,
+     44
+    ],
+    "active_card": "PMCG1-001",
+    "active_energy": 1,
+    "printed_retreat_cost": 1,
+    "all_moves": 5,
+    "excluded_v6": 0,
+    "v8_tier": "tier3",
+    "v8_state": "goal_met_only",
+    "tier_sizes": [
+     0,
+     0,
+     5
+    ],
+    "d4": "none_keep",
+    "break_in_tier": 5,
+    "keep_in_tier": 0,
+    "both_in_same_tier": false
+   }
+  ],
+  "old_position_reproduced": false,
+  "reason": "five cases are tier 1 under rules-v8 (break moves are tier 3, not compared by D4); one case is tier 3 with break moves only (none_keep)"
+ },
+ "boards": {
+  "M": {
+   "what": "main: player 0 active Ivysaur (retreat 1) with 1 Grass; bench Venusaur (Energy Trans, no energy) and Bulbasaur with 1 Grass; opponent active Hitmonchan; turn 7. Same conditions as the six cases (actor-1 deck grass Pokemon, retreat 1, one Grass on the active, retreat payable) with the attack goals unreachable by quantity (2 Grass in play, Vine Whip needs 3 units) so that the chosen tier is tier 3",
+   "seeds": {
+    "1": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "tier_has_both": true,
+      "d4_removed_breaks": true,
+      "v8_keep_accepted": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 4,
+      "excluded_v6": 0,
+      "choosable": 4,
+      "tier_sizes": [
+       0,
+       0,
+       4
+      ],
+      "chosen_set": 2,
+      "d4": "kept",
+      "restricted": true,
+      "sets": {
+       "all": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 2,
+        "break": 0
+       }
+      },
+      "choice_set": "after_d4",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=kept|restricted=True": 2,
+      "tier3|d4=all_keep|restricted=False": 1,
+      "tier1|d4=None|restricted=True": 2,
+      "tier3|d4=none_keep|restricted=False": 1,
+      "tier3|d4=None|restricted=False": 1
+     },
+     "d4_kept_v8": 2,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      14,
+      10
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "keep": 2,
+       "break": 1,
+       "unpayable_kept": 7,
+       "restore": 1,
+       "undetermined": 1
+      },
+      "v8": {
+       "keep": 3,
+       "undetermined": 1,
+       "break": 1,
+       "unpayable_kept": 1,
+       "restore": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 4,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 3
+      },
+      "v8": {
+       "retreat_selected": 4,
+       "retreat_accepted": 2,
+       "retreat_unbuildable": 2
+      }
+     },
+     "direct_contrast_first_et": false,
+     "first_submit_difference": {
+      "index": 2,
+      "first_energy_trans": false,
+      "v7": {
+       "n": 3,
+       "move": [
+        1,
+        7,
+        3
+       ],
+       "class": "break"
+      },
+      "v8": {
+       "n": 3,
+       "move": [
+        3,
+        2,
+        2
+       ],
+       "class": "keep",
+       "tier": "tier3",
+       "d4": "kept",
+       "restricted": true,
+       "set": [
+        [
+         3,
+         2,
+         1
+        ],
+        [
+         3,
+         2,
+         2
+        ]
+       ]
+      },
+      "same_state": {
+       "same_start": true,
+       "same_accepted_prefix": true,
+       "same_board_before": true,
+       "same_retreat_probe_before": true,
+       "both_energy_trans": true
+      },
+      "same_state_all": true,
+      "contrast": true
+     }
+    },
+    "2": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "tier_has_both": true,
+      "d4_removed_breaks": true,
+      "v8_keep_accepted": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        2,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 4,
+      "excluded_v6": 0,
+      "choosable": 4,
+      "tier_sizes": [
+       0,
+       0,
+       4
+      ],
+      "chosen_set": 2,
+      "d4": "kept",
+      "restricted": true,
+      "sets": {
+       "all": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 2,
+        "break": 0
+       }
+      },
+      "choice_set": "after_d4",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": true,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=kept|restricted=True": 1,
+      "tier1|d4=None|restricted=True": 2,
+      "tier3|d4=none_keep|restricted=False": 2,
+      "tier3|d4=None|restricted=False": 2
+     },
+     "d4_kept_v8": 1,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": true,
+       "n": 2,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "check_valid": null,
+       "outcome": null
+      },
+      "v8": {
+       "selected_before_next_et": true,
+       "n": 2,
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted"
+      }
+     },
+     "operations": [
+      10,
+      9
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 1,
+       "restore": 1,
+       "undetermined": 1,
+       "unpayable_kept": 5
+      },
+      "v8": {
+       "keep": 1,
+       "undetermined": 1,
+       "break": 2,
+       "unpayable_kept": 2,
+       "restore": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 2,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 1
+      }
+     },
+     "direct_contrast_first_et": true,
+     "first_submit_difference": {
+      "index": 0,
+      "first_energy_trans": true,
+      "v7": {
+       "n": 1,
+       "move": [
+        1,
+        2,
+        3
+       ],
+       "class": "break"
+      },
+      "v8": {
+       "n": 1,
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "class": "keep",
+       "tier": "tier3",
+       "d4": "kept",
+       "restricted": true,
+       "set": [
+        [
+         3,
+         7,
+         1
+        ],
+        [
+         3,
+         7,
+         2
+        ]
+       ]
+      },
+      "same_state": {
+       "same_start": true,
+       "same_accepted_prefix": true,
+       "same_board_before": true,
+       "same_retreat_probe_before": true,
+       "both_energy_trans": true
+      },
+      "same_state_all": true,
+      "contrast": true
+     }
+    },
+    "3": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "tier_has_both": true,
+      "d4_removed_breaks": true,
+      "v8_keep_accepted": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        2,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 4,
+      "excluded_v6": 0,
+      "choosable": 4,
+      "tier_sizes": [
+       0,
+       0,
+       4
+      ],
+      "chosen_set": 2,
+      "d4": "kept",
+      "restricted": true,
+      "sets": {
+       "all": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 2,
+        "break": 0
+       }
+      },
+      "choice_set": "after_d4",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": true,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=kept|restricted=True": 2,
+      "tier3|d4=None|restricted=False": 6
+     },
+     "d4_kept_v8": 2,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      11,
+      10
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 2,
+       "unpayable_kept": 3,
+       "restore": 2,
+       "undetermined": 1
+      },
+      "v8": {
+       "keep": 2,
+       "undetermined": 1,
+       "unpayable_kept": 5
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 5,
+       "retreat_accepted": 2,
+       "retreat_unbuildable": 3
+      },
+      "v8": {
+       "retreat_selected": 2,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 1
+      }
+     },
+     "direct_contrast_first_et": true,
+     "first_submit_difference": {
+      "index": 0,
+      "first_energy_trans": true,
+      "v7": {
+       "n": 1,
+       "move": [
+        1,
+        2,
+        3
+       ],
+       "class": "break"
+      },
+      "v8": {
+       "n": 1,
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "class": "keep",
+       "tier": "tier3",
+       "d4": "kept",
+       "restricted": true,
+       "set": [
+        [
+         3,
+         7,
+         1
+        ],
+        [
+         3,
+         7,
+         2
+        ]
+       ]
+      },
+      "same_state": {
+       "same_start": true,
+       "same_accepted_prefix": true,
+       "same_board_before": true,
+       "same_retreat_probe_before": true,
+       "both_energy_trans": true
+      },
+      "same_state_all": true,
+      "contrast": true
+     }
+    },
+    "4": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "tier_has_both": true,
+      "d4_removed_breaks": true,
+      "v8_keep_accepted": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": true,
+       "class": "keep"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 4,
+      "excluded_v6": 0,
+      "choosable": 4,
+      "tier_sizes": [
+       0,
+       0,
+       4
+      ],
+      "chosen_set": 2,
+      "d4": "kept",
+      "restricted": true,
+      "sets": {
+       "all": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 4,
+        "keep": 2,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 2,
+        "break": 0
+       }
+      },
+      "choice_set": "after_d4",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=kept|restricted=True": 2,
+      "tier3|d4=none_keep|restricted=False": 2,
+      "tier1|d4=None|restricted=True": 2
+     },
+     "d4_kept_v8": 2,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      12,
+      9
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "keep": 1,
+       "break": 1,
+       "unpayable_kept": 6,
+       "restore": 1,
+       "undetermined": 1
+      },
+      "v8": {
+       "keep": 2,
+       "undetermined": 1,
+       "restore": 2,
+       "break": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 4,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 3
+      },
+      "v8": {
+       "retreat_selected": 4,
+       "retreat_accepted": 2,
+       "retreat_unbuildable": 2
+      }
+     },
+     "direct_contrast_first_et": false,
+     "first_submit_difference": {
+      "index": 1,
+      "first_energy_trans": false,
+      "v7": {
+       "n": 2,
+       "move": [
+        1,
+        2,
+        3
+       ],
+       "class": "break"
+      },
+      "v8": {
+       "n": 2,
+       "move": [
+        2,
+        7,
+        3
+       ],
+       "class": "keep",
+       "tier": "tier3",
+       "d4": "kept",
+       "restricted": true,
+       "set": [
+        [
+         2,
+         7,
+         1
+        ],
+        [
+         2,
+         7,
+         3
+        ]
+       ]
+      },
+      "same_state": {
+       "same_start": true,
+       "same_accepted_prefix": true,
+       "same_board_before": true,
+       "same_retreat_probe_before": true,
+       "both_energy_trans": true
+      },
+      "same_state_all": true,
+      "contrast": true
+     }
+    }
+   }
+  },
+  "A": {
+   "what": "control, no keep move (the n287 type): active Bulbasaur (retreat 1) with 1 Grass; bench Venusaur (no energy) and Paras (no energy). Every move takes the only Grass off the active",
+   "seeds": {
+    "1": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true,
+      "retreat_unpayable_after": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        1,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        1,
+        1,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 2,
+      "excluded_v6": 0,
+      "choosable": 2,
+      "tier_sizes": [
+       0,
+       0,
+       2
+      ],
+      "chosen_set": 2,
+      "d4": "none_keep",
+      "restricted": false,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       }
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=none_keep|restricted=False": 2,
+      "tier1|d4=None|restricted=True": 2
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      6,
+      6
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 1,
+       "unpayable_kept": 2,
+       "restore": 1
+      },
+      "v8": {
+       "break": 2,
+       "restore": 2
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      }
+     }
+    },
+    "2": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true,
+      "retreat_unpayable_after": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 2,
+      "excluded_v6": 0,
+      "choosable": 2,
+      "tier_sizes": [
+       0,
+       0,
+       2
+      ],
+      "chosen_set": 2,
+      "d4": "none_keep",
+      "restricted": false,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       }
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": true,
+     "evaluations_v8": {
+      "tier3|d4=none_keep|restricted=False": 1,
+      "tier1|d4=None|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": true,
+       "n": 2,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "check_valid": null,
+       "outcome": null
+      },
+      "v8": {
+       "selected_before_next_et": true,
+       "n": 2,
+       "build": {
+        "unbuildable": "total_units_unreachable",
+        "stage": 2
+       },
+       "check_valid": null,
+       "outcome": null
+      }
+     },
+     "operations": [
+      4,
+      4
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 1,
+       "restore": 1
+      },
+      "v8": {
+       "break": 1,
+       "restore": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      }
+     }
+    },
+    "3": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true,
+      "retreat_unpayable_after": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 2,
+      "excluded_v6": 0,
+      "choosable": 2,
+      "tier_sizes": [
+       0,
+       0,
+       2
+      ],
+      "chosen_set": 2,
+      "d4": "none_keep",
+      "restricted": false,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       }
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=none_keep|restricted=False": 1,
+      "tier1|d4=None|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      5,
+      4
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 1,
+       "unpayable_kept": 1,
+       "restore": 1
+      },
+      "v8": {
+       "break": 1,
+       "restore": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 2,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 1
+      }
+     }
+    },
+    "4": {
+     "pass": true,
+     "checks": {
+      "before_payable": true,
+      "first_eval": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true,
+      "retreat_unpayable_after": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      },
+      "v8": {
+       "move": [
+        1,
+        1,
+        3
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": true,
+       "payable_after": false,
+       "class": "break"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "tier3",
+      "state": "goal_met_only",
+      "moves": 2,
+      "excluded_v6": 0,
+      "choosable": 2,
+      "tier_sizes": [
+       0,
+       0,
+       2
+      ],
+      "chosen_set": 2,
+      "d4": "none_keep",
+      "restricted": false,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_tier": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       },
+       "after_d4": {
+        "n": 2,
+        "keep": 0,
+        "break": 2
+       }
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": [
+       {
+        "status": "ok",
+        "source": "fetched"
+       }
+      ]
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "tier3|d4=none_keep|restricted=False": 1,
+      "tier1|d4=None|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      6,
+      4
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "break": 1,
+       "unpayable_kept": 2,
+       "restore": 1
+      },
+      "v8": {
+       "break": 1,
+       "restore": 1
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 2,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 1
+      }
+     }
+    }
+   }
+  },
+  "B": {
+   "what": "control, cost not determined: the active is face down (Lt. Surge's Secret Plan helpers; real card Bulbasaur) with 1 Grass; bench Hitmonchan (no energy), Venusaur (no energy) and Bulbasaur with 1 Grass. The retreat inputs carry cost_evaluation not_evaluated (no total_units)",
+   "seeds": {
+    "1": {
+     "pass": true,
+     "checks": {
+      "cost_not_evaluated": true,
+      "first_eval_unevaluable": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        2
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "unevaluable:active_units_undetermined",
+      "state": null,
+      "moves": null,
+      "excluded_v6": null,
+      "choosable": null,
+      "tier_sizes": null,
+      "chosen_set": null,
+      "d4": null,
+      "restricted": null,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_tier": null,
+       "after_d4": null
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": []
+     },
+     "submit_differs": false,
+     "same_sequence": true,
+     "evaluations_v8": {
+      "unevaluable:active_units_undetermined|d4=None|restricted=None": 1,
+      "tier3|d4=None|restricted=False": 12
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      },
+      "v8": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      }
+     },
+     "operations": [
+      16,
+      16
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "undetermined": 2,
+       "unpayable_kept": 11
+      },
+      "v8": {
+       "undetermined": 2,
+       "unpayable_kept": 11
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      },
+      "v8": {
+       "retreat_selected": 3,
+       "retreat_accepted": 1,
+       "retreat_unbuildable": 2
+      }
+     }
+    },
+    "2": {
+     "pass": true,
+     "checks": {
+      "cost_not_evaluated": true,
+      "first_eval_unevaluable": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "unevaluable:active_units_undetermined",
+      "state": null,
+      "moves": null,
+      "excluded_v6": null,
+      "choosable": null,
+      "tier_sizes": null,
+      "chosen_set": null,
+      "d4": null,
+      "restricted": null,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_tier": null,
+       "after_d4": null
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": []
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "unevaluable:active_units_undetermined|d4=None|restricted=None": 4,
+      "tier1|d4=all_keep|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false
+      },
+      "v8": {
+       "selected_before_next_et": false
+      }
+     },
+     "operations": [
+      10,
+      7
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "undetermined": 5,
+       "unpayable_kept": 1,
+       "restore": 1,
+       "keep": 1
+      },
+      "v8": {
+       "undetermined": 5
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 1,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 1
+      },
+      "v8": {
+       "retreat_selected": 0,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 0
+      }
+     }
+    },
+    "3": {
+     "pass": true,
+     "checks": {
+      "cost_not_evaluated": true,
+      "first_eval_unevaluable": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "unevaluable:active_units_undetermined",
+      "state": null,
+      "moves": null,
+      "excluded_v6": null,
+      "choosable": null,
+      "tier_sizes": null,
+      "chosen_set": null,
+      "d4": null,
+      "restricted": null,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_tier": null,
+       "after_d4": null
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": []
+     },
+     "submit_differs": false,
+     "same_sequence": true,
+     "evaluations_v8": {
+      "unevaluable:active_units_undetermined|d4=None|restricted=None": 1,
+      "tier1|d4=all_keep|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      },
+      "v8": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      }
+     },
+     "operations": [
+      4,
+      4
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "undetermined": 2
+      },
+      "v8": {
+       "undetermined": 2
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 0,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 0
+      },
+      "v8": {
+       "retreat_selected": 0,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 0
+      }
+     }
+    },
+    "4": {
+     "pass": true,
+     "checks": {
+      "cost_not_evaluated": true,
+      "first_eval_unevaluable": true,
+      "not_restricted": true,
+      "same_first_move_as_v7": true
+     },
+     "first_et": {
+      "v7": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      },
+      "v8": {
+       "move": [
+        3,
+        7,
+        1
+       ],
+       "build": "ok",
+       "check_valid": true,
+       "outcome": "accepted",
+       "payable_before": null,
+       "payable_after": null,
+       "class": "undetermined"
+      }
+     },
+     "first_eval_v8": {
+      "position": 0,
+      "result": "unevaluable:active_units_undetermined",
+      "state": null,
+      "moves": null,
+      "excluded_v6": null,
+      "choosable": null,
+      "tier_sizes": null,
+      "chosen_set": null,
+      "d4": null,
+      "restricted": null,
+      "sets": {
+       "all": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_v6": {
+        "n": 2,
+        "keep": 0,
+        "break": 0
+       },
+       "after_tier": null,
+       "after_d4": null
+      },
+      "choice_set": "after_v6 (rules-v6 result, the rules-v7 choice)",
+      "retreat_items": []
+     },
+     "submit_differs": false,
+     "same_sequence": false,
+     "evaluations_v8": {
+      "unevaluable:active_units_undetermined|d4=None|restricted=None": 1,
+      "tier1|d4=all_keep|restricted=True": 1
+     },
+     "d4_kept_v8": 0,
+     "retreat_after_first_et": {
+      "v7": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      },
+      "v8": {
+       "selected_before_next_et": false,
+       "next_accepted": "reveal_face_down"
+      }
+     },
+     "operations": [
+      6,
+      4
+     ],
+     "accepted_et_classes": {
+      "v7": {
+       "undetermined": 2,
+       "keep": 2
+      },
+      "v8": {
+       "undetermined": 2
+      }
+     },
+     "retreat": {
+      "v7": {
+       "retreat_selected": 0,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 0
+      },
+      "v8": {
+       "retreat_selected": 0,
+       "retreat_accepted": 0,
+       "retreat_unbuildable": 0
+      }
+     }
+    }
+   }
+  }
+ },
+ "results": {
+  "all_pass": true,
+  "d4_selection_changed_seeds": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "direct_contrast_first_et_seeds": [
+   "2",
+   "3"
+  ],
+  "direct_contrast_later_same_state_seeds": [
+   "1",
+   "4"
+  ],
+  "v8_keep_first_move_seeds": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "v7_break_first_move_seeds": [
+   "2",
+   "3"
+  ],
+  "v8_retreat_accepted_with_original_active": 4,
+  "v7_retreat_accepted_with_original_active": 4,
+  "v7_breaks_with_original_active": 4,
+  "v8_breaks_with_original_active": 0,
+  "v7_unbuildable_retreats_with_original_active": 4,
+  "v8_unbuildable_retreats_with_original_active": 0,
+  "v8_breaks_after_active_changed": 4,
+  "v8_breaks_after_active_changed_kinds": [
+   "tier3|none_keep"
+  ],
+  "control_A_pass_seeds": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ],
+  "control_B_pass_seeds": [
+   "1",
+   "2",
+   "3",
+   "4"
+  ]
+ },
+ "conclusions": {
+  "d4_changed_selection": "yes: board M, 4 / 4 seeds (kept: 4 tier-3 moves -> 2 keep moves)",
+  "submit_difference": "yes: 2 / 4 seeds at the first Energy Trans (pre-registered); 2 more seeds at the first submit difference in the same state (supplementary)",
+  "retreat_kept": "yes: after every rules-v8 move with the original active the retreat inputs had a payment subset; the policy's own retreat was accepted in 4 / 4 seeds",
+  "controls": "no keep move (A) and cost not evaluated (B): not restricted, the rules-v7 choice; differences later in the turn come from tier 1, not D4",
+  "normal_games": "not counted as an effect in normal games; rules-v8 stays explicitly selected only"
+ },
+ "not_confirmed": [
+  "D4 frequency and submit differences in normal games",
+  "D4 inside tier 1 / 2 (always all_keep: only add moves)",
+  "retreat inputs unavailable / refused / withheld",
+  "retreat cost modifiers, special energy",
+  "Energy Trans / retreat choice without the fixed prelude"
+ ],
+ "evidence": "kyuura-engine-verification-vai/verifier/runs/vai-tr8v8d4-run/",
+ "failures": [
+  {
+   "id": "F1",
+   "what": "six-case script read a non-existent field for the rules-v6 exclusion; fixed to input_restriction, same results",
+   "kept": "raw/F1/"
+  },
+  {
+   "id": "F2",
+   "what": "game rng digest used repr(random.Random) (object address); fixed to getstate(); rerun out/boards_r2 equal to out/boards except the digest and seconds",
+   "kept": "raw/F2/, out/boards"
+  }
+ ]
+}
