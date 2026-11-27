@@ -178,5 +178,12 @@ class OtherRb3PathsTest(unittest.TestCase):
         self.assertIsNotNone(apply_kernel(state, UseAttack(0, 0)))  # ソニックブームは受理
 
 
+class DocumentTest(unittest.TestCase):
+    def test_record_of_the_interpretation(self):
+        text = DOC.read_text(encoding="utf-8")
+        for needed in ("カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認", "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD", "PR1-022", "0.199.0"):
+            self.assertIn(needed, text)
+
+
 if __name__ == "__main__":
     unittest.main()
