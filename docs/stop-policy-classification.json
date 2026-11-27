@@ -19954,7 +19954,7 @@
    ],
    "tests": {
     "assert_like_lines": 0,
-    "mention_lines": 9,
+    "mention_lines": 10,
     "files": [
      "tests/helpers.py",
      "tests/test_energy_control_rainbow_v0_199.py",
