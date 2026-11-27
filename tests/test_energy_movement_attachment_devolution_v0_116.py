@@ -492,12 +492,14 @@ class EnergyControlTest(unittest.TestCase):
         self.assertEqual(moved.energy_attachments_this_turn, state.energy_attachments_this_turn)
         audited(self, moved)
 
-    def test_rainbow_on_the_field_is_a_stopped_choice(self):
+    def test_rainbow_on_the_field_is_not_selectable(self):
+        """v0.199（docs/energy-control-rainbow-v0.199.md）: 場のレインボーエネルギーは特殊エネルギーカードとして選べるものに入らない（v0.198 までは RB3 で選べるが選ぶと止めた）。"""
         state = board(mon(MEWTWO_PR, (PS,)), opponent=mon(H.LAPRAS, (W, RAINBOW)))
         used = attack(state, 0, HD)
-        rainbow = state.players[1].active.energy[1]
-        self.assertEqual(used.decision.context_value("unresolved_choices"), (rainbow,))
-        rejects(self, used, ResolveDecision(0, used.decision.id, (rainbow,)), E.RAINBOW_BASIC_CODE)
+        water, rainbow = state.players[1].active.energy
+        self.assertEqual((used.decision.options, used.decision.context_value("unresolved_choices", ())), ((water,), ()))
+        with self.assertRaises(IllegalActionError):
+            apply_kernel(used, ResolveDecision(0, used.decision.id, (rainbow,)))
 
 
 class TwisterTest(unittest.TestCase):

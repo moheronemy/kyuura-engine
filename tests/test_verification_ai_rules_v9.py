@@ -2,12 +2,14 @@
 
 rules-v9 は rules-v8 に、submit の拒否のうち公開の結果の分類が未裁定で continuable のものを、同じ主体・同じエピソード（局面）の (候補, 入力の意味の署名) で
 記録し、拒否済みの入力を除いた作れる入力から選び、作れる入力がすべて拒否済みの候補を順位 8 にする規則を加える。エンジンの拒否（RB3）・judge・停止方針は
-変えない。構築盤面（エンジンの状態から始める ``FixtureRunner``）で、ミュウツー（PR1-022）の［エナジーコントロール］が、相手の場のエネルギーカードが
-レインボーエネルギー（と無色2個エネルギー）だけのときに RB3 で拒否される場面を作り、次を確かめる。
+変えない。構築盤面（エンジンの状態から始める ``FixtureRunner``）で、RB3 で拒否される場面を作り、次を確かめる。
+v0.199 から、ミュウツー（PR1-022）の［エナジーコントロール］は場のレインボーエネルギーを選べるものから外すので RB3 で止まらない
+（docs/energy-control-rainbow-v0.199.md）。0.199.0 の盤面は、今も RB3 で止まるミュウ（SI-004）の［レインボーウェーブ］（ついているのがレインボーエネルギーだけ。
+入力 1 つ）と、わるいレアコイル（PMCG4-030）の［じりょくせん］（相手の対戦ポケモンにレインボーエネルギー・控えあり。同じ候補に［ソニックブーム］）にした。
 
 - ① 入力が 1 つの RB3 のワザが拒否されたあと、通常の順位で別の候補（にげる）を送り、受理される。拒否の前後で状態・確かめの値・乱数・公開の更新が変わらず、
   拒否の通知は送った本人への応答だけ
-- ② 同じ候補（ワザの宣言）の別の入力（テレキネシス）が残り、受理される。候補は下げない
+- ② 同じ候補（ワザの宣言）の別の入力（ソニックブーム）が残り、受理される。候補は下げない
 - ③ 別の手が受理されて局面が変わると、以前の拒否を引き継がず、同じワザを通常の順位で評価し直す（もう一度送って拒否される）
 - ④ 別の手がない（試験の中で API の候補の応答から拒否される候補以外を外した。メインの段では番の終わりが必ずあるので、エンジンの盤面では作れない）と、
   拒否済みの入力を送り直さず、既存の上限（draws_per_position）の no_progress で終わる
@@ -32,7 +34,8 @@ from tools.verification_ai.fixtures_observe import FixtureRunner
 from tools.verification_ai.policies import (REFUSED_ALL, REFUSED_INPUT_AVOIDANCE, REFUSED_RANK, RULES9_DISTRIBUTION, RULING_UNRESOLVED,
                                             EnergyTransProgressRulePolicy, RefusedInputRulePolicy, RulePolicy, candidate_identity)
 
-MEWTWO, BUL, P, G, F, DCE, RAINBOW, POTION = "PR1-022", "PMCG1-001", "PMCG1-101", "PMCG1-097", "PMCG1-102", "PMCG1-096", "PMCG4-065", "PMCG1-071"
+MEW, DARK_MAGNETON, MAGNEMITE, BUL, P, G, F, L, DCE, RAINBOW, POTION = ("SI-004", "PMCG4-030", "PMCG1-036", "PMCG1-001", "PMCG1-101", "PMCG1-097", "PMCG1-102",
+                                                                      "PMCG1-100", "PMCG1-096", "PMCG4-065", "PMCG1-071")
 RB3 = "UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD"
 ALLOWED = frozenset({"supported", "may_stop_later"})
 
@@ -47,10 +50,11 @@ def side(active, bench=(), hand=()):
 
 
 # 相手（主体 1）: バトル場にエネルギーなし、ベンチに無色2個エネルギーとレインボーエネルギー（seed 9083 の局面と同じ形）
-RAINBOW_ONLY = side({"card": BUL}, [{"card": BUL, "energy": [DCE, RAINBOW]}])
-B1 = (side({"card": MEWTWO, "energy": [P, G]}, [{"card": BUL}]), RAINBOW_ONLY)  # ①: エナジーコントロールだけ（テレキネシスは払えない）・にげる・番の終わり
-B2 = (side({"card": MEWTWO, "energy": [P, P, P]}), RAINBOW_ONLY)  # ②: エナジーコントロールとテレキネシス（同じ候補の 2 つの入力）・番の終わり
-B3 = (side({"card": MEWTWO, "energy": [P, G], "damage": 20}, hand=[POTION]), RAINBOW_ONLY)  # ③: きずぐすり（受理で局面が変わる）・番の終わり
+OPPONENT = side({"card": BUL}, [{"card": BUL}])
+RAINBOW_ACTIVE = side({"card": BUL, "energy": [RAINBOW]}, [{"card": BUL}])  # じりょくせんの RB3（相手の対戦ポケモンのレインボーエネルギー・控えあり）
+B1 = (side({"card": MEW, "energy": [RAINBOW]}, [{"card": BUL}]), OPPONENT)  # ①: レインボーウェーブだけ（入力 1 つ）・にげる（0 個）・番の終わり
+B2 = (side({"card": DARK_MAGNETON, "energy": [L, L], "evolved_from": MAGNEMITE}), RAINBOW_ACTIVE)  # ②: ソニックブームとじりょくせん（同じ候補の 2 つの入力）・番の終わり
+B3 = (side({"card": MEW, "energy": [RAINBOW], "damage": 10}, hand=[POTION]), OPPONENT)  # ③: きずぐすり（受理で局面が変わる）・番の終わり
 
 
 def attempts(result, actor=0):
@@ -84,7 +88,7 @@ class Board1Test(unittest.TestCase):
             self.assertEqual(len(refused), 1, seed)
             e = refused[0]
             self.assertEqual((name_of(e), e["submit"]["result"]["diagnostic_id"], e["submit"]["result"]["category"], e["submit"]["result"]["continuable"]),
-                             (["エナジーコントロール"], RB3, RULING_UNRESOLVED, True), seed)
+                             (["レインボーウェーブ"], RB3, RULING_UNRESOLVED, True), seed)
             self.assertEqual(e["refused_input"], {"result": "recorded", "refused_for_candidate": 1, "buildable": 1, "remaining": 0, "all_refused": True})
             after = a[a.index(e) + 1]
             self.assertEqual((after["candidate"]["kind"], after["build"], outcome(after)), ("retreat", "ok", "accepted"), seed)
@@ -130,7 +134,7 @@ class Board1Test(unittest.TestCase):
 
 
 class Board2Test(unittest.TestCase):
-    """②: 同じ候補の別の入力（テレキネシス）が残り、受理される。"""
+    """②: 同じ候補の別の入力（ソニックブーム）が残り、受理される。"""
 
     def test_other_input_of_the_same_candidate(self):
         for seed in (1, 2, 3, 4):
@@ -138,11 +142,11 @@ class Board2Test(unittest.TestCase):
             a = attempts(v9)
             names = [(name_of(e), outcome(e) or e["build"]) for e in a if e["candidate"]["kind"] == "use_attack"]
             first = next(i for i, x in enumerate(names) if x[1] == "rejected") if any(x[1] == "rejected" for x in names) else None
-            if first is None:  # 最初にテレキネシスを選んだ（拒否なし）
-                self.assertEqual(names[-1], (["テレキネシス"], "accepted"), seed)
+            if first is None:  # 最初にソニックブームを選んだ（拒否なし）
+                self.assertEqual(names[-1], (["ソニックブーム"], "accepted"), seed)
                 continue
-            self.assertEqual(names[first], (["エナジーコントロール"], "rejected"), seed)
-            self.assertEqual(names[first + 1], (["テレキネシス"], "accepted"), seed)
+            self.assertEqual(names[first], (["じりょくせん"], "rejected"), seed)
+            self.assertEqual(names[first + 1], (["ソニックブーム"], "accepted"), seed)
             e = [x for x in a if outcome(x) == "rejected"][0]
             self.assertEqual((e["refused_input"]["buildable"], e["refused_input"]["remaining"], e["refused_input"]["all_refused"]), (2, 1, False))
             nxt = a[a.index(e) + 1]
@@ -151,7 +155,7 @@ class Board2Test(unittest.TestCase):
             self.assertEqual(v9["anomalies"], [], seed)
 
     def test_seeds_reach_the_refusal(self):
-        """4 つの seed のどれかで、拒否のあとの別の入力の受理を通る（乱数の都合で最初にテレキネシスを選ぶ seed は数えない）。"""
+        """4 つの seed のどれかで、拒否のあとの別の入力の受理を通る（乱数の都合で最初にソニックブームを選ぶ seed は数えない）。"""
         hits = 0
         for seed in range(1, 9):
             _r, v9 = run_board(B2, 9, seed, until=lambda r, e: e.get("actor") == 0 and outcome(e) == "accepted")

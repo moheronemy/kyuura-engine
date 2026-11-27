@@ -14417,12 +14417,13 @@ class MoveOpponentFieldEnergy(Element):
     """相手の場のエネルギーカード（特殊エネルギー以外）を 1 枚選んではがす。その後、相手の場のポケモンを 1 匹選び、はがしたエネルギーをそのポケモンにつける（v0.116。ミュウツーの
     「エナジーコントロール」の、失敗のコインのあと。``effects.FailOnTailsMoveOpponentFieldEnergy``。docs 5 章）。
 
-    - 選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。``context`` の ``"stage"`` は ``"energy"``。``effects.opponent_field_energy_options``。場のレインボー
-      エネルギーは RB3 で選べるが選ぶと止める）→ はがす前に、そのカードのついているポケモンが効果の要素（``ENERGY_MOVE_ELEMENT``）を受けるかを ``reaches`` で決める（受けなければ何もしない）
+    - 選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。``context`` の ``"stage"`` は ``"energy"``。``effects.opponent_field_energy_options``。v0.199 から
+      基本エネルギーカードだけで、場のレインボーエネルギーは特殊エネルギーカードとして入らない（v0.198 までは RB3 で選べるが選ぶと止めた））→ はがす前に、そのカードのついているポケモンが
+      効果の要素（``ENERGY_MOVE_ELEMENT``）を受けるかを ``reaches`` で決める（受けなければ何もしない）
       → つけるポケモン（決定 ``SELECT_POKEMON``。``"stage"`` は ``"target"``。相手の場のポケモン。はがしたポケモン自身も選べる）。2 つの決定のあいだ、カードはついたまま
     - つけるポケモンが受けない（``ENERGY_ATTACH_ELEMENT``。「とうめい」）なら、はがしたカードは持ち主のトラッシュ（T36 と同じ読み方。KEEP でなくなる効果なら v0.101 の KP3）。手札からつける
       操作ではない（つけたときの特殊エネルギーの効果は起こらない）。ついたカードへの反応は ``attached_in_attack``（つけ替え）
-    - 相手の場にエネルギーカードがなければ処理の対象がない（p.309）"""
+    - 相手の場に選べる基本エネルギーカードがなければ処理の対象がない（p.309。決定を出さずにワザを終える）"""
 
     phase: ClassVar[Phase] = Phase.EFFECT
     opponent_element: ClassVar[str] = E.ENERGY_MOVE_ELEMENT  # 宣言（G37 の理由の文）。受けるかは、はがすポケモン・つけるポケモンごとに ``reaches`` で決める
@@ -14431,16 +14432,13 @@ class MoveOpponentFieldEnergy(Element):
         return kind in (MOVE_OPPONENT_ENERGY, SELECT_POKEMON)
 
     def has_target(self, run: AttackRun) -> bool:
-        return bool(E.opponent_field_energy_options(run.state, run.player)[0])
+        return bool(E.opponent_field_energy_options(run.state, run.player))
 
     def run(self, run: AttackRun) -> bool:
-        options, rainbow = E.opponent_field_energy_options(run.state, run.player)
+        options = E.opponent_field_energy_options(run.state, run.player)
         if not options:
             return False
-        if len(rainbow) == len(options):
-            raise run.res.question("rainbow_basic_energy_card", f"相手の場のレインボーエネルギー {list(rainbow)}（エナジーコントロールの「特殊エネルギー以外」）")
-        extra = (("stage", "energy"),) + _unresolved_extra(rainbow, E.RAINBOW_BASIC_CODE, E.RAINBOW_BASIC_REASON)
-        run.suspend(kind=MOVE_OPPONENT_ENERGY, player=run.player, options=options, carry=True, extra=extra)
+        run.suspend(kind=MOVE_OPPONENT_ENERGY, player=run.player, options=options, carry=True, extra=(("stage", "energy"),))
         return True
 
     def resume(self, run: AttackRun, decision: PendingDecision, choices: tuple[int, ...]) -> None:
@@ -14448,8 +14446,8 @@ class MoveOpponentFieldEnergy(Element):
         opponent = 1 - run.player
         p = state.players[opponent]
         if run.carried.get("stage") == "energy":
-            options, rainbow = E.opponent_field_energy_options(state, run.player)
-            if len(choices) != 1 or choices[0] not in options or choices[0] in rainbow:
+            options = E.opponent_field_energy_options(state, run.player)
+            if len(choices) != 1 or choices[0] not in options:
                 raise RuntimeError(f"はがすカード {choices} が、相手の場の選べるエネルギーカードではない（エンジンの不具合）")
             source = next(pokemon for pokemon in p.in_play() if choices[0] in pokemon.energy)
             if not reaches(run.res, run.fs, opponent, source, E.ENERGY_MOVE_ELEMENT):

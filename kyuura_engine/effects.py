@@ -44375,24 +44375,20 @@ def baton_pass_targets(state: GameState, player: int, energy_type: EnergyType) -
     return tuple(options), tuple(stops)
 
 
-def opponent_field_energy_options(state: GameState, player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    """v0.116: エナジーコントロールで選べる相手の場のエネルギーカード（相手の場の並び（バトル場 → ベンチ）・ついている順）と、そのうちの選ぶと止めるレインボーエネルギー（RB3。
-    場のレインボーエネルギーが「特殊エネルギー以外」に当たるか）。選べるのは基本エネルギーカード（特殊エネルギーカード以外）。タケシの保護のついているポケモンのカードは、相手の使う
-    ワザでははがされないので入れない（``energy_removal_protected``）。"""
+def opponent_field_energy_options(state: GameState, player: int) -> tuple[int, ...]:
+    """v0.116: エナジーコントロールで選べる相手の場のエネルギーカード（相手の場の並び（バトル場 → ベンチ）・ついている順）。選べるのは基本エネルギーカード（特殊エネルギー
+    カード以外）。タケシの保護のついているポケモンのカードは、相手の使うワザでははがされないので入れない（``energy_removal_protected``）。
+
+    v0.199（docs/energy-control-rainbow-v0.199.md）: 場についているレインボーエネルギーは、ワザの文面の「特殊エネルギー以外」に当たらない特殊エネルギーカードとして外す
+    （カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認）。v0.198 までは選べるが選ぶと止める（RB3）カードとして入れていた。この判断はエナジーコントロールだけで、
+    ``rainbow_cards_attached``・``rainbow_basic_error`` を使うほかの処理（RB3 で止める処理）には当てはめない。"""
     opponent = 1 - player
     options: list[int] = []
-    rainbow: list[int] = []
     for pokemon in state.players[opponent].in_play():
         if energy_removal_protected(state, opponent, pokemon, player) is not None:
             continue
-        found = set(rainbow_cards_attached(state, [pokemon]))
-        for uid in pokemon.energy:
-            if state.card_def(uid).is_basic_energy:
-                options.append(uid)
-            elif uid in found:
-                options.append(uid)
-                rainbow.append(uid)
-    return tuple(options), tuple(rainbow)
+        options.extend(uid for uid in pokemon.energy if state.card_def(uid).is_basic_energy)
+    return tuple(options)
 
 
 def returned_attached_cards(state: GameState, owner: int, pokemon: PokemonInPlay, by_player: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
@@ -44598,8 +44594,10 @@ class FailOnTailsMoveOpponentFieldEnergy(AttackEffect):
     - 要素は ``FailOnTails`` → ``MoveOpponentFieldEnergy``。「うら」はワザの失敗（p.323）。選ぶのはワザを使ったプレイヤー: はがすカード（決定 ``MOVE_OPPONENT_ENERGY``。相手の場（バトル場 →
       ベンチ）のどのポケモンの基本エネルギーカードでもよい。対戦ポケモンだけに狭めない。``opponent_field_energy_options``）→ つけるポケモン（決定 ``SELECT_POKEMON``。相手の場のポケモン。
       はがしたポケモン自身も選べる（文面に「別の」はない。エナジートランスの「別の」（CR-ENERGY-TRANS-TARGET）を持ち込まない））。カードは 2 つめの答えのあとで動かす
-    - 場のレインボーエネルギーは「特殊エネルギー以外」に当たるかが決まらない（RB3）ので、選べるが選ぶと止める。はがすポケモン・つけるポケモンの効果の要素（``ENERGY_MOVE_ELEMENT``・
-      ``ENERGY_ATTACH_ELEMENT``。「ワザをうけない」状態・「とうめい」）。つけるポケモンが受けなければ、はがしたカードは持ち主のトラッシュ（T36 と同じ読み方）。手札からつける操作ではない"""
+    - v0.199: 場のレインボーエネルギーは特殊エネルギーカードとして選べるものに入れない（「特殊エネルギー以外」。カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認。
+      v0.198 までは RB3 で選べるが選ぶと止めた）。選べるカードが 0 枚なら、「おもて」でも決定を出さずにワザを終える（p.309 の処理の対象がない）
+    - はがすポケモン・つけるポケモンの効果の要素（``ENERGY_MOVE_ELEMENT``・``ENERGY_ATTACH_ELEMENT``。「ワザをうけない」状態・「とうめい」）。つけるポケモンが受けなければ、
+      はがしたカードは持ち主のトラッシュ（T36 と同じ読み方）。手札からつける操作ではない"""
 
     implementation_id = "fail_on_tails_move_opponent_field_energy"
     opponent_effect_elements = (ENERGY_MOVE_ELEMENT,)
@@ -44611,10 +44609,10 @@ class FailOnTailsMoveOpponentFieldEnergy(AttackEffect):
     def decision_problems(self, state: GameState, use: AttackUse, decision: PendingDecision) -> list[str]:
         label = _label(state, use)
         if decision.kind == MOVE_OPPONENT_ENERGY:
-            options, rainbow = opponent_field_energy_options(state, use.player)
+            options = opponent_field_energy_options(state, use.player)
             problems = _decision_form(decision, label, kind=MOVE_OPPONENT_ENERGY, player=use.player, choices=(1, 1), options=options)
-            if tuple(decision.context_value("unresolved_choices", ())) != rainbow:
-                problems.append(f"「{label}」の決定の選ぶと止める選択 {decision.context_value('unresolved_choices', ())} が {rainbow}（RB3）ではない")
+            if decision.context_value("unresolved_choices", ()):
+                problems.append(f"「{label}」の決定に選ぶと止める選択 {decision.context_value('unresolved_choices', ())} がある（v0.199 から、選べるのは基本エネルギーカードだけ）")
             return problems
         return _decision_form(decision, label, kind=SELECT_POKEMON, player=use.player, choices=(1, 1),
                               options=(p.pokemon_id for p in state.players[1 - use.player].in_play()))
