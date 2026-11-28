@@ -1,0 +1,1111 @@
+{
+ "format": "kyuura-coin-times-prevented-damage/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "bdbc75729166493cefdada602a71c8005464a40a",
+  "branch": "claude/coin-times-prevented-damage",
+  "engine_version": "0.202.0",
+  "commits": {
+   "fix": "12af5dc",
+   "legacy_reference_registry": "69dd630",
+   "fixed_games_and_ledger": "fa5e533",
+   "version_0_202_0": "09bcb0b13e89c245f6daf8c7993c135d11845e52"
+  }
+ },
+ "interpretation": "coin x damage (CoinFlipDamage / CoinFlipDamageThenSelfConfuse; kernel HeadsTimes) against a damage-only prevention (PreventDamage: withdraw, harden): flip the stated coins as usual and apply the prevention to the resulting damage; same reading as v0.201 (HeadsBonus); card text and existing rule based implementation interpretation; no direct ruling of the time found",
+ "scope": {
+  "changed": [
+   "resolution: HeadsTimes.flip_against_damage_only_void",
+   "registration: CoinFlipDamage.problem returns None (legacy preflight / v0.13 route agree)"
+  ],
+  "registrations": {
+   "CoinFlipDamage": 85,
+   "CoinFlipDamageThenSelfConfuse": 2
+  },
+  "unchanged": [
+   "barrier (whole attack)",
+   "egg-throw MAX (HeadsTimesAttachedEnergy)",
+   "Magic Darts (ChooseOpponentPokemonCoinsDamage, target choice path)",
+   "failure coins (FailOnTailsDamage)",
+   "CoinHeadsDamagePerOwnCounter (rage super punch; shares prevented_coin_damage_problem)",
+   "T19b",
+   "Focus Band"
+  ]
+ },
+ "probe_before": {
+  "rock_throw:withdraw:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:withdraw:htt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:withdraw:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:htt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    0
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    10
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "heads"
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:withdraw:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:withdraw:hht": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:barrier:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:barrier:hht": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:no_prevention:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    0
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": true,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:no_prevention:hht": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "tails"
+   ],
+   "damage": [
+    80
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": true,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "egg_throw_max_control:withdraw:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "egg_throw_max_control:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads"
+   ],
+   "damage": [
+    20
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "magic_darts_control:withdraw:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "magic_darts_control:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "heads"
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:withdraw:h": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:withdraw:t": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:no_prevention:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads"
+   ],
+   "damage": [
+    80
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:no_prevention:t": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rage_super_punch_control:withdraw:h": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "probe_after": {
+  "rock_throw:withdraw:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:withdraw:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "tails",
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:withdraw:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "heads"
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:htt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    0
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    10
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "heads"
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:withdraw:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "attacker_confused": true,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:withdraw:hht": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "attacker_confused": true,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:barrier:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:barrier:hht": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:no_prevention:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails",
+    "tails",
+    "tails"
+   ],
+   "damage": [
+    0
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": true,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "petal_dance:no_prevention:hht": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "tails"
+   ],
+   "damage": [
+    80
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": true,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "egg_throw_max_control:withdraw:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "egg_throw_max_control:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads"
+   ],
+   "damage": [
+    20
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "magic_darts_control:withdraw:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "magic_darts_control:no_prevention:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads",
+    "heads",
+    "heads"
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:withdraw:h": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:withdraw:t": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:no_prevention:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "heads"
+   ],
+   "damage": [
+    80
+   ],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "sky_attack_failure_coin_control:no_prevention:t": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    "tails"
+   ],
+   "damage": [],
+   "damage_prevented": 0,
+   "attacker_confused": false,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rage_super_punch_control:withdraw:h": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": [],
+   "damage": null,
+   "damage_prevented": null,
+   "attacker_confused": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "legacy_reference": {
+  "fixture_unchanged_sha256": "595f9f82f23af9f347be998a4200753422bea4fe2ba30ca562f8e7dba8758872",
+  "calls_compared": 1875,
+  "differences": 26,
+  "registered": 26,
+  "unexplained": 0
+ },
+ "fixed_games": {
+  "test_harden_games_v0_4b": {
+   "games": 40,
+   "classes": {
+    "explained": 3,
+    "same": 37
+   },
+   "changed_counts_keys": 22,
+   "golden": {
+    "old": [
+     [
+      225,
+      88
+     ],
+     "71f3be1cf00d48cf5655c035e89e53fc9968acddf42d28aefc96ca39b289b8e5"
+    ],
+    "new": [
+     [
+      225,
+      88
+     ],
+     "71f3be1cf00d48cf5655c035e89e53fc9968acddf42d28aefc96ca39b289b8e5"
+    ]
+   },
+   "first_differences": [
+    {
+     "label": "cure",
+     "seed": 0,
+     "first_attempt": 220,
+     "accepted_before": 194,
+     "old_end": [
+      220,
+      84,
+      "game_over"
+     ],
+     "new_end": [
+      219,
+      84,
+      "game_over"
+     ]
+    },
+    {
+     "label": "cure",
+     "seed": 11,
+     "first_attempt": 200,
+     "accepted_before": 182,
+     "old_end": [
+      214,
+      84,
+      "game_over"
+     ],
+     "new_end": [
+      204,
+      77,
+      "game_over"
+     ]
+    },
+    {
+     "label": "cure",
+     "seed": 12,
+     "first_attempt": 87,
+     "accepted_before": 83,
+     "old_end": [
+      218,
+      88,
+      "game_over"
+     ],
+     "new_end": [
+      230,
+      88,
+      "game_over"
+     ]
+    }
+   ]
+  },
+  "test_stage2_games_v0_4c": {
+   "games": 40,
+   "classes": {
+    "explained": 4,
+    "same": 36
+   },
+   "changed_counts_keys": 13,
+   "golden": {
+    "old": [
+     [
+      161,
+      51
+     ],
+     "53e6a10881f38a1fc1572977e6dd5d160b7bdbb6b158d7e7409db2ade3872d8e"
+    ],
+    "new": [
+     [
+      154,
+      49
+     ],
+     "239912b13efc43e93b4eefceb0d427d68b46f535d8c104117bf610f95ac3dd5e"
+    ]
+   },
+   "first_differences": [
+    {
+     "label": "cure",
+     "seed": 0,
+     "first_attempt": 219,
+     "accepted_before": 206,
+     "old_end": [
+      222,
+      79,
+      "game_over"
+     ],
+     "new_end": [
+      228,
+      83,
+      "game_over"
+     ]
+    },
+    {
+     "label": "cure",
+     "seed": 2,
+     "first_attempt": 107,
+     "accepted_before": 104,
+     "old_end": [
+      161,
+      51,
+      "game_over"
+     ],
+     "new_end": [
+      154,
+      49,
+      "game_over"
+     ]
+    },
+    {
+     "label": "cure",
+     "seed": 12,
+     "first_attempt": 229,
+     "accepted_before": 196,
+     "old_end": [
+      213,
+      80,
+      "game_over"
+     ],
+     "new_end": [
+      213,
+      80,
+      "game_over"
+     ]
+    },
+    {
+     "label": "no_cure",
+     "seed": 306,
+     "first_attempt": 136,
+     "accepted_before": 114,
+     "old_end": [
+      179,
+      63,
+      "game_over"
+     ],
+     "new_end": [
+      176,
+      63,
+      "game_over"
+     ]
+    }
+   ]
+  },
+  "test_combined_games_v0_4e": {
+   "games": 48,
+   "classes": {
+    "same": 42,
+    "explained": 6
+   },
+   "changed_counts_keys": 31,
+   "golden": null,
+   "first_differences": [
+    {
+     "label": "seed",
+     "seed": 23,
+     "first_attempt": 246,
+     "accepted_before": 220,
+     "old_end": [
+      224,
+      83,
+      "game_over"
+     ],
+     "new_end": [
+      224,
+      83,
+      "game_over"
+     ]
+    },
+    {
+     "label": "seed",
+     "seed": 500,
+     "first_attempt": 154,
+     "accepted_before": 133,
+     "old_end": [
+      233,
+      83,
+      "game_over"
+     ],
+     "new_end": [
+      231,
+      83,
+      "game_over"
+     ]
+    },
+    {
+     "label": "seed",
+     "seed": 505,
+     "first_attempt": 161,
+     "accepted_before": 145,
+     "old_end": [
+      228,
+      87,
+      "game_over"
+     ],
+     "new_end": [
+      229,
+      87,
+      "game_over"
+     ]
+    },
+    {
+     "label": "seed",
+     "seed": 513,
+     "first_attempt": 123,
+     "accepted_before": 114,
+     "old_end": [
+      167,
+      62,
+      "game_over"
+     ],
+     "new_end": [
+      167,
+      62,
+      "game_over"
+     ]
+    },
+    {
+     "label": "seed",
+     "seed": 518,
+     "first_attempt": 95,
+     "accepted_before": 93,
+     "old_end": [
+      200,
+      64,
+      "game_over"
+     ],
+     "new_end": [
+      198,
+      62,
+      "game_over"
+     ]
+    },
+    {
+     "label": "seed",
+     "seed": 523,
+     "first_attempt": 169,
+     "accepted_before": 148,
+     "old_end": [
+      194,
+      69,
+      "game_over"
+     ],
+     "new_end": [
+      201,
+      73,
+      "game_over"
+     ]
+    }
+   ]
+  }
+ },
+ "full_suite": {
+  "commit": "09bcb0b13e89c245f6daf8c7993c135d11845e52",
+  "modules": 372,
+  "exit_0": 371,
+  "failed": [
+   "tests.test_verification_ai_prestop"
+  ],
+  "tests": 9391,
+  "skipped": 1,
+  "git_status_unchanged": true,
+  "failed_recheck": {
+   "module": "tests.test_verification_ai_prestop.LimitTest",
+   "runs": {
+    "base1": "OK",
+    "base2": "FAILED",
+    "new1": "FAILED",
+    "new2": "FAILED"
+   },
+   "note": "row byte counts differ between runs; also fails on the base tree bdbc757"
+  }
+ },
+ "normal_game": {
+  "plan": {
+   "vai-batch-ctp-v10": "f7149dffc65bdeba775eebfb6ec4baf02d62ebc6c6603ec5ba02aaabc0e522b9"
+  },
+  "games": {
+   "old": {
+    "batch": "vai-batch-tr8v10m-c3",
+    "engine_version": "0.201.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 35,
+    "accepted": 117,
+    "rejected": 8,
+    "judge": {
+     "expected": 117,
+     "undetermined": 8
+    }
+   },
+   "new": {
+    "batch": "vai-batch-ctp-v10",
+    "engine_version": "0.202.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 22,
+    "accepted": 62,
+    "rejected": 0,
+    "judge": {
+     "expected": 62
+    }
+   }
+  },
+  "pair": {
+   "operation_index": 24,
+   "accepted_before": 24,
+   "public_log_equal_before": true,
+   "attempts_equal_before": 24
+  },
+  "rock_throw": {
+   "old": {
+    "declarations": 13,
+    "submit": {
+     "accepted": 5,
+     "rejected": 8
+    },
+    "damage_prevented": 0
+   },
+   "new": {
+    "declarations": 7,
+    "submit": {
+     "accepted": 7
+    },
+    "damage_prevented": 5
+   }
+  },
+  "same_declaration": {
+   "old": {
+    "n": 25,
+    "actor": 0,
+    "turn": [
+     0,
+     8
+    ],
+    "check_valid": true,
+    "submit": "rejected",
+    "diagnostic_id": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "defender": {
+     "card_id": "PMCG1-027",
+     "name_ja": "カメール",
+     "persistent": [
+      "prevent_damage"
+     ],
+     "damage": 20
+    },
+    "next_accepted_same_actor": {
+     "n": 26,
+     "kind": "retreat",
+     "meaning": [
+      null,
+      null
+     ]
+    }
+   },
+   "new": {
+    "n": 25,
+    "actor": 0,
+    "turn": [
+     0,
+     8
+    ],
+    "check_valid": true,
+    "submit": "accepted",
+    "diagnostic_id": null,
+    "defender": {
+     "card_id": "PMCG1-027",
+     "name_ja": "カメール",
+     "persistent": [
+      "prevent_damage"
+     ],
+     "damage": 20
+    },
+    "events": [
+     "attack",
+     "coin_flip",
+     "coin_flip",
+     "coin_flip",
+     "damage_prevented",
+     "persistent_effect_removed",
+     "turn_end",
+     "pokemon_check",
+     "turn_start",
+     "draw"
+    ],
+    "coin": [
+     "tails",
+     "tails",
+     "heads"
+    ],
+    "damage": [],
+    "damage_prevented": 1,
+    "next_accepted": {
+     "actor": 1,
+     "command": "attach_energy"
+    }
+   }
+  },
+  "budget_used": {
+   "tool_seconds": 3.01,
+   "outer_seconds": 18.365,
+   "evidence_bytes": 3498855
+  }
+ }
+}
