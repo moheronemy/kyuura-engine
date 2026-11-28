@@ -1868,5 +1868,300 @@
     "saved_submit": "accepted"
    }
   ]
+ },
+ "basic_move_normal_game": {
+  "date": "2026-11-28",
+  "doc_base": "ebbd7a98796c46e87b073cbc60f78432162e5cb7",
+  "execution_commit": "5737d540c892e6b41db73d6eabf49305e4d10ab3",
+  "selection": {
+   "source": "vai-batch-tr8v9m-c2 (0.199.0, C116 vs R58, seeds 9091-9096)",
+   "rule": "restricted (tier1/2), mixed basic + Rainbow, v9 moved_card_not_basic, history restorable; prefer before the Hydro Pump refusal, then seed ascending, then first in the game",
+   "summary": {
+    "et_choices": 18,
+    "mixed": 18,
+    "v9_moved_card_not_basic": 18,
+    "classes": {
+     "v10_evaluated_no_restriction": 5,
+     "v10_restricted_to_basic": 13
+    },
+    "history_restorable": 18,
+    "candidates": 13,
+    "selected": {
+     "seed": 9092,
+     "n": 87,
+     "turn": [
+      0,
+      28
+     ],
+     "position": 82,
+     "before_hydro_pump_refusal": true
+    }
+   },
+   "games": [
+    {
+     "seed": 9091,
+     "game": "g001-rules-v9-s9091",
+     "et_choices": 0,
+     "hydro_pump_refusal_n": null,
+     "et_detections": 0
+    },
+    {
+     "seed": 9092,
+     "game": "g002-rules-v9-s9092",
+     "et_choices": 15,
+     "hydro_pump_refusal_n": null,
+     "et_detections": 0
+    },
+    {
+     "seed": 9093,
+     "game": "g003-rules-v9-s9093",
+     "et_choices": 0,
+     "hydro_pump_refusal_n": null,
+     "et_detections": 0
+    },
+    {
+     "seed": 9094,
+     "game": "g004-rules-v9-s9094",
+     "et_choices": 3,
+     "hydro_pump_refusal_n": 124,
+     "et_detections": 0
+    },
+    {
+     "seed": 9095,
+     "game": "g005-rules-v9-s9095",
+     "et_choices": 0,
+     "hydro_pump_refusal_n": null,
+     "et_detections": 0
+    },
+    {
+     "seed": 9096,
+     "game": "g006-rules-v9-s9096",
+     "et_choices": 0,
+     "hydro_pump_refusal_n": null,
+     "et_detections": 0
+    }
+   ],
+   "note": "derived evaluation of saved inputs with the fixed tool; not a game; reused retreat inputs rebuilt from earlier attempt rows at the same position (F1)"
+  },
+  "plans": {
+   "vai-batch-v10g-v9": "81f8f88437033f313ea33cd4073d0d642e5f4cb81eb355b6a97e0e4876c5cea1",
+   "vai-batch-v10g-v10": "2d2e32dea8ea02d09a789dd83cd305a073a42bfcc40669630cfc5447596c1c4f"
+  },
+  "games": {
+   "old_v9": {
+    "engine_version": "0.199.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "accepted": 237,
+    "rejected": 0,
+    "judge": {
+     "expected": 237
+    }
+   },
+   "new_v9": {
+    "engine_version": "0.200.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "accepted": 237,
+    "rejected": 0,
+    "judge": {
+     "expected": 237
+    }
+   },
+   "new_v10": {
+    "engine_version": "0.200.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 62,
+    "accepted": 186,
+    "rejected": 2,
+    "judge": {
+     "expected": 186,
+     "undetermined": 2
+    }
+   }
+  },
+  "pairs": {
+   "old_v9_vs_new_v9": {
+    "operation_index": 237,
+    "accepted_before": 237,
+    "public_log_equal_before": true,
+    "attempts_equal_before": null
+   },
+   "new_v9_vs_new_v10": {
+    "operation_index": 82,
+    "accepted_before": 82,
+    "public_log_equal_before": true,
+    "attempts_equal_before": 86
+   }
+  },
+  "target": {
+   "n": 87,
+   "turn": [
+    0,
+    28
+   ],
+   "same_view_and_inputs": "own view, inputs response, stages and candidate equal; candidates response differs only in the game and revision tokens",
+   "rules_v9": {
+    "result": "unevaluable:moved_card_not_basic",
+    "move": [
+     6,
+     105,
+     8
+    ],
+    "moved_card": "PMCG1-097",
+    "submit": "accepted",
+    "after_same_turn": {
+     "retreat": {
+      "selected": 2,
+      "sent": 1,
+      "accepted": 1
+     },
+     "use_attack": {
+      "selected": 1,
+      "sent": 1,
+      "accepted": 1
+     },
+     "use_power": {
+      "selected": 10,
+      "sent": 10,
+      "accepted": 10
+     },
+     "attach_energy": {
+      "selected": 0,
+      "sent": 0,
+      "accepted": 0
+     },
+     "end_turn": {
+      "selected": 0,
+      "sent": 0,
+      "accepted": 0
+     }
+    }
+   },
+   "rules_v10": {
+    "result": "tier1",
+    "restricted": true,
+    "set": [
+     [
+      6,
+      101,
+      5
+     ],
+     [
+      6,
+      105,
+      5
+     ],
+     [
+      10,
+      91,
+      5
+     ]
+    ],
+    "special_moves": 4,
+    "goals": [
+     {
+      "deficit": 1,
+      "kind": "retreat",
+      "label": "retreat",
+      "met": false,
+      "source": "reused_attempt"
+     }
+    ],
+    "move": [
+     10,
+     91,
+     5
+    ],
+    "moved_card": "PMCG1-097",
+    "submit": "accepted",
+    "active_after": {
+     "pokemon_id": 5,
+     "card_id": "PMCG1-011",
+     "name_ja": "フシギバナ",
+     "energy": [
+      "PMCG4-065",
+      "PMCG1-097"
+     ],
+     "energy_units": [
+      [
+       "fighting",
+       "fire",
+       "grass",
+       "lightning",
+       "psychic",
+       "water"
+      ],
+      [
+       "grass"
+      ]
+     ]
+    },
+    "after_same_turn": {
+     "window_attempts": 2,
+     "by_kind": {
+      "retreat": {
+       "selected": 1,
+       "sent": 1,
+       "accepted": 1
+      },
+      "use_attack": {
+       "selected": 1,
+       "sent": 1,
+       "accepted": 1
+      },
+      "use_power": {
+       "selected": 0,
+       "sent": 0,
+       "accepted": 0
+      },
+      "attach_energy": {
+       "selected": 0,
+       "sent": 0,
+       "accepted": 0
+      },
+      "end_turn": {
+       "selected": 0,
+       "sent": 0,
+       "accepted": 0
+      }
+     },
+     "accepted": [
+      {
+       "n": 88,
+       "kind": "retreat",
+       "meaning": [
+        "PMCG1-023",
+        "PMCG4-065",
+        "PMCG1-097"
+       ],
+       "turn": [
+        0,
+        28
+       ]
+      },
+      {
+       "n": 89,
+       "kind": "use_attack",
+       "meaning": [
+        "からにこもる"
+       ],
+       "turn": [
+        0,
+        28
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "budget_used": {
+   "tool_seconds": 19.614,
+   "outer_seconds": 53.771,
+   "evidence_bytes": 33143486
+  }
  }
 }
