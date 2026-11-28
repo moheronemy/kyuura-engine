@@ -1,0 +1,530 @@
+{
+ "format": "kyuura-quick-attack-prevented-coin/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "ea9e0e104b6dfdeed141dd0c116fafd88b711c3c",
+  "branch": "claude/quick-attack-prevented-coin",
+  "commits": {
+   "fix": "190c9795ac3ea9f298e6ab5ffe5b55fb63c47396",
+   "version_0_201_0": "c28d527bde034d0d5e78fcec1759d70389fde930"
+  },
+  "engine_version": "0.201.0"
+ },
+ "saved_refusals": {
+  "game": "vai-batch-v10g-v10 g001-rules-v10-s9092 (0.200.0)",
+  "attempts": [
+   103,
+   123
+  ],
+  "attack": "ES1-024 ポッポ でんこうせっか（10+。コインを投げて「おもて」なら、20ダメージを追加する。）",
+  "defender": "PMCG1-023 ゼニガメ with persistent prevent_damage (からにこもる: 次の相手の番に受けるダメージが0になる)",
+  "stopped_at": "resolution.programs.Damage.run (HeadsBonus local coin; first_void found the damage-only prevention)",
+  "same_path_both": true,
+  "accepted_instead": "かぜおこし (10, no coin) both times"
+ },
+ "interpretation": "the coin decides only the damage amount and the opponent's effect prevents only damage: flip the coin as usual and apply the prevention to the resulting damage (card text and existing rule based implementation interpretation; no direct ruling of the time found). Effects that make the Pokemon not receive the attack (barrier) keep the stop",
+ "scope": {
+  "changed": "HeadsBonus (CoinBonusDamage: 63 registrations, e.g. でんこうせっか・ひをふく・ふみつけ; and the user-simplified おたんじょうび) when the void effect has no BEFORE_EFFECT window",
+  "unchanged": [
+   "barrier and other effects with the BEFORE_EFFECT window",
+   "CoinFlipDamage (×)",
+   "local gate coins (つのでつつく)",
+   "OpponentTailsBonus",
+   "FailOnTails / void_coin_question (ゴッドバード)",
+   "bench damage coins",
+   "T19b"
+  ]
+ },
+ "probe_before": {
+  "withdraw:heads": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "withdraw:tails": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "barrier:heads": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "barrier:tails": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "no_prevention:heads": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  },
+  "no_prevention:tails": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage": [
+    10
+   ],
+   "damage_prevented": 0,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  }
+ },
+ "probe_after": {
+  "withdraw:heads": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  },
+  "withdraw:tails": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage": [],
+   "damage_prevented": 1,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  },
+  "barrier:heads": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "barrier:tails": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage": null,
+   "damage_prevented": null,
+   "current_player_after": null,
+   "api_submit": "rejected",
+   "api_code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "direct_equals_api": null
+  },
+  "no_prevention:heads": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage": [
+    30
+   ],
+   "damage_prevented": 0,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  },
+  "no_prevention:tails": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage": [
+    10
+   ],
+   "damage_prevented": 0,
+   "current_player_after": 1,
+   "api_submit": "accepted",
+   "api_code": null,
+   "direct_equals_api": true
+  }
+ },
+ "normal_game": {
+  "plan": {
+   "vai-batch-pcd-v10": "740460e866d3dbcca2df5566bbc4c3b0887cbf5785bd397cd21f1ac3baa169e3"
+  },
+  "games": {
+   "old": {
+    "batch": "vai-batch-v10g-v10",
+    "engine_version": "0.200.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 62,
+    "accepted": 186,
+    "rejected": 2,
+    "judge": {
+     "expected": 186,
+     "undetermined": 2
+    }
+   },
+   "new": {
+    "batch": "vai-batch-pcd-v10",
+    "engine_version": "0.201.0",
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 61,
+    "accepted": 186,
+    "rejected": 0,
+    "judge": {
+     "expected": 186
+    }
+   }
+  },
+  "pair": {
+   "operation_index": 98,
+   "accepted_before": 98,
+   "public_log_equal_before": true,
+   "attempts_equal_before": 102
+  },
+  "quick_attack": {
+   "old": [
+    {
+     "n": 103,
+     "actor": 0,
+     "turn": [
+      0,
+      33
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [
+       "prevent_damage"
+      ],
+      "damage": 10
+     },
+     "next_accepted_same_actor": {
+      "n": 104,
+      "kind": "use_attack",
+      "meaning": [
+       "かぜおこし"
+      ]
+     }
+    },
+    {
+     "n": 116,
+     "actor": 0,
+     "turn": [
+      0,
+      39
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [],
+      "damage": 10
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ],
+     "coin": [
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "next_accepted": {
+      "actor": 1,
+      "command": "attach_energy"
+     }
+    },
+    {
+     "n": 123,
+     "actor": 0,
+     "turn": [
+      0,
+      43
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [
+       "prevent_damage"
+      ],
+      "damage": 30
+     },
+     "next_accepted_same_actor": {
+      "n": 124,
+      "kind": "use_attack",
+      "meaning": [
+       "かぜおこし"
+      ]
+     }
+    },
+    {
+     "n": 131,
+     "actor": 0,
+     "turn": [
+      0,
+      47
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [],
+      "damage": 30
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage",
+      "knock_out"
+     ],
+     "coin": [
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "next_accepted": {
+      "actor": 0,
+      "command": "resolve_decision"
+     }
+    }
+   ],
+   "new": [
+    {
+     "n": 103,
+     "actor": 0,
+     "turn": [
+      0,
+      33
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [
+       "prevent_damage"
+      ],
+      "damage": 10
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage_prevented",
+      "persistent_effect_removed",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ],
+     "coin": [
+      "heads"
+     ],
+     "damage": [],
+     "damage_prevented": 1,
+     "next_accepted": {
+      "actor": 1,
+      "command": "attach_energy"
+     }
+    },
+    {
+     "n": 111,
+     "actor": 0,
+     "turn": [
+      0,
+      37
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [],
+      "damage": 10
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ],
+     "coin": [
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "next_accepted": {
+      "actor": 1,
+      "command": "attach_energy"
+     }
+    },
+    {
+     "n": 115,
+     "actor": 0,
+     "turn": [
+      0,
+      39
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [],
+      "damage": 20
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage",
+      "knock_out"
+     ],
+     "coin": [
+      "heads"
+     ],
+     "damage": [
+      30
+     ],
+     "damage_prevented": 0,
+     "next_accepted": {
+      "actor": 0,
+      "command": "resolve_decision"
+     }
+    },
+    {
+     "n": 125,
+     "actor": 0,
+     "turn": [
+      0,
+      43
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "defender": {
+      "card_id": "PMCG1-023",
+      "name_ja": "ゼニガメ",
+      "persistent": [],
+      "damage": 10
+     },
+     "events": [
+      "attack",
+      "coin_flip",
+      "damage",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ],
+     "coin": [
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "next_accepted": {
+      "actor": 1,
+      "command": "attach_energy"
+     }
+    }
+   ]
+  },
+  "budget_used": {
+   "tool_seconds": 7.403,
+   "outer_seconds": 23.791,
+   "evidence_bytes": 13617926
+  }
+ }
+}
