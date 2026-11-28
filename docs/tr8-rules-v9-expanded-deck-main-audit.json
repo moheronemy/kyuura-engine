@@ -1,0 +1,1149 @@
+{
+ "format": "kyuura-tr8-rules-v9-expanded-deck-main-audit/1",
+ "date": "2026-11-28",
+ "base": {
+  "doc_commit": "78f56d6f3811fefae454a22bd041f4869658c89e",
+  "doc_branch_of_base": "claude/docs-index-cleanup",
+  "execution_commit": "3d1f3ba3146c2a597e8137a71c8b02d5e60bc9e9",
+  "engine_version": "0.199.0",
+  "tool_version": 20,
+  "execution_code_vs_doc_base": "kyuura_engine/, tools/, scripts/ equal; only tests/test_energy_control_rainbow_v0_199.py differs",
+  "work_branch": "claude/tr8-rules-v9-expanded-deck-main-audit"
+ },
+ "fixed_conditions": {
+  "conditions": {
+   "reference": {
+    "seat0": "hitmonchan-dewgong-v2",
+    "seat1": "venusaur-parasect-v2"
+   },
+   "different_colour": {
+    "seat0": "C116",
+    "seat1": "R58"
+   },
+   "special_energy": {
+    "seat0": "E58",
+    "seat1": "R58"
+   },
+   "no_ability": {
+    "seat0": "A122",
+    "seat1": "C121"
+   }
+  },
+  "convention_set": "CS-KYUURA-PLAY-TR8@1",
+  "mode": "rules-v9",
+  "profile": "deep",
+  "per_game_limits": "default (same as the pilot plans)",
+  "observation": true,
+  "prestop": true,
+  "decks": "pilot (vai-tr8v9x-run) inputs: explicit lists of vai-tr8v8x-run/decklists (file sha256, content and expanded hashes equal, 60 cards, legal under 0.199.0); preset decks for the reference condition"
+ },
+ "seeds": {
+  "rule": "9091 以上で連続 6 値がすべて未使用の最初の組（4 条件で共通に使う）",
+  "files_scanned": 834,
+  "errors": 0,
+  "max_used": 9090,
+  "selected": [
+   9091,
+   9092,
+   9093,
+   9094,
+   9095,
+   9096
+  ]
+ },
+ "plans": {
+  "games_per_plan": 6,
+  "budget_seconds": 900,
+  "evidence_mib": 1024,
+  "plan_sha256": {
+   "vai-batch-tr8v9m-c1": "499ab98283a9dbe2c81023ddfd9750dc5f107211b111aec9af5f1e73a01fe8dc",
+   "vai-batch-tr8v9m-c2": "bd9bef5bc59b3671d0b2c89becc59a1c8ad6c4522c9ac4c81f050040a8f98302",
+   "vai-batch-tr8v9m-c3": "66845e7f8c263dfb728b8e5b399272c96661a4a21ef736903a5ad9a1950b2508",
+   "vai-batch-tr8v9m-c4": "c8ca377a7bb976a936e70165f2db2809432ff019aef8ae4e9ddf2492d33c7458"
+  },
+  "fixed_before_first_game": true,
+  "order": "seed ascending; within a seed reference -> different colour -> special energy -> no ability"
+ },
+ "budget": {
+  "program_limits": {
+   "tool_seconds": 3600.0,
+   "outer_seconds": 7200.0,
+   "evidence_bytes": 2147483648
+  },
+  "start_conditions": {
+   "plan_seconds": 150.0,
+   "program_tool_seconds": 150.0,
+   "program_outer_seconds": 600.0
+  },
+  "used": {
+   "tool_seconds": 106.975,
+   "outer_seconds": 493.241,
+   "evidence_bytes": 159372390
+  },
+  "next_game_startable_after": true
+ },
+ "run": {
+  "calls": 24,
+  "codes": [
+   0
+  ],
+  "policy_stop": false
+ },
+ "total": {
+  "planned": 24,
+  "started": 24,
+  "complete": 24,
+  "incomplete": 0,
+  "not_started": 0,
+  "game_over": 24,
+  "completion_rate": "24/24",
+  "term_class": {
+   "game_over": 24
+  },
+  "plan_status_last": {
+   "completed": 24
+  },
+  "refusals": {
+   "sent_refusals": 4,
+   "by_code": {
+    "UNRESOLVED_RAINBOW_ENERGY_TYPE|continuable=True": 4
+   },
+   "resend_suppressed_attempts": 0,
+   "refused_excluded_rows": 4,
+   "other_move_accepted": 4,
+   "first_accepted_kinds": {
+    "retreat": 1,
+    "play_trainer": 1,
+    "use_power": 2
+   },
+   "games_with_refusal_finished": 1,
+   "games_with_refusal": 1,
+   "observed": true
+  },
+  "energy_control": {
+   "declarations": 12,
+   "accepted": 12,
+   "rejected": 0,
+   "coin": {
+    "tails": 9,
+    "heads": 3
+   },
+   "decision_issued": 3,
+   "moved": 3,
+   "with_rainbow": 12
+  },
+  "cost_evaluation": {
+   "goal_status": {
+    "retreat": {
+     "unreached_active_left": 3,
+     "met_after_1": 5,
+     "met_with_0": 2,
+     "not_applicable_met_at_start": 3,
+     "unevaluable": 1
+    },
+    "attack": {
+     "unreached_active_left": 18,
+     "met_after_2": 3,
+     "met_after_1": 1,
+     "unevaluable": 2
+    }
+   },
+   "after_goal_met": {
+    "retreat": {
+     "selected": 13,
+     "built_ok": 6,
+     "sent": 6,
+     "accepted": 6
+    },
+    "attack": {
+     "selected": 4,
+     "built_ok": 4,
+     "sent": 4,
+     "accepted": 4
+    }
+   },
+   "skipped_by_attached": {},
+   "unevaluable_by_attached": {
+    "unevaluable:moved_card_not_basic|PMCG4-065|movable_nonbasic=PMCG4-065": 4,
+    "unevaluable:moved_card_not_basic|-|movable_nonbasic=PMCG4-065": 11,
+    "unevaluable:moved_card_not_basic|PMCG1-096,PMCG4-065|movable_nonbasic=PMCG4-065": 1,
+    "unevaluable:moved_card_not_basic|PMCG4-063,PMCG4-065|movable_nonbasic=PMCG4-065": 2
+   },
+   "after_skip_or_unevaluable_same_turn": {
+    "result:unevaluable:moved_card_not_basic|rows": {
+     "n": 18
+    },
+    "result:unevaluable:moved_card_not_basic|turn_windows": {
+     "n": 3
+    },
+    "result:unevaluable:moved_card_not_basic|retreat": {
+     "selected": 5,
+     "sent": 2,
+     "accepted": 2
+    },
+    "result:unevaluable:moved_card_not_basic|use_attack": {
+     "selected": 6,
+     "sent": 6,
+     "accepted": 3
+    }
+   },
+   "et_choices": 69,
+   "progress_result": {
+    "tier3": 37,
+    "tier1": 14,
+    "unevaluable:moved_card_not_basic": 18
+   }
+  },
+  "tool_seconds": 106.975
+ },
+ "by_condition": {
+  "reference": {
+   "planned": 6,
+   "started": 6,
+   "complete": 6,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 6,
+   "completion_rate": "6/6",
+   "term_class": {
+    "game_over": 6
+   },
+   "plan_status_last": {
+    "completed": 6
+   },
+   "refusals": {
+    "sent_refusals": 0,
+    "by_code": {},
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 0,
+    "other_move_accepted": 0,
+    "first_accepted_kinds": {},
+    "games_with_refusal_finished": 0,
+    "games_with_refusal": 0,
+    "observed": false
+   },
+   "energy_control": {
+    "declarations": 0,
+    "accepted": 0,
+    "rejected": 0,
+    "coin": {},
+    "decision_issued": 0,
+    "moved": 0,
+    "with_rainbow": 0
+   },
+   "cost_evaluation": {
+    "goal_status": {
+     "retreat": {
+      "unreached_active_left": 3,
+      "met_after_1": 5,
+      "met_with_0": 1,
+      "not_applicable_met_at_start": 2
+     },
+     "attack": {
+      "unreached_active_left": 14,
+      "met_after_2": 3,
+      "met_after_1": 1
+     }
+    },
+    "after_goal_met": {
+     "retreat": {
+      "selected": 9,
+      "built_ok": 4,
+      "sent": 4,
+      "accepted": 4
+     },
+     "attack": {
+      "selected": 4,
+      "built_ok": 4,
+      "sent": 4,
+      "accepted": 4
+     }
+    },
+    "skipped_by_attached": {},
+    "unevaluable_by_attached": {},
+    "after_skip_or_unevaluable_same_turn": {},
+    "et_choices": 51,
+    "progress_result": {
+     "tier3": 37,
+     "tier1": 14
+    }
+   },
+   "tool_seconds": 31.222
+  },
+  "different_colour": {
+   "planned": 6,
+   "started": 6,
+   "complete": 6,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 6,
+   "completion_rate": "6/6",
+   "term_class": {
+    "game_over": 6
+   },
+   "plan_status_last": {
+    "completed": 6
+   },
+   "refusals": {
+    "sent_refusals": 4,
+    "by_code": {
+     "UNRESOLVED_RAINBOW_ENERGY_TYPE|continuable=True": 4
+    },
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 4,
+    "other_move_accepted": 4,
+    "first_accepted_kinds": {
+     "retreat": 1,
+     "play_trainer": 1,
+     "use_power": 2
+    },
+    "games_with_refusal_finished": 1,
+    "games_with_refusal": 1,
+    "observed": true
+   },
+   "energy_control": {
+    "declarations": 12,
+    "accepted": 12,
+    "rejected": 0,
+    "coin": {
+     "tails": 9,
+     "heads": 3
+    },
+    "decision_issued": 3,
+    "moved": 3,
+    "with_rainbow": 12
+   },
+   "cost_evaluation": {
+    "goal_status": {
+     "retreat": {
+      "met_with_0": 1,
+      "not_applicable_met_at_start": 1,
+      "unevaluable": 1
+     },
+     "attack": {
+      "unreached_active_left": 4,
+      "unevaluable": 2
+     }
+    },
+    "after_goal_met": {
+     "retreat": {
+      "selected": 4,
+      "built_ok": 2,
+      "sent": 2,
+      "accepted": 2
+     }
+    },
+    "skipped_by_attached": {},
+    "unevaluable_by_attached": {
+     "unevaluable:moved_card_not_basic|PMCG4-065|movable_nonbasic=PMCG4-065": 4,
+     "unevaluable:moved_card_not_basic|-|movable_nonbasic=PMCG4-065": 11,
+     "unevaluable:moved_card_not_basic|PMCG1-096,PMCG4-065|movable_nonbasic=PMCG4-065": 1,
+     "unevaluable:moved_card_not_basic|PMCG4-063,PMCG4-065|movable_nonbasic=PMCG4-065": 2
+    },
+    "after_skip_or_unevaluable_same_turn": {
+     "result:unevaluable:moved_card_not_basic|rows": {
+      "n": 18
+     },
+     "result:unevaluable:moved_card_not_basic|turn_windows": {
+      "n": 3
+     },
+     "result:unevaluable:moved_card_not_basic|retreat": {
+      "selected": 5,
+      "sent": 2,
+      "accepted": 2
+     },
+     "result:unevaluable:moved_card_not_basic|use_attack": {
+      "selected": 6,
+      "sent": 6,
+      "accepted": 3
+     }
+    },
+    "et_choices": 18,
+    "progress_result": {
+     "unevaluable:moved_card_not_basic": 18
+    }
+   },
+   "tool_seconds": 36.232
+  },
+  "special_energy": {
+   "planned": 6,
+   "started": 6,
+   "complete": 6,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 6,
+   "completion_rate": "6/6",
+   "term_class": {
+    "game_over": 6
+   },
+   "plan_status_last": {
+    "completed": 6
+   },
+   "refusals": {
+    "sent_refusals": 0,
+    "by_code": {},
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 0,
+    "other_move_accepted": 0,
+    "first_accepted_kinds": {},
+    "games_with_refusal_finished": 0,
+    "games_with_refusal": 0,
+    "observed": false
+   },
+   "energy_control": {
+    "declarations": 0,
+    "accepted": 0,
+    "rejected": 0,
+    "coin": {},
+    "decision_issued": 0,
+    "moved": 0,
+    "with_rainbow": 0
+   },
+   "cost_evaluation": {
+    "goal_status": {},
+    "after_goal_met": {},
+    "skipped_by_attached": {},
+    "unevaluable_by_attached": {},
+    "after_skip_or_unevaluable_same_turn": {},
+    "et_choices": 0,
+    "progress_result": {}
+   },
+   "tool_seconds": 12.886
+  },
+  "no_ability": {
+   "planned": 6,
+   "started": 6,
+   "complete": 6,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 6,
+   "completion_rate": "6/6",
+   "term_class": {
+    "game_over": 6
+   },
+   "plan_status_last": {
+    "completed": 6
+   },
+   "refusals": {
+    "sent_refusals": 0,
+    "by_code": {},
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 0,
+    "other_move_accepted": 0,
+    "first_accepted_kinds": {},
+    "games_with_refusal_finished": 0,
+    "games_with_refusal": 0,
+    "observed": false
+   },
+   "energy_control": {
+    "declarations": 0,
+    "accepted": 0,
+    "rejected": 0,
+    "coin": {},
+    "decision_issued": 0,
+    "moved": 0,
+    "with_rainbow": 0
+   },
+   "cost_evaluation": {
+    "goal_status": {},
+    "after_goal_met": {},
+    "skipped_by_attached": {},
+    "unevaluable_by_attached": {},
+    "after_skip_or_unevaluable_same_turn": {},
+    "et_choices": 0,
+    "progress_result": {}
+   },
+   "tool_seconds": 26.635
+  }
+ },
+ "refusals_detail": [
+  {
+   "condition": "different_colour",
+   "seed": 9094,
+   "turn": [
+    0,
+    42
+   ],
+   "actor": 1,
+   "attack": [
+    "ハイドロポンプ"
+   ],
+   "engine_code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+   "continuable": true,
+   "refused_input": {
+    "all_refused": true,
+    "buildable": 1,
+    "refused_for_candidate": 1,
+    "remaining": 0,
+    "result": "recorded"
+   },
+   "after": {
+    "attempts": 1,
+    "reselected_same_input": 0,
+    "excluded_before_build": 0,
+    "sent": 1,
+    "rejected_again": 0,
+    "accepted": 1,
+    "first_accepted": {
+     "n": 125,
+     "kind": "retreat",
+     "attack": [],
+     "same_candidate": false,
+     "same_input": false,
+     "reason": "rule7:priority5:retreat:tie3:refused_excluded1"
+    }
+   }
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9094,
+   "turn": [
+    0,
+    42
+   ],
+   "actor": 1,
+   "attack": [
+    "ハイドロポンプ"
+   ],
+   "engine_code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+   "continuable": true,
+   "refused_input": {
+    "all_refused": true,
+    "buildable": 1,
+    "refused_for_candidate": 1,
+    "remaining": 0,
+    "result": "recorded"
+   },
+   "after": {
+    "attempts": 1,
+    "reselected_same_input": 0,
+    "excluded_before_build": 0,
+    "sent": 1,
+    "rejected_again": 0,
+    "accepted": 1,
+    "first_accepted": {
+     "n": 129,
+     "kind": "play_trainer",
+     "attack": [],
+     "same_candidate": false,
+     "same_input": false,
+     "reason": "rule7:priority5:play_trainer:tie3:refused_excluded1"
+    }
+   }
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9094,
+   "turn": [
+    0,
+    42
+   ],
+   "actor": 1,
+   "attack": [
+    "ハイドロポンプ"
+   ],
+   "engine_code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+   "continuable": true,
+   "refused_input": {
+    "all_refused": true,
+    "buildable": 1,
+    "refused_for_candidate": 1,
+    "remaining": 0,
+    "result": "recorded"
+   },
+   "after": {
+    "attempts": 1,
+    "reselected_same_input": 0,
+    "excluded_before_build": 0,
+    "sent": 1,
+    "rejected_again": 0,
+    "accepted": 1,
+    "first_accepted": {
+     "n": 131,
+     "kind": "use_power",
+     "attack": [],
+     "same_candidate": false,
+     "same_input": false,
+     "reason": "rule7:priority5:use_power:tie2:refused_excluded1"
+    }
+   }
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9094,
+   "turn": [
+    0,
+    42
+   ],
+   "actor": 1,
+   "attack": [
+    "ハイドロポンプ"
+   ],
+   "engine_code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+   "continuable": true,
+   "refused_input": {
+    "all_refused": true,
+    "buildable": 1,
+    "refused_for_candidate": 1,
+    "remaining": 0,
+    "result": "recorded"
+   },
+   "after": {
+    "attempts": 1,
+    "reselected_same_input": 0,
+    "excluded_before_build": 0,
+    "sent": 1,
+    "rejected_again": 0,
+    "accepted": 1,
+    "first_accepted": {
+     "n": 133,
+     "kind": "use_power",
+     "attack": [],
+     "same_candidate": false,
+     "same_input": false,
+     "reason": "rule7:priority5:use_power:tie2:refused_excluded1"
+    }
+   }
+  }
+ ],
+ "energy_control_detail": [
+  {
+   "seed": 9094,
+   "turn": [
+    0,
+    47
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9094,
+   "turn": [
+    0,
+    49
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    5
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    7
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    9
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    11
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "heads"
+   ],
+   "attack_failed": [],
+   "decision": "move_opponent_energy",
+   "moved": 1,
+   "moves": [
+    {
+     "card_id": "PMCG1-097",
+     "energy_kind": "basic",
+     "from": 2,
+     "to": 2
+    }
+   ],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    13
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "heads"
+   ],
+   "attack_failed": [],
+   "decision": "move_opponent_energy",
+   "moved": 1,
+   "moves": [
+    {
+     "card_id": "PMCG1-099",
+     "energy_kind": "basic",
+     "from": 2,
+     "to": 2
+    }
+   ],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    25
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "heads"
+   ],
+   "attack_failed": [],
+   "decision": "move_opponent_energy",
+   "moved": 1,
+   "moves": [
+    {
+     "card_id": "PMCG1-099",
+     "energy_kind": "basic",
+     "from": 5,
+     "to": 5
+    }
+   ],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    27
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    29
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    55
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  },
+  {
+   "seed": 9096,
+   "turn": [
+    0,
+    57
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "coin": [
+    "tails"
+   ],
+   "attack_failed": [
+    "coin"
+   ],
+   "decision": null,
+   "moved": 0,
+   "moves": [],
+   "opponent_field_energy_kinds": [
+    "basic",
+    "special"
+   ],
+   "rainbow_on_opponent_field": true
+  }
+ ],
+ "games": [
+  {
+   "condition": "reference",
+   "seed": 9091,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 23,
+   "accepted": 66,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "reference",
+   "seed": 9092,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 43,
+   "accepted": 195,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "reference",
+   "seed": 9093,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 13,
+   "accepted": 55,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "reference",
+   "seed": 9094,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 35,
+   "accepted": 171,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "reference",
+   "seed": 9095,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 54,
+   "accepted": 162,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "reference",
+   "seed": 9096,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 53,
+   "accepted": 177,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9091,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 14,
+   "accepted": 43,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9092,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 86,
+   "accepted": 237,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9093,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 15,
+   "accepted": 46,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9094,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 54,
+   "accepted": 158,
+   "rejected": 4,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9095,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 7,
+   "accepted": 19,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "different_colour",
+   "seed": 9096,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 72,
+   "accepted": 219,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9091,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 3,
+   "accepted": 11,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9092,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 3,
+   "accepted": 11,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9093,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 13,
+   "accepted": 42,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9094,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 10,
+   "accepted": 31,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9095,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 3,
+   "accepted": 10,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "special_energy",
+   "seed": 9096,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 3,
+   "accepted": 11,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9091,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 36,
+   "accepted": 90,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9092,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 55,
+   "accepted": 151,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9093,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 32,
+   "accepted": 84,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9094,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 56,
+   "accepted": 149,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9095,
+   "termination": "game_over",
+   "winner": 1,
+   "turns": 14,
+   "accepted": 37,
+   "rejected": 0,
+   "plan_status": "completed"
+  },
+  {
+   "condition": "no_ability",
+   "seed": 9096,
+   "termination": "game_over",
+   "winner": 0,
+   "turns": 45,
+   "accepted": 122,
+   "rejected": 0,
+   "plan_status": "completed"
+  }
+ ],
+ "special_energy_short_games": "4 of 6 special-energy games ended at turn 3: seat 1 (R58) had one basic Pokemon in the opening hand (no bench option at setup or later) and its active was knocked out",
+ "old_audit": "rules-v7 / v8 expanded audit: 16 plans equal to the fixed hashes, no LOCK, 53 games not started (not touched)",
+ "not_estimated": "no cross-policy effect estimate (rules-v9 only)",
+ "different_colour_unevaluable_rows_with_movable_basic": "18 of 18 (checked on the attempt rows: stage-2 options included basic Energy cards); 11 of 18 had no special energy on the active",
+ "moved_card_not_basic_rule": "tools/verification_ai/policies.py: any candidate move of a non-basic Energy card makes the whole choice unevaluable:moved_card_not_basic"
+}

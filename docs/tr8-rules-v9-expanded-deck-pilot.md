@@ -2,6 +2,7 @@
 
 2026-11-27。[rules-v9 の試験](tr8-rules-v9-refused-input-experiment.md) の続きとして、[拡大デッキの監査](history/tr8-rules-v8-expanded-deck-audit-plan.md) の 4 条件を、新しい seed で各 1 局ずつ `rules-v9` で実行した記録です。
 
+- **本監査の結果（2026-11-28）:** 0.199.0 で 4 条件 × 6 局（seed 9091〜9096）を実行し、24／24 が `game_over` でした（[拡大デッキの本監査](tr8-rules-v9-expanded-deck-main-audit.md)）。
 - これは `rules-v9` の先行試験です。`rules-v9` は明示的に選んだときだけ使います。
 - 次のものは変えていません: 方策・エンジン・規約・judge・単局の上限・既定の設定。
 - v7／v8 の費用評価を比べる旧監査の 16 計画は、保全したままです（残り 53 局は未着手）。停止の解除・再開はしていません。
