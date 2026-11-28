@@ -43,7 +43,7 @@
 | 検証用 AI の上限つき逐次バッチ（計画・実行・照合） | [バッチ](docs/verification-ai-batch.md)・[明示的なデッキリスト](docs/verification-ai-decklist.md)・[外部の pyc キャッシュの手順](docs/verification-ai-pyc-cache-procedure.md)・[資源と実行予算](docs/verification-ai-scale-budget.md) |
 | 検証用 AI の方策 | 通常のルールの方策: `rules-v1`（[V2](docs/verification-ai-v2.md)）・`rules-v2`（[V2 の補完](docs/verification-ai-v2-repeat.md)）。方式の一覧は [バッチ](docs/verification-ai-batch.md)。試験の方策は下の表 |
 
-試験の方策は、`batch plan --modes` で明示したときだけ使います（既定にしていません）。`rules-v3`・`rules-v4` は `rules-v2` に、`rules-v5`〜`rules-v9` は 1 つ前の方策に規則を足したものです。
+試験の方策は、`batch plan --modes` で明示したときだけ使います（既定にしていません）。`rules-v3`・`rules-v4` は `rules-v2` に、`rules-v5`〜`rules-v10` は 1 つ前の方策に規則を足したものです。
 
 | 方策 | 足した規則 | 仕様と比較の文書 |
 |---|---|---|
@@ -54,6 +54,7 @@
 | `rules-v7` | 支払い条件が変わらない「にげる」を後回し | [試験](docs/tr8-retreat-reselection-experiment.md) |
 | `rules-v8` | ［エナジートランス］で費用に近づく移動を優先 | [試験](docs/tr8-energy-trans-progress-policy-experiment.md) |
 | `rules-v9` | 同じ局面で未裁定として拒否された入力を避けて別の手へ進む | [試験](docs/tr8-rules-v9-refused-input-experiment.md) |
+| `rules-v10` | ［エナジートランス］の費用評価を基本エネルギーの移動だけでも行う（レインボーなどの移動は採点の外） | [v0.200](docs/hydro-pump-rainbow-rules-v10-v0.200.md) |
 
 ### 残件（未対応・未裁定）
 
@@ -61,14 +62,15 @@
 - **エンジン・検証用 AI・GUI をまとめた一覧:** [現在の完了・未完了一覧（0.187.0 の時点）](docs/project-status-ledger-v0187.md)。0.188.0 からあとの変化は、[実装状況](docs/implementation-status.md) の末尾の「現在の完了・未完了一覧」の節と、下の「現在の状態」にあります。
 - **機能凍結の前の棚卸し（v0.133 の時点）:** [棚卸し](docs/pre-freeze-gap-inventory.md)・[修正計画](docs/pre-freeze-remediation-plan.md)。
 
-### 現在の状態（0.199.0。2026-11-28）
+### 現在の状態（0.200.0。2026-11-28）
 
-- **エンジン 0.199.0:** ミュウツー（PR1-022）の［エナジーコントロール］で、相手の場のレインボーエネルギーを選べるものから外しました（[v0.199](docs/energy-control-rainbow-v0.199.md)）。
+- **エンジン 0.200.0:** カメックスの［ハイドロポンプ］で、場で「水」を供給するレインボーエネルギーを「水」エネルギーとして数えます（[v0.200](docs/hydro-pump-rainbow-rules-v10-v0.200.md)。カード文面と既存のルールに基づく実装解釈。当時の直接裁定は未確認）。seed 9094 の通常の対戦で、0.199.0 が RB1 で拒否した宣言が受理されました（60 ダメージ）。ほかの RB1 の処理は止まるままです。
+- **0.199.0 から:** ミュウツー（PR1-022）の［エナジーコントロール］で、相手の場のレインボーエネルギーを選べるものから外しました（[v0.199](docs/energy-control-rainbow-v0.199.md)）。
   - 記録の区分は「カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認」です。研究の論点（kyuura）は未解決のままです。
   - 同じ停止コード `UNRESOLVED_RAINBOW_AS_BASIC_ENERGY_CARD` を使うほかの処理には当てはめていません（止まるままです）。
 - **通常の対戦での確認:** seed 9083 の 1 局で、0.198.0 が拒否した宣言が受理され、局は完走しました（[1 局の再検証](docs/energy-control-rainbow-v0199-game-verification.md)）。
   - 通常の対戦で出た枝は「うら」だけです。相手の場がレインボーエネルギーと無色2個エネルギーだけの盤面での「おもて」は、構築盤面でだけ確かめています。
-- **検証用 AI:** 道具の版 20、規約集合 `CS-KYUURA-PLAY-TR8@1`。`rules-v9` は試験の方策で、明示したときだけ使います（上の表）。
+- **検証用 AI:** 道具の版 21、規約集合 `CS-KYUURA-PLAY-TR8@1`。`rules-v9`・`rules-v10` は試験の方策で、明示したときだけ使います（上の表）。`rules-v10` の基本エネルギーの移動の評価は、構築盤面でだけ確かめています（通常の対戦では未観測）。
 - **拡大デッキの監査:** `rules-v9` の本監査（0.199.0・4 条件 × 6 局・seed 9091〜9096）は 24／24 が `game_over` でした（[本監査](docs/tr8-rules-v9-expanded-deck-main-audit.md)。[先行試験](docs/tr8-rules-v9-expanded-deck-pilot.md) は 4／4）。
   - 拒否は 4 件（RB1 の［ハイドロポンプ］）で、どれも別の手が受理されました。異色の条件の費用評価は、動かせるカードにレインボーエネルギーがあるため、すべて評価できませんでした（本監査の 7 章に次の課題）。
   - `rules-v7`／`rules-v8` の費用評価を比べる旧監査の 16 計画は保全したままで、残りの 53 局は未着手です（[旧監査の計画](docs/history/tr8-rules-v8-expanded-deck-audit-plan.md)）。停止の解除・再開はしていません。
@@ -89,7 +91,8 @@
 
 新しい順です。各版で変えたこと・当時の根拠・検証の条件は、その版の文書にあります。整理の前の README にあった長い説明は、本文のまま [README の履歴](docs/history/readme-archive-v0.199.md) の 1 章に移しました。
 
-- v0.199（今のエンジンの版。`kyuura_engine` の版は 0.199.0）: ミュウツー（PR1-022）の［エナジーコントロール］で、相手の場についているレインボーエネルギーを、ワザの文面の「特殊エネルギー以外」に当たらない特殊エネルギーカードとして選べるものから外す（カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認）。 文書: [energy-control-rainbow-v0.199.md](docs/energy-control-rainbow-v0.199.md)
+- v0.200（今のエンジンの版。`kyuura_engine` の版は 0.200.0）: カメックス（PMCG1-032）の［ハイドロポンプ］で、場で「水」を供給するレインボーエネルギーを「水」エネルギーとして数える（カード文面と既存のルールに基づく実装解釈。当時の直接裁定は未確認）。検証用 AI の試験の方策 `rules-v10`（道具の版 21）。 文書: [hydro-pump-rainbow-rules-v10-v0.200.md](docs/hydro-pump-rainbow-rules-v10-v0.200.md)
+- v0.199（`kyuura_engine` の版は 0.199.0）: ミュウツー（PR1-022）の［エナジーコントロール］で、相手の場についているレインボーエネルギーを、ワザの文面の「特殊エネルギー以外」に当たらない特殊エネルギーカードとして選べるものから外す（カード文面とカード分類に基づく実装解釈。当時の直接裁定は未確認）。 文書: [energy-control-rainbow-v0.199.md](docs/energy-control-rainbow-v0.199.md)
 - v0.198（`kyuura_engine` の版は 0.198.0）: ラッキースタジアムの別の個体の同じ番の使用のプレイ用の続行規約 `PC-LUCKY-STADIUM-REPLACEMENT@1` と開発用の部分的な集合 `CS-KYUURA-PLAY-TR8@1`（TR7@1 の 26 規約 + 1）。 文書: [play-convention-tr8-v0.198.md](docs/play-convention-tr8-v0.198.md)
 - v0.197（`kyuura_engine` の版は 0.197.0）: 「とうめい」で受けないと決まったあとの特殊状態のワザのコインのプレイ用の続行規約 `PC-T19B-NULLIFIED-STATUS-COIN@1` と開発用の部分的な集合 `CS-KYUURA-PLAY-TR7@1`（TR6@1 の 25 規約 + 1）。 文書: [play-convention-tr7-v0.197.md](docs/play-convention-tr7-v0.197.md)
 - v0.196（`kyuura_engine` の版は 0.196.0）: エナジーへんかんの 0 枚の答えのプレイ用の続行規約 `PC-ENERGY-CONVERSION-ZERO@1` と開発用の部分的な集合 `CS-KYUURA-PLAY-TR6@1`（TR4@1 の 24 規約 + 1）。 文書: [play-convention-tr6-v0.196.md](docs/play-convention-tr6-v0.196.md)

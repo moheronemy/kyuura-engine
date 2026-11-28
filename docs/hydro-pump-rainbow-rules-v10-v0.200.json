@@ -1,0 +1,1872 @@
+{
+ "format": "kyuura-hydro-pump-rainbow-rules-v10/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "7bc426fb7aeaae104da127c271e46eaef0e7427b",
+  "branch": "claude/hydro-pump-rainbow-rules-v10",
+  "commits": {
+   "engine_fix": "7f110085cfe7d98c3a1c780a019edbaf9e94fa71",
+   "rules_v10": "f872bfe2fc83c13c6c7b554adb0a16060ffbd79f",
+   "version_0_200_0": "5737d540c892e6b41db73d6eabf49305e4d10ab3"
+  },
+  "engine_version": "0.200.0",
+  "tool_version": 21
+ },
+ "hydro_pump": {
+  "card": "PMCG1-032 (and its reprints IPH-002, PR1-028 that share the entry)",
+  "text_ja": "「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
+  "latest_ja_p90": "ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",
+  "interpretation": "the extra damage counts Water energy units; Rainbow Energy on the field provides one unit of any basic type, so a Rainbow providing Water counts as one Water energy (card text and existing rule based implementation interpretation; the direct ruling of the time is not confirmed)",
+  "scope": "only this attack's extra damage (registration flag rainbow_provides_type); other ExtraEnergyDamage attacks, Rain Dance, Energy Control and other RB1 / RB3 users unchanged",
+  "probe_before": {
+   "9094_n124": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "9094_n128": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "basic_WWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     40
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     40
+    ]
+   },
+   "rainbow_WWR": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "basic_WWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     50
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     50
+    ]
+   },
+   "rainbow_WWWR": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "basic_WWWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWWR": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "rainbow_WWWRR": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "basic_WWWWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWWWR": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "rainbow_WWWR_DCE": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": "rejected",
+    "api_damage": null
+   },
+   "control:water_gun_rainbow": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:rain_dance_rainbow": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE",
+    "damage": null,
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:energy_control_rainbow_dce:heads": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [],
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:energy_control_rainbow_dce:tails": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [],
+    "api_submit": null,
+    "api_damage": null
+   }
+  },
+  "probe_after": {
+   "9094_n124": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "9094_n128": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     50
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     50
+    ]
+   },
+   "basic_WWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     40
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     40
+    ]
+   },
+   "rainbow_WWR": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     40
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     40
+    ]
+   },
+   "basic_WWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     50
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     50
+    ]
+   },
+   "rainbow_WWWR": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     50
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     50
+    ]
+   },
+   "basic_WWWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWWR": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWRR": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "basic_WWWWWW": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWWWR": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     60
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     60
+    ]
+   },
+   "rainbow_WWWR_DCE": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [
+     50
+    ],
+    "api_submit": "accepted",
+    "api_damage": [
+     50
+    ]
+   },
+   "control:water_gun_rainbow": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+    "damage": null,
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:rain_dance_rainbow": {
+    "direct": "rejected",
+    "code": "UNRESOLVED_RAINBOW_ATTACH_AS_TYPE",
+    "damage": null,
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:energy_control_rainbow_dce:heads": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [],
+    "api_submit": null,
+    "api_damage": null
+   },
+   "control:energy_control_rainbow_dce:tails": {
+    "direct": "accepted",
+    "code": null,
+    "damage": [],
+    "api_submit": null,
+    "api_damage": null
+   }
+  }
+ },
+ "rules_v10": {
+  "spec": "rules-v9 + Energy Trans cost evaluation over basic Energy card moves only; non-basic moves never tier 1 / 2; no tier 1 / 2 basic move -> no restriction (previous choice, special moves included); all moves non-basic -> unevaluable as before",
+  "unchanged": [
+   "candidate ranks",
+   "default modes",
+   "refused-input memory scope",
+   "attack goals with special energy on the active stay skipped"
+  ]
+ },
+ "normal_games": {
+  "plans": {
+   "vai-batch-hp10-v9": "70756d558b89990c116f08df6b2c787279c8a81832fb43e5aa21bcd5d89070df",
+   "vai-batch-hp10-v10": "8e2ad6a958c52e91d70dd7b3e3a245b292557a0d5e9b93769661c0fcd3235a70"
+  },
+  "games": {
+   "old_v9": {
+    "engine_version": "0.199.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 54,
+    "accepted": 158,
+    "rejected": 4,
+    "judge": {
+     "expected": 158,
+     "undetermined": 4
+    },
+    "undetermined": 4,
+    "batch": "vai-batch-tr8v9m-c2",
+    "game": "g004-rules-v9-s9094"
+   },
+   "new_v9": {
+    "engine_version": "0.200.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 48,
+    "accepted": 138,
+    "rejected": 0,
+    "judge": {
+     "expected": 138
+    },
+    "undetermined": 0,
+    "batch": "vai-batch-hp10-v9",
+    "game": "g001-rules-v9-s9094"
+   },
+   "new_v10": {
+    "engine_version": "0.200.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 48,
+    "accepted": 138,
+    "rejected": 0,
+    "judge": {
+     "expected": 138
+    },
+    "undetermined": 0,
+    "batch": "vai-batch-hp10-v10",
+    "game": "g001-rules-v10-s9094"
+   }
+  },
+  "pairs": {
+   "old_v9_vs_new_v9": {
+    "operation_index": 117,
+    "accepted_before": 117,
+    "public_log_equal_before": true,
+    "public_log_events_before": 370,
+    "a_operation": {
+     "actor": 1,
+     "command": {
+      "attack_index": 0,
+      "card": 77,
+      "player": 1,
+      "type": "use_attack"
+     },
+     "outcome": "rejected",
+     "check": {
+      "state": null,
+      "rng": null,
+      "log_length": null,
+      "decision": null,
+      "status": null
+     }
+    },
+    "b_operation": {
+     "actor": 1,
+     "command": {
+      "attack_index": 0,
+      "card": 77,
+      "player": 1,
+      "type": "use_attack"
+     },
+     "outcome": "accepted",
+     "check": {
+      "state": "a30922f1de6b1c3c4876b3297a7365f699d768c1237214cfde687878f69e3b68",
+      "rng": "8e9705a2e28d89030e7c4f1fadb530e55aea2c900424f0151019dba4bcb02e5e",
+      "log_length": 373,
+      "decision": {
+       "id": 8,
+       "kind": "take_prize",
+       "player": 1
+      },
+      "status": "awaiting_decision"
+     }
+    },
+    "attempts_equal_before": 123,
+    "a_attempt": {
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "position": 117,
+     "kind": "use_attack",
+     "meaning": [
+      {
+       "stage": 1,
+       "card_id": "PMCG1-032",
+       "name_ja": "ハイドロポンプ",
+       "attack_index": 0,
+       "zone": null,
+       "pokemon": null,
+       "card": 77
+      }
+     ],
+     "choices": [
+      "o1"
+     ],
+     "build": "ok",
+     "outcome": "rejected",
+     "reason": "rule7:priority4:use_attack",
+     "n": 124,
+     "energy_trans_progress": null
+    },
+    "b_attempt": {
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "position": 117,
+     "kind": "use_attack",
+     "meaning": [
+      {
+       "stage": 1,
+       "card_id": "PMCG1-032",
+       "name_ja": "ハイドロポンプ",
+       "attack_index": 0,
+       "zone": null,
+       "pokemon": null,
+       "card": 77
+      }
+     ],
+     "choices": [
+      "o1"
+     ],
+     "build": "ok",
+     "outcome": "accepted",
+     "reason": "rule7:priority4:use_attack",
+     "n": 124,
+     "energy_trans_progress": null
+    }
+   },
+   "new_v9_vs_new_v10": {
+    "operation_index": 138,
+    "accepted_before": 138,
+    "public_log_equal_before": true,
+    "public_log_events_before": 428,
+    "a_operation": null,
+    "b_operation": null,
+    "attempts_equal_before": null,
+    "a_attempt": null,
+    "b_attempt": null
+   }
+  },
+  "hydro_pump": {
+   "old_v9": [
+    {
+     "n": 124,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 1,
+     "defender": "PR1-022"
+    },
+    {
+     "n": 128,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 1,
+     "defender": "PR1-022"
+    },
+    {
+     "n": 130,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 1,
+     "defender": "PR1-022"
+    },
+    {
+     "n": 132,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "rejected",
+     "diagnostic_id": "UNRESOLVED_RAINBOW_ENERGY_TYPE",
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 1,
+     "defender": "PR1-022"
+    },
+    {
+     "n": 134,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 0,
+     "defender": "PR1-022",
+     "damage": [
+      40
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 142,
+     "actor": 1,
+     "turn": [
+      0,
+      44
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 0,
+     "defender": "neo3-004",
+     "damage": [
+      40
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ]
+    },
+    {
+     "n": 147,
+     "actor": 1,
+     "turn": [
+      0,
+      46
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 0,
+     "defender": "neo3-004",
+     "damage": [
+      40
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 153,
+     "actor": 1,
+     "turn": [
+      0,
+      48
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 0,
+     "defender": "PR1-022",
+     "damage": [
+      40
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ]
+    },
+    {
+     "n": 156,
+     "actor": 1,
+     "turn": [
+      0,
+      50
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 3,
+     "rainbow": 0,
+     "defender": "PR1-022",
+     "damage": [
+      40
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 164,
+     "actor": 1,
+     "turn": [
+      0,
+      52
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 0,
+     "defender": "ES1-024",
+     "damage": [
+      50
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "coin_flip",
+      "focus_band",
+      "discard_attached_trainer",
+      "turn_end",
+      "pokemon_check",
+      "turn_start",
+      "draw"
+     ]
+    },
+    {
+     "n": 169,
+     "actor": 1,
+     "turn": [
+      0,
+      54
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 0,
+     "defender": "ES1-024",
+     "damage": [
+      50
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    }
+   ],
+   "new_v9": [
+    {
+     "n": 124,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 1,
+     "defender": "PR1-022",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 131,
+     "actor": 1,
+     "turn": [
+      0,
+      44
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 1,
+     "defender": "neo3-004",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 137,
+     "actor": 1,
+     "turn": [
+      0,
+      46
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 5,
+     "rainbow": 1,
+     "defender": "PR1-022",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 144,
+     "actor": 1,
+     "turn": [
+      0,
+      48
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 5,
+     "rainbow": 1,
+     "defender": "ES1-024",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    }
+   ],
+   "new_v10": [
+    {
+     "n": 124,
+     "actor": 1,
+     "turn": [
+      0,
+      42
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 1,
+     "defender": "PR1-022",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 131,
+     "actor": 1,
+     "turn": [
+      0,
+      44
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ]
+     ],
+     "water_basic": 4,
+     "rainbow": 1,
+     "defender": "neo3-004",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 137,
+     "actor": 1,
+     "turn": [
+      0,
+      46
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 5,
+     "rainbow": 1,
+     "defender": "PR1-022",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    },
+    {
+     "n": 144,
+     "actor": 1,
+     "turn": [
+      0,
+      48
+     ],
+     "check_valid": true,
+     "submit": "accepted",
+     "diagnostic_id": null,
+     "blastoise_energy": [
+      [
+       "PMCG4-064",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG4-063",
+       "special"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ],
+      [
+       "PMCG4-065",
+       "special"
+      ],
+      [
+       "PMCG1-097",
+       "basic"
+      ],
+      [
+       "PMCG1-099",
+       "basic"
+      ]
+     ],
+     "water_basic": 5,
+     "rainbow": 1,
+     "defender": "ES1-024",
+     "damage": [
+      60
+     ],
+     "events": [
+      "attack",
+      "damage",
+      "knock_out"
+     ]
+    }
+   ]
+  },
+  "energy_trans_choices": {
+   "old_v9": 3,
+   "new_v9": 0,
+   "new_v10": 0
+  },
+  "budget_used": {
+   "tool_seconds": 13.088,
+   "outer_seconds": 45.832,
+   "evidence_bytes": 18149563
+  }
+ },
+ "derived_energy_trans": {
+  "note": "derived evaluation of saved inputs; not a game; fresh policy without the game's rules-v6 deferral history",
+  "rows": [
+   {
+    "n": 126,
+    "saved_result": "unevaluable:moved_card_not_basic",
+    "rules_v9": "unevaluable:moved_card_not_basic",
+    "rules_v10": "tier3",
+    "rules_v10_restricted": false,
+    "rules_v10_fallback": "special_included",
+    "special_moves": 4,
+    "goals": [
+     {
+      "kind": "retreat",
+      "label": "retreat",
+      "source": "fetched",
+      "met": true,
+      "deficit": 0
+     }
+    ],
+    "skipped": {
+     "attack_special_energy_on_active": 1
+    },
+    "saved_choice": [
+     "PMCG1-011",
+     "PMCG1-097",
+     "PMCG1-023"
+    ],
+    "saved_submit": "accepted"
+   },
+   {
+    "n": 131,
+    "saved_result": "unevaluable:moved_card_not_basic",
+    "rules_v9": "unevaluable:moved_card_not_basic",
+    "rules_v10": "tier3",
+    "rules_v10_restricted": false,
+    "rules_v10_fallback": "special_included",
+    "special_moves": 2,
+    "goals": [
+     {
+      "kind": "retreat",
+      "label": "retreat",
+      "source": "fetched",
+      "met": true,
+      "deficit": 0
+     }
+    ],
+    "skipped": {
+     "attack_special_energy_on_active": 1
+    },
+    "saved_choice": [
+     "PMCG1-023",
+     "PMCG1-097",
+     "PMCG1-032"
+    ],
+    "saved_submit": "accepted"
+   },
+   {
+    "n": 133,
+    "saved_result": "unevaluable:moved_card_not_basic",
+    "rules_v9": "unevaluable:moved_card_not_basic",
+    "rules_v10": "tier3",
+    "rules_v10_restricted": false,
+    "rules_v10_fallback": "special_included",
+    "special_moves": 2,
+    "goals": [
+     {
+      "kind": "retreat",
+      "label": "retreat",
+      "source": "fetched",
+      "met": true,
+      "deficit": 0
+     }
+    ],
+    "skipped": {
+     "attack_special_energy_on_active": 1
+    },
+    "saved_choice": [
+     "PMCG1-032",
+     "PMCG4-065",
+     "PMCG1-023"
+    ],
+    "saved_submit": "accepted"
+   }
+  ]
+ }
+}
