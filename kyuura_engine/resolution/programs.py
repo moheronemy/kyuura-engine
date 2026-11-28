@@ -2188,6 +2188,20 @@ class Status(Element):
 
         return focus_band_of(run.res, target) is not None
 
+    def barrier_effect_coin_path(self, run: AttackRun) -> bool:
+        """v0.204（docs/barrier-effect-coin-v0.204.md）: バリアーの相手にもこの要素のコインを投げる経路か（状態と要素の値だけで決める。状態を変えない。カード ID で分けない）。
+
+        相手の対戦ポケモンへの、この要素のコインで特殊状態を決める要素（「うら」の効果・ワザ全体のコイン・前の結果・入れ替え・ダメージのあとの条件・特殊などくのない形）で、
+        同じワザの前の要素に相手へのダメージの要素があり（ダメージのあとの追加効果）、ほかの要素がどれも相手へのダメージの要素のとき。コインでダメージの量・ワザの成否を決める
+        経路、自分への効果（自分へのダメージ・自分のマーカー・自分の特殊状態を含むワザ）、別の対象への処理はこの経路ではない。"""
+        if (self.target != OPP or self.local_coin is None or self.otherwise is not None or self.gate is not None or self.if_result is not None
+                or self.after_switch is not None or self.after_damage is not None or self.poison_damage is not None or self.poison_multiplier != 1):
+            return False
+        if run.redirect is not None or run.index >= len(run.program) or run.program[run.index] is not self:
+            return False
+        others = [element for element in run.program if element is not self]
+        return bool(others) and all(isinstance(element, Damage) and element.target == OPP for element in others) and run.program.index(self) > 0
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -2259,7 +2273,9 @@ class Status(Element):
                 if run.flip(1).results[0] is self.local_coin:
                     reaches(run.res, run.fs, owner, target, self.condition)  # 受けないと決まっている（偽。ログ attack_evaded）
                 return False
-            prevented_effect_coin(run, owner, target)  # v0.31: 「ワザをうけない」状態（バリアー）なら、効果だけを決めるコインを投げるか決まらない
+            # v0.31: 「ワザをうけない」状態（バリアー）なら、効果だけを決めるコインを投げるか決まらない。v0.204（docs/barrier-effect-coin-v0.204.md）: ダメージのあとに
+            # 相手への特殊状態を決めるこの要素のコイン（``barrier_effect_coin_path``）は、バリアーの相手でもコインを通常どおり 1 回投げ、バリアーが効果を無効にする（下の reaches）
+            prevented_effect_coin(run, owner, target, allow_barrier=self.barrier_effect_coin_path(run))
             condition = self.condition
             if run.flip(1).results[0] is not self.local_coin:
                 if self.otherwise is None:
@@ -2276,12 +2292,18 @@ class Status(Element):
         return False
 
 
-def prevented_effect_coin(run: AttackRun, owner: int, target: PokemonInPlay) -> None:
+def prevented_effect_coin(run: AttackRun, owner: int, target: PokemonInPlay, *, allow_barrier: bool = False) -> None:
     """効果の要素のコインの前に、対象が効果の要素を無効にする状態（v0.31。バリアー）なら問い（HC3。コインはその効果だけを決めるので、投げるかが
-    決められない。v0.4b の ``prevented_coin_damage`` と同じ形）。"""
+    決められない。v0.4b の ``prevented_coin_damage`` と同じ形）。
+
+    ``allow_barrier``（v0.204。docs/barrier-effect-coin-v0.204.md）: 無効にする効果がバリアー（``catalog.BARRIER``。「次の相手の番の「ワザ」をうけない」）なら問わない
+    （コインは通常どおり投げ、バリアーが効果を無効にする。「ワザをうけない」を、ワザを受けるポケモンへの処理に当てた実装解釈）。ほかの効果の要素を無効にする効果
+    （［クリスタルボディ］・［ニュートラルシールド］など）は今までどおり問う。"""
     from .kernel import first_void
 
     void = first_void(run.res, run.incoming(), owner, target, Window.BEFORE_EFFECT)
+    if void is not None and allow_barrier and void.definition.name == "barrier":
+        return
     if void is not None:
         raise run.res.question("prevented_effect_coin", f"ポケモン {target.pokemon_id}（{void.implementation.kind}）")
 
