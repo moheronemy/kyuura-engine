@@ -232,11 +232,14 @@ class HurricanePunchTest(unittest.TestCase):
                 self.assertEqual(damages(events), [(1, amount, "opponent_active")])
                 self.assertEqual(draws, 4)  # 120 でサカキのカイリキーは HP 以上になり、こんじょうの決定を待つ（コインはまだ）
 
-    def test_prevented_defender_is_unresolved(self):
+    def test_prevented_defender_flips_and_prevents(self):
+        """v0.202: ハリケーンパンチ（「おもて」の数×）は、「ダメージを受けない」相手にも 4 枚を投げ、ダメージを無効にする（v0.11〜v0.201 は止めた。
+        docs/coin-times-prevented-damage-v0.202.md）。いかりのスーパーパンチ（上の ``test_prevented_defender_is_unresolved``）は止めたまま。"""
         state = board(gmachamp(), {"card": METAPOD, "evolved_from": CATERPIE, "prevent_damage": TURN - 1})
-        with self.assertRaises(UnsupportedError) as raised:
-            apply_command(state, UseAttack(0, 0))
-        self.assertEqual(raised.exception.code, "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+        new, events, draws = run(state, UseAttack(0, 0), H, H, H, H)
+        kinds = [e["kind"] for e in events]
+        self.assertEqual(kinds[:6], ["attack", "coin_flip", "coin_flip", "coin_flip", "coin_flip", "damage_prevented"])
+        self.assertEqual(new.players[1].active.damage, 0)
 
 
 class EvolutionTest(unittest.TestCase):

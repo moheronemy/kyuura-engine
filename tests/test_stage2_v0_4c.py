@@ -806,14 +806,19 @@ class TwineedleTest(unittest.TestCase):
 class PreventedTargetTest(unittest.TestCase):
     """「かたまる」で「ダメージを受けない」状態の相手（p.321。v0.4b の未解決裁定を受け継ぐ。13）。"""
 
-    def test_twineedle_against_a_protected_target_is_unresolved(self):
-        """コインでダメージの量を決める要素だけのワザ（``CoinFlipDamage``）なので、v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``
-        がダブルニードルにも当てはまる。拒否の前にコイン（こんらんのコインも）を投げず、状態も乱数も変わらない。"""
+    def test_twineedle_against_a_protected_target_flips_and_prevents(self):
+        """コインでダメージの量を決める要素だけのワザ（``CoinFlipDamage``）。v0.202 から、「ダメージを受けない」相手にも通常どおりコインを 2 枚投げ、
+        結果のダメージを無効にする（v0.4c〜v0.201 は v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` で止めた。docs/coin-times-prevented-damage-v0.202.md）。
+        こんらん状態なら、先にこんらんのコインを投げる。"""
         state = protected_opponent()
         self.assertEqual(len(state.players[1].active.persistent_effects), 1)
-        assert_rejected(self, state, UseAttack(0, 0), "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
+        new, events = run(with_coin_results(state, H, H), UseAttack(0, 0))
+        self.assertEqual([e["kind"] for e in events][:4], ["attack", "coin_flip", "coin_flip", "damage_prevented"])
+        self.assertEqual(new.players[1].active.damage, 0)
         confused = protected_opponent(beedrill(energy=[GRASS, GRASS, GRASS], confusion=True))
-        assert_rejected(self, confused, UseAttack(0, 0), "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
+        new, events = run(with_coin_results(confused, H, H, T), UseAttack(0, 0))
+        self.assertEqual([e["source"] for e in events if e["kind"] == "coin_flip"], ["confusion", "attack", "attack"])
+        self.assertEqual(new.players[1].active.damage, 0)
 
     def test_normal_targets_and_expired_effects(self):
         """「かたまる」が「うら」なら通常どおり使える。効果が期限（相手の番の次の番（7 番）の終わり）で消えたら、9 番には

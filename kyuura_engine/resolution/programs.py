@@ -1211,6 +1211,9 @@ class HeadsTimes:
     coins: int
     per: int
     by_heads: ClassVar[bool] = False
+    # v0.202: 受けるポケモンの効果がダメージだけを無効にするとき（からにこもる・かたまる）、コインを投げて結果のダメージに無効を当てる（``Damage.run``。
+    # v0.201 の ``HeadsBonus`` と同じ読み方。docs/coin-times-prevented-damage-v0.202.md）。ワザを受けない効果（バリアー）は今までどおり問う
+    flip_against_damage_only_void: ClassVar[bool] = True
 
     @property
     def local_coins(self) -> int:
@@ -1769,7 +1772,8 @@ class Damage(Element):
             void = first_void(run.res, run.incoming(), owner, receiver)
             # v0.201: 「コインを投げて「おもて」なら、N ダメージを追加する」（``HeadsBonus``）は、受けるポケモンの効果がダメージだけを無効にする（効果の窓を持たない。
             # 「からにこもる」「かたまる」）なら、通常どおりコインを投げ、その結果で決まるダメージに無効を当てる（カード文面と既存のルールに基づく実装解釈。
-            # docs/quick-attack-prevented-coin-v0.201.md）。ワザ全体を受けない効果（バリアー。効果の窓も持つ）と、ほかのコインのダメージ（×・つのでつつく・相手が投げるコインなど）は今までどおり問う
+            # docs/quick-attack-prevented-coin-v0.201.md）。v0.202 から、「コインを N 枚投げ、「おもて」の数×M のダメージ」（``HeadsTimes``）も同じ（docs/coin-times-prevented-damage-v0.202.md）。
+            # ワザ全体を受けない効果（バリアー。効果の窓も持つ）と、ほかのコインのダメージ（たまなげMAX・つのでつつく・相手が投げるコインなど）は今までどおり問う
             damage_only = void is not None and Window.BEFORE_EFFECT not in void.definition.windows
             if void is not None and not (damage_only and getattr(self.base, "flip_against_damage_only_void", False) and not gate_only_damage):
                 raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}",

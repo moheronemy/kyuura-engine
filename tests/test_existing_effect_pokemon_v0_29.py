@@ -243,17 +243,17 @@ class CoinDamageTest(unittest.TestCase):
                     (damage,) = events(new, since, "damage")
                     self.assertEqual(damage["steps"][0], ("1 基本となる計算", heads * effect.damage_per_heads))
 
-    def test_prevented_defender_is_unresolved(self):
-        """「ダメージを受けない」状態（かたまる）の相手には、コインがダメージの量だけを決めるので、コインの前に止める（既存の問い・既存の停止コード
-        UNRESOLVED_PREVENTED_COIN_DAMAGE。v0.4b。新しいコードはない）。"""
+    def test_prevented_defender_flips_and_prevents(self):
+        """「ダメージを受けない」状態（かたまる）の相手には、v0.202 から通常どおりコインを投げ、結果のダメージを無効にする（v0.29〜v0.201 はコインの前に
+        UNRESOLVED_PREVENTED_COIN_DAMAGE で止めた。docs/coin-times-prevented-damage-v0.202.md）。"""
         for key in ((MISTYS_GOLDEEN, 0), (LT_SURGES_VOLTORB, 0), (BROCKS_GEODUDE, 0), (BROCKS_LICKITUNG, 1)):
             with self.subTest(key=key):
-                state = board(attacker(key), {"card": METAPOD, "evolved_from": CATERPIE, "prevent_damage": 6})
-                before = snapshot(state)
-                with self.assertRaises(UnsupportedError) as ctx:
-                    apply_command(state, UseAttack(0, key[1]))
-                self.assertEqual(ctx.exception.code, "UNRESOLVED_PREVENTED_COIN_DAMAGE")
-                self.assertEqual(snapshot(state), before)
+                coins = EXPECTED[key][1].coins
+                state = with_coin_results(board(attacker(key), {"card": METAPOD, "evolved_from": CATERPIE, "prevent_damage": 6}), *([H] * coins))
+                new = apply_command(state, UseAttack(0, key[1]))
+                got = [e["kind"] for e in new.log[len(state.log):]]
+                self.assertEqual(got[:coins + 2], ["attack", *["coin_flip"] * coins, "damage_prevented"])
+                self.assertEqual(new.players[1].active.damage, 0)
 
 
 class FixedDamageTest(unittest.TestCase):

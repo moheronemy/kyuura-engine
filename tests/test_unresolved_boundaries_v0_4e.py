@@ -32,7 +32,7 @@ from tests.helpers import (
     POTION, PONYTA, RATTATA, SEEL, SWITCH, T, VULPIX, WATER, WEEDLE, FIRE, build_test_state, find_seed, uids, with_coin_results,
     BLASTOISE, BULBASAUR, IVYSAUR, SQUIRTLE, VENUSAUR, WARTORTLE, GASTLY, HAUNTER, GRIMER, MUK, PSYCHIC,
     DIGLETT, FIGHTING, HITMONCHAN, LIGHTNING, MACHAMP, MACHOKE, MACHOP, PIKACHU,
-    GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKETS_SNORLAX,
+    EXEGGCUTE, EXEGGUTOR, GIOVANNIS_MACHAMP, GIOVANNIS_MACHOKE, GIOVANNIS_MACHOP, ROCKETS_MOLTRES, ROCKETS_SNORLAX,
 )
 from tests.test_evolution_v0_4a import test_pool
 
@@ -658,9 +658,17 @@ class PreventedCoinDamageBoundaryTest(BoundaryTestCase):
     def test_trigger_and_neighbours(self):
         doduo = {"card": DODUO, "energy": [FIRE]}
         beedrill = {"card": BEEDRILL, "evolved_from": [WEEDLE, KAKUNA], "energy": [GRASS] * 3}
-        for attacker in (doduo, beedrill, {**doduo, "confusion": True}):
+        # v0.202（docs/coin-times-prevented-damage-v0.202.md）: 「おもて」の数×のワザ（みだれづき・ダブルニードル）は止めない（下の「止めない」）。止める場合は、
+        # 自分のダメージカウンターの数×（いかりのスーパーパンチ）とエネルギーの数だけのコイン（たまなげMAX）
+        machop = {"card": GIOVANNIS_MACHOP, "energy": [FIGHTING] * 2, "damage": 30}
+        exeggutor = {"card": EXEGGUTOR, "evolved_from": EXEGGCUTE, "energy": [GRASS] * 2}
+        for attacker, index in ((machop, 1), (exeggutor, 1), ({**machop, "confusion": True}, 1)):
             with self.subTest(attacker=attacker["card"], confused=attacker.get("confusion", False)):
-                self.assert_rejected(self.board(attacker), UseAttack(0, 0), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+                self.assert_rejected(self.board(attacker), UseAttack(0, index), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+        for attacker in (doduo, beedrill):
+            with self.subTest(proceeds=attacker["card"]):
+                done = self.assert_proceeds(with_coin_results(self.board(attacker), H, T), UseAttack(0, 0))
+                self.assertIn("damage_prevented", [e["kind"] for e in done.log])
         # 止めない: ダメージを受けない状態でない相手・ダメージ以外の効果のあるワザ（どくばり）・ふきとばし
         self.assert_proceeds(with_coin_results(self.board(doduo, prevent=False), H, T), UseAttack(0, 0))
         poisoned = self.assert_proceeds(with_coin_results(self.board(beedrill), H), UseAttack(0, 1))

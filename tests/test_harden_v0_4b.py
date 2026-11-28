@@ -290,12 +290,17 @@ class DamagePreventionTest(unittest.TestCase):
                          ["damage_prevented", "coin_flip", "damage"])
         self.assertEqual((new.players[0].active.damage, new.players[1].active.damage), (0, 10))
 
-    def test_coin_damage_against_prevention_is_unresolved(self):
-        """ドードーの「みだれづき」（コインでダメージの量を決める要素だけ）: 要素が無効になるとき、そのコインを投げるかは決め
-        られない（乱数の続きが変わる）。こんらん状態でも、こんらんのコインの前に止める。状態も乱数も変わらない。"""
-        assert_rejected(self, protected({"card": DODUO, "energy": [FIRE]}), UseAttack(1, 0), "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
-        assert_rejected(self, protected({"card": DODUO, "energy": [FIRE], "confusion": True}), UseAttack(1, 0),
-                        "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
+    def test_coin_damage_against_prevention_flips_and_prevents(self):
+        """ドードーの「みだれづき」（コインでダメージの量を決める要素だけ）: v0.202 から、通常どおりコインを 2 枚投げ、結果のダメージを無効にする
+        （v0.4b〜v0.201 は、そのコインを投げるかが決められないとして止めた。docs/coin-times-prevented-damage-v0.202.md）。こんらん状態なら、先にこんらんの
+        コイン（「うら」なら自分にダメージでワザは終わる）。"""
+        new, events = run(with_coin_results(protected({"card": DODUO, "energy": [FIRE]}), H, T), UseAttack(1, 0))
+        self.assertEqual(kinds(events)[:4], ["attack", "coin_flip", "coin_flip", "damage_prevented"])
+        self.assertEqual(new.players[0].active.damage, 0)
+        new, events = run(with_coin_results(protected({"card": DODUO, "energy": [FIRE], "confusion": True}), H, H, H), UseAttack(1, 0))
+        self.assertEqual([e["source"] for e in events if e["kind"] == "coin_flip"], ["confusion", "attack", "attack"])
+        self.assertIn("damage_prevented", kinds(events))
+        self.assertEqual(new.players[0].active.damage, 0)
         # 効果のないポケモンには、今までどおり使える
         new, events = run(with_coin_results(unprotected({"card": DODUO, "energy": [FIRE]}), H, H), UseAttack(1, 0))
         self.assertEqual(new.players[0].active.damage, 20)
@@ -686,7 +691,9 @@ class AtomicityTest(unittest.TestCase):
         assert_rejected(self, state, UseAttack(0, 0), "INSUFFICIENT_ENERGY")
         assert_rejected(self, state, EvolvePokemon(0, uid_of(state, 0, FIRE), state.players[0].active.pokemon_id), "NOT_EVOLUTION_CARD")
         assert_rejected(self, state, Retreat(0, (), state.players[0].bench[0].card), "WRONG_RETREAT_COST")
-        assert_rejected(self, protected({"card": DODUO, "energy": [FIRE]}), UseAttack(1, 0), "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
+        # v0.202 から、みだれづき（「おもて」の数×）は止めない。止めるままの、サカキのワンリキーの［いかりのスーパーパンチ］（自分のダメージカウンターの数×）で確かめる
+        assert_rejected(self, protected({"card": "PMCG6-057", "energy": [FIGHTING, FIGHTING], "damage": 30}), UseAttack(1, 1),
+                        "UNRESOLVED_PREVENTED_COIN_DAMAGE", UnsupportedError)
 
     def test_pending_decision_rejects_other_commands(self):
         state = my_turn(stage1(prevent_damage=3), hand=(SWITCH,))

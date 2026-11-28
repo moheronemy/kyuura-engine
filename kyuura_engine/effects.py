@@ -432,15 +432,16 @@ class CoinFlipDamage(AttackEffect):
     implementation_id = "coin_flip_damage"
 
     def problem(self, state: GameState, use: AttackUse) -> UnsupportedError | None:
-        """相手の対戦ポケモンが「ダメージを受けない」状態（v0.4b。「かたまる」など）なら、原典で決められない。
+        """v0.202 から止めない（v0.4b〜v0.201 は、相手の対戦ポケモンが「ダメージを受けない」状態なら ``UNRESOLVED_PREVENTED_COIN_DAMAGE``）。
 
         p.321 は「それを受けたポケモンが「ダメージを受けない」状態だったら、そのポケモンにダメージを与える「ワザの要素」は
-        無効」と書く。このワザの要素は「コインを2枚投げ、「おもて」の数×10のダメージ」の 1 つだけで、コインはダメージの
-        量を決めるためだけに投げる。無効になった要素のコインを投げるか（投げても結果は使わない）は書かれていない。
-        投げるかどうかで乱数の続き（この先のコインの結果）が変わるので、こんらんのコインも含め、コインを投げる前に止める
-        （docs/persistent-damage-v0.4b.md 5 章）。
+        無効」と書き、無効になった要素のコインを投げるかは書かれていない（docs/persistent-damage-v0.4b.md 5 章）。v0.202 は、v0.201 の
+        ［でんこうせっか］と同じく、通常どおりコインを投げ、その結果で決まるダメージに無効を当てる（カード文面と既存のルールに基づく実装解釈。
+        docs/coin-times-prevented-damage-v0.202.md）。ここで見る「ダメージを受けない」状態（``damage_prevention`` の ``PreventDamage``）は、どれも
+        ダメージだけを無効にする効果（解決の基盤の ``HARDEN``。効果の窓を持たない）なので、解決の基盤の ``HeadsTimes`` の判定と同じになる。
+        ワザを受けない効果（バリアー。``AttackBarrier``）は、ここでは見ず、解決の基盤が今までどおり止める。
         """
-        return prevented_coin_damage_problem(state, use)
+        return None
 
     def __post_init__(self) -> None:
         if not isinstance(self.coins, int) or isinstance(self.coins, bool) or self.coins < 1:
@@ -472,7 +473,7 @@ class CoinFlipDamage(AttackEffect):
 def prevented_coin_damage_problem(state: GameState, use: AttackUse) -> UnsupportedError | None:
     """ダメージの量だけをコインで決めるワザの要素（``CoinFlipDamage``・v0.11 の ``CoinHeadsDamagePerOwnCounter``）を、「ダメージを
     受けない」状態（v0.4b）の相手の対戦ポケモンに使う場合（``UNRESOLVED_PREVENTED_COIN_DAMAGE``。v0.4b の ``CoinFlipDamage.problem`` を
-    v0.11 で関数に分けた。メッセージ・止める条件は同じ）。"""
+    v0.11 で関数に分けた。メッセージ・止める条件は同じ）。v0.202 から ``CoinFlipDamage`` は使わない（``CoinFlipDamage.problem``）。"""
     target = state.players[1 - use.player].active
     prevention = None if target is None else damage_prevention(state, target)
     if prevention is None:
@@ -504,7 +505,8 @@ class CoinHeadsDamagePerOwnCounter(AttackEffect):
     - 数えるのは、このワザを使うポケモンのダメージカウンター（ダメージ ÷ 10。``Rules.damage_per_counter``）。このワザの要素の中で自分の
       ダメージは変わらない（自分へのダメージの要素はない）。
     - コインはダメージの量を決めるためだけに投げる（ほかの要素はない）ので、「ダメージを受けない」状態の相手には、``CoinFlipDamage`` と
-      同じく、コインを投げる前に ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` で止める（``prevented_coin_damage_problem``）。
+      同じく、コインを投げる前に ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` で止める（``prevented_coin_damage_problem``。v0.202 で ``CoinFlipDamage`` は止めなくなったが、
+      このワザは変えていない）。
     """
 
     damage_per_counter: int
@@ -550,7 +552,7 @@ class SelfDamageInsteadOnTails(AttackEffect):
       解説「きぜつしないためには「ディフェンダー」を2枚つけてようやくです」）。
     - 「うら」では相手はダメージを受けない（ダメージの要素がない）ので、相手の「とうめい」（v0.9）・「はんげき」（v0.10）は評価しない。
     - コインは相手へのダメージの量だけでなく自分へのダメージの要素も決める（その要素は「ダメージを受けない」状態の相手でも有効）ので、
-      ``CoinFlipDamage`` の ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` には当たらない（``CoinBonusDamageAndParalyze`` と同じ考え方）。
+      ``CoinFlipDamage`` の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.4b〜v0.201）には当たらない（``CoinBonusDamageAndParalyze`` と同じ考え方）。
     """
 
     self_damage: int
@@ -1384,7 +1386,7 @@ class CoinBonusDamageAndParalyze(AttackEffect):
     - ダメージの量がコインで決まるので、コインはダメージの計算の前に投げる（「おもて」なら 30、「うら」なら 10）。
     - マヒ状態にするのは「効果」で、ダメージではない。最終ダメージが 0 でも、相手が「ダメージを受けない」状態（v0.4b。ダメージの
       要素は無効、「ダメージ以外の効果は受ける」）でも、「おもて」ならマヒ状態にする。このワザのコインはマヒにするかも決めるので、
-      「ダメージを受けない」相手にもコインを投げる（``CoinFlipDamage`` の ``UNRESOLVED_PREVENTED_COIN_DAMAGE`` は、コインがダメージの
+      「ダメージを受けない」相手にもコインを投げる（``CoinFlipDamage`` の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.4b〜v0.201）は、コインがダメージの
       量だけを決めるワザの問題で、このワザには当てはまらない）。
     - 相手の対戦ポケモンが、このワザのダメージできぜつしたら、処理の対象がいないのでマヒ状態にしない（p.309・p.323。
       ``ParalyzeOnHeads`` と同じ。コインは投げたあと）。
@@ -7562,7 +7564,8 @@ class CoinFlipDamageThenSelfConfuse(AttackEffect):
     v0.2d の ``CoinFlipDamage``（みだれづき）と同じダメージの要素（``HeadsTimes``）に、コインのない自分への特殊状態（``Status(CONFUSION, target=SELF)``。v0.41 の
     ``DamageThenConfuseBoth`` の自分への要素と同じ）を加えた形。「おもて」が 0 枚（ダメージ 0）でも、自分はこんらん状態になる（「その後」は順番。「ダメージを
     与えた後」の条件ではない）。ワザを使ったポケモンが相手の「はんげき」などで HP 以上なら、こんらんにしない（p.309）。コインはダメージの量だけを決めるので、
-    「ダメージを受けない」相手には v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``。"""
+    「ダメージを受けない」相手には、v0.42〜v0.201 は v0.4b の ``UNRESOLVED_PREVENTED_COIN_DAMAGE``。v0.202 から、通常どおりコインを投げてダメージを無効にし、
+    そのあと自分はこんらん状態になる（``HeadsTimes``。docs/coin-times-prevented-damage-v0.202.md）。"""
 
     coins: int
     damage_per_heads: int

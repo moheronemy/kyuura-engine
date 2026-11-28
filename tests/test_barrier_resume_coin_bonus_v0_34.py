@@ -385,18 +385,23 @@ class BarrierCoinTest(unittest.TestCase):
 
     def test_damage_only_coin_attacks_keep_v0_4b_code(self):
         """コインがダメージの要素だけを決めるワザ（失敗するワザ・ミサイルばり・たまなげMAX・でんこうせっか）は、バリアー・かたまるの相手に v0.4b の
-        ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.33 と同じ）。v0.201 から、でんこうせっかだけは、かたまる（ダメージだけを無効にする）の相手にはコインを投げる。"""
+        ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.33 と同じ）。v0.201 から、でんこうせっかは、かたまる（ダメージだけを無効にする）の相手にはコインを投げる。
+        v0.202 から、ミサイルばり（「おもて」の数×）も同じ（docs/coin-times-prevented-damage-v0.202.md）。"""
         cases = [(mon(BLAINES_KANGASKHAN, (FIGHTING,)), 0), (mon(JOLTEON, (LIGHTNING, LIGHTNING, LIGHTNING)), 1), (mon(EXEGGUTOR, (GRASS, GRASS)), 1),
                  (mon(FLAREON, (FIRE, FIRE)), 0)]
         for attacker, index in cases:
             with self.subTest(card=attacker["card"]):
                 assert_stops(self, with_barrier(attacker), UseAttack(1, index), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
-                if attacker["card"] == FLAREON:
+                if attacker["card"] in (FLAREON, JOLTEON):
                     # v0.201: でんこうせっか（「おもて」なら追加。HeadsBonus）は、ダメージだけを無効にするかたまるの相手にはコインを投げて無効を当てる
-                    # （tests/test_quick_attack_prevented_coin_v0_201.py）。バリアー（ワザを受けない）には上のとおり止める
-                    state = with_coin_results(board(attacker, mon(METAPOD, prevent_damage=TURN - 1)), H)
+                    # （tests/test_quick_attack_prevented_coin_v0_201.py）。v0.202: ミサイルばり（「おもて」の数×。HeadsTimes）も同じ
+                    # （tests/test_coin_times_prevented_damage_v0_202.py）。バリアー（ワザを受けない）には上のとおり止める
+                    state = with_coin_results(board(attacker, mon(METAPOD, prevent_damage=TURN - 1)), H, H, H, H)
                     new = play(state, UseAttack(0, index))
-                    self.assertEqual([e["kind"] for e in new.log[len(state.log):]][:3], ["attack", "coin_flip", "damage_prevented"])
+                    got = [e["kind"] for e in new.log[len(state.log):]]
+                    flips = got[1:].index("damage_prevented")
+                    self.assertGreaterEqual(flips, 1)
+                    self.assertEqual(got[:flips + 2], ["attack", *["coin_flip"] * flips, "damage_prevented"])
                     continue
                 assert_stops(self, board(attacker, mon(METAPOD, prevent_damage=TURN - 1)), UseAttack(0, index), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
 

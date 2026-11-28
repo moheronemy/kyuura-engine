@@ -803,7 +803,8 @@ class RainbowPowderTest(unittest.TestCase):
 
 class ReusedTypeTest(unittest.TestCase):
     def test_double_lariat(self):
-        """コイン 2 枚の「おもて」0・1・2 枚で 0・40・80（0 枚は失敗ではない）。「ダメージを受けない」相手には v0.4b。"""
+        """コイン 2 枚の「おもて」0・1・2 枚で 0・40・80（0 枚は失敗ではない）。「ダメージを受けない」相手には、v0.202 から通常どおりコインを 2 枚投げて
+        ダメージを無効にする（v0.4b〜v0.201 は止めた。docs/coin-times-prevented-damage-v0.202.md）。"""
         for flips, base in (((TL, TL), 0), ((HD, TL), 40), ((HD, HD), 80)):
             state = board(mon(URSARING, (W, W, W, W)), opponent=mon(CHANSEY))
             after = attack(state, 1, *flips)
@@ -811,7 +812,13 @@ class ReusedTypeTest(unittest.TestCase):
                 self.assertEqual(len(coins_of(state, after)), 2)
                 self.assertEqual(amounts(state, after, 1)[0][0], base)
                 self.assertEqual(kinds(state, after, "attack_failed"), [])
-        rejects(self, board(mon(URSARING, (W, W, W, W)), opponent=mon(CHANSEY, prevent_damage=TURN - 1)), UseAttack(0, 1), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+        prevented = board(mon(URSARING, (W, W, W, W)), opponent=mon(CHANSEY, prevent_damage=TURN - 1))
+        for flips in ((TL, TL), (HD, TL), (HD, HD)):
+            after = attack(prevented, 1, *flips)
+            with self.subTest(prevented=flips):
+                self.assertEqual(len(coins_of(prevented, after)), 2)
+                self.assertEqual(kinds(prevented, after, "damage_prevented", "damage"), ["damage_prevented"])
+                self.assertEqual(after.players[1].active.damage, 0)
 
     def test_plain_damage_and_coin_attacks(self):
         """みずかけ・たいあたり（説明文なし）は目安のダメージだけ。でんきショックは「おもて」でマヒ。でんげきは「うら」で自分にも 10。"""

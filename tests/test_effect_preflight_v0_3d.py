@@ -17,6 +17,7 @@
 import itertools
 import unittest
 
+from kyuura_engine import effects as E
 from kyuura_engine import EngineError, PlayTrainer, UseAttack, apply_command, check_invariants, load_card_pool
 from kyuura_engine.conditions import paralysis_problem, paralysis_recovery_turn
 from kyuura_engine.effects import DEFAULT_EFFECTS, AttackEntry, AttackKey, ConfuseOnHeads
@@ -96,6 +97,8 @@ EVOLVED_FROM = {METAPOD: (CATERPIE,), BEEDRILL: (WEEDLE, KAKUNA), BUTTERFREE: (C
                 GIOVANNIS_MACHAMP: (GIOVANNIS_MACHOP, GIOVANNIS_MACHOKE), DARK_WARTORTLE: (ROCKET_SQUIRTLE,)}
 # コインでダメージの量を決める要素だけのワザ（CoinFlipDamage。v0.11 のいかりのスーパーパンチ（CoinHeadsDamagePerOwnCounter）も）
 COIN_DAMAGE = {(DODUO, 0), (BEEDRILL, 0), (GIOVANNIS_MACHOP, 1), (GIOVANNIS_MACHAMP, 0), (DARK_WARTORTLE, 0)}
+# v0.202: そのうち「おもて」の数×のワザ（登録の型が ``CoinFlipDamage``）。「ダメージを受けない」相手にも止めない
+COIN_TIMES = {key for key in COIN_DAMAGE if type(E.DEFAULT_EFFECTS.attack_entry(*key).effect) is E.CoinFlipDamage}
 ATTACKER_STATES = [{}, {"poison": 10}, {"confusion": True}, {"poison": 10, "confusion": True}]
 DEFENDER_STATES = [{}, {"poison": 10}, {"sleep": True}, {"paralysis": 2}, {"paralysis": 3}, {"confusion": True},
                    {"poison": 10, "confusion": True},
@@ -144,9 +147,10 @@ class CoinIndependenceTest(unittest.TestCase):
             results = {outcome(with_coin_results(state, *coins), UseAttack(0, index)) for coins in COINS}
             with self.subTest(card=card, attacker=attacker_state, defender=defender_state, near_ko=near_ko, pluspower=pluspower):
                 self.assertEqual(len(results), 1, results)
-                if (card, index) in COIN_DAMAGE and "prevent_damage" in defender_state:
+                if (card, index) in COIN_DAMAGE and (card, index) not in COIN_TIMES and "prevent_damage" in defender_state:
                     # v0.4b: コインでダメージの量を決めるワザの要素が無効になるとき、そのコインを投げるかは決められない
-                    # （p.321。docs/persistent-damage-v0.4b.md 5 章）。こんらんのコインの前に止める
+                    # （p.321。docs/persistent-damage-v0.4b.md 5 章）。こんらんのコインの前に止める。v0.202 から「おもて」の数×（``COIN_TIMES``）は止めず、
+                    # 通常どおりコインを投げてダメージを無効にする（下の、ほかのワザと同じ分け方。docs/coin-times-prevented-damage-v0.202.md）
                     self.assertEqual(results, {"UNRESOLVED_PREVENTED_COIN_DAMAGE"})
                 elif card == ROCKETS_SNORLAX and "prevent_damage" in defender_state:
                     # v0.17b: たおれこむのダメージが「ダメージを受けない」状態で無効なら、自分をねむりにするかは決められない（Z23）。止める問いの優先度は
