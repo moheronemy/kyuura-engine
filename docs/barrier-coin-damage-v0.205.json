@@ -1,0 +1,591 @@
+{
+ "format": "kyuura-barrier-coin-damage/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "a540fc88a8cf54d4a26bd5495d54a91a5e64fbf7",
+  "branch": "claude/barrier-coin-damage",
+  "engine_version": "0.205.0",
+  "commits": {
+   "fix": "062c180",
+   "version_0_205_0": "3475e4f664c8e01b00012125f68a470eebf919b9"
+  }
+ },
+ "reading": "against Barrier, when the attack is only damage to the opponent's active, accept and flip the coins as usual (Quick Attack type: the bonus coin; Rock Throw type: the stated coins), then Barrier prevents the resulting damage (0); same card-text based reading as v0.204 (Wrap); no direct ruling of the time found",
+ "scope": {
+  "changed": "resolution Damage.run: the question is skipped when the void is catalog.BARRIER and every element of the attack is damage to the opponent's active (registration side: CoinBonusDamage has no check, CoinFlipDamage.problem does not stop since v0.202)",
+  "registrations": {
+   "CoinBonusDamage": 63,
+   "CoinFlipDamage": 85,
+   "UserSimplifiedCoinBonusDamage": 2
+  },
+  "unchanged": [
+   "attacks with an effect on the user (petal dance)",
+   "success coins (Sky Attack)",
+   "Magic Darts / egg-throw MAX",
+   "non-Barrier voids",
+   "bench / other targets"
+  ]
+ },
+ "probe_before": {
+  "quick_attack:barrier:h": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:no_barrier:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [
+    30
+   ],
+   "defender": {
+    "damage": 50,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:barrier:t": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:no_barrier:t": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    10
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:ttt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    0
+   ],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:htt": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    10
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:hhh": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [
+    30
+   ],
+   "defender": {
+    "damage": 50,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:rock_throw:withdraw:hht": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 0,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:wrap:barrier:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:petal_dance_user_effect:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:sky_attack_success_coin:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "probe_after": {
+  "quick_attack:barrier:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:no_barrier:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [
+    30
+   ],
+   "defender": {
+    "damage": 50,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:barrier:t": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "quick_attack:no_barrier:t": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    10
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:ttt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    0
+   ],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:htt": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [
+    10
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:barrier:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "rock_throw:no_barrier:hhh": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [
+    30
+   ],
+   "defender": {
+    "damage": 50,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:rock_throw:withdraw:hht": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 0,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:wrap:barrier:h": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "damage_events": [],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:petal_dance_user_effect:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:sky_attack_success_coin:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "damage_events": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "tests": {
+  "related_modules": 135,
+  "related_failed_before_expectation_updates": [
+   "tests.test_barrier_effect_coin_v0_204",
+   "tests.test_barrier_resume_coin_bonus_v0_34",
+   "tests.test_coin_times_prevented_damage_v0_202",
+   "tests.test_quick_attack_prevented_coin_v0_201"
+  ],
+  "rerun_after_updates": {
+   "modules": 5,
+   "exit_0": 5
+  },
+  "fixed_games_and_v0_13_reference": "unchanged (all pass without expectation changes)",
+  "generators": {
+   "checks": 6,
+   "exit_0": 6
+  }
+ }
+}
