@@ -2170,6 +2170,24 @@ class Status(Element):
         entry = state.effects.attack_entry(key.card_id, key.attack_index)
         return entry is not None and type(entry.effect) in self.NULLIFIED_COIN_EFFECTS
 
+    def focus_band_before_paralysis_coin(self, run: AttackRun, target: PokemonInPlay | None) -> bool:
+        """v0.203（docs/focus-band-paralysis-coin-v0.203.md）: きあいのハチマキのコインを、残りHPがなくなった時点で投げる場面か（状態と要素の値だけで決める。状態を変えない）。
+
+        相手の対戦ポケモンへの「おもて」でマヒにするこの要素のコイン（ほかの条件・「うら」の効果・特殊などくのない形）が、このワザの最後の要素で、その対象がこのワザの
+        ダメージで残りHPがなくなり、きあいのハチマキがはたらく（``kernel.focus_band_of``）とき。適用範囲はこの場面だけで、あとのダメージ・ダメージカウンター・ほかの効果・
+        ［こらえる］（KS1）は今までどおり FB1・KS1 で止める。"""
+        if (self.condition != PARALYSIS or self.target != OPP or self.local_coin is not HEADS or self.otherwise is not None or self.gate is not None
+                or self.if_result is not None or self.after_switch is not None or self.after_damage is not None or self.poison_damage is not None
+                or self.poison_multiplier != 1):
+            return False
+        if target is None or run.redirect is not None or run.index != len(run.program) - 1 or run.program[run.index] is not self:
+            return False
+        if run.state.is_face_down(target) or not E.knocked_by_hp(run.state, target):
+            return False
+        from .kernel import focus_band_of
+
+        return focus_band_of(run.res, target) is not None
+
     def run(self, run: AttackRun) -> bool:
         if self.gate is not None and not run.coin_is(self.gate):
             return False
@@ -2190,6 +2208,12 @@ class Status(Element):
             if result.dealt <= 0 and not (immune and self.local_coin is None):
                 raise run.res.question("effect_after_no_damage", f"ポケモン {result.pokemon_id}",
                                        E.effect_after_no_damage_error(str(run.key), result, self.condition))
+        if self.focus_band_before_paralysis_coin(run, target):
+            # v0.203（利用者の選んだ読み方 A）: 残りHPがなくなった時点で、きあいのハチマキのコインを投げる。「おもて」なら残りHP 10 のポケモンにこの要素を続け（コインを投げ、
+            # 「おもて」ならマヒ）、「うら」なら残りHPがないまま（下の knocked_out で対象がなく、この要素のコインは投げない。きぜつの判定の窓では投げ直さない）
+            from .kernel import focus_band_now
+
+            focus_band_now(run.res, target)
         if run.knocked_out(target):
             run.ko_prevention_conflict(target, owner)
             return False

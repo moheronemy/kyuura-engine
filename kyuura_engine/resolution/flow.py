@@ -733,16 +733,9 @@ def _focus_band(res: Resolution, owner: int, pokemon, attached, effect) -> None:
     """v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキ。持ち主がコインを 1 枚投げ（``source="trainer"``）、「おもて」ならのっているダメージを今有効な最大HP
     − ``remaining_hp`` にして（「きぜつ」せず、残りHPは「10」。ログ ``focus_band`` の ``survived``）、このカードをトラッシュする（``reason`` ``used``）。「うら」ならそのまま
     （きぜつの処理でほかのついているカードといっしょにトラッシュする）。そのあと［ずらかる］を確かめる（残りHPが「10」になった）。"""
-    state = res.state
-    flips = flip_coins(state, owner, 1, source="trainer", effect=state.cards[attached.card].card_id, card=attached.card, pokemon_id=pokemon.pokemon_id)
-    survived = flips.results[0] is CoinSide.HEADS
-    if survived:
-        pokemon.damage = max(0, max_hp(state, pokemon) - effect.remaining_hp)
-    state.add_event("focus_band", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=attached.card, result=flips.results[0].value,
-                    survived=survived, total_damage=pokemon.damage)
-    if survived:
-        E.discard_attached_tool(state, pokemon, attached, E.TOOL_USED)
-        settle_scram(res)
+    from .kernel import apply_focus_band
+
+    apply_focus_band(res, owner, pokemon, attached, effect)  # v0.203: 処理は kernel に移した（ワザの処理の中の ``focus_band_now`` と同じ）
 
 
 def _resume_exp_all(res: Resolution, decision, choices) -> None:

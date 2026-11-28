@@ -441,8 +441,18 @@ class FocusBandTest(unittest.TestCase):
         self.assertEqual(len(new_events(state, after, "knock_out")), 1)
 
     def test_effect_after_damage_is_fb1(self):
-        state = self._board(attacker=mon(H.ELECTABUZZ, (L,)), defender=mon(H.ABRA, damage=20, trainers=[tool(FOCUS_BAND)]))
+        # v0.203（docs/focus-band-paralysis-coin-v0.203.md）: でんきショック（「おもて」ならマヒ）は、残りHPがなくなった時点でハチマキのコインを投げる（下の
+        # ``test_paralysis_coin_after_damage_flips_the_band_first``）。マヒ以外の効果（どくばりの「どく」）は今までどおり FB1
+        state = self._board(attacker=mon(H.WEEDLE, (G,)), defender=mon(H.ABRA, damage=20, trainers=[tool(FOCUS_BAND)]))
         rejects(self, state, UseAttack(0, 0), NEW_CODES["FB1"])
+
+    def test_paralysis_coin_after_damage_flips_the_band_first(self):
+        state = self._board(attacker=mon(H.ELECTABUZZ, (L,)), defender=mon(H.ABRA, damage=20, trainers=[tool(FOCUS_BAND)]))
+        after = attack(state, 0, HD, HD)
+        self.assertEqual([e["source"] for e in new_events(state, after, "coin_flip")], ["trainer", "attack"])
+        abra = after.players[1].active
+        self.assertEqual((abra.damage, abra.conditions.paralyzed), (20, True))  # 残りHP 10・マヒ
+        audited(self, after)
 
     def test_band_with_exp_all_is_g40(self):
         # 同じきぜつの判定の窓で、きあいのハチマキと学習装置がはたらく（どちらを先に処理するかで結果が変わる。既存の G40）

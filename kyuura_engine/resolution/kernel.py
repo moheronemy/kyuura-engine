@@ -180,6 +180,9 @@ class Resolution:
         # プレイヤー, ダメージを与えたポケモン)）。ダメージカウンターの移動・こんらん・特殊能力のダメージでは記録しない。きあいのハチマキ・学習装置の候補（きぜつの判定の窓）と、
         # きあいのハチマキの処理の時点の問い（FB1）に使う。決定をまたぐときは続きの情報で運ぶ（``AttackRun.suspend``）
         self.damage_ko: dict[int, tuple[int, int]] = {}
+        # v0.203（docs/focus-band-paralysis-coin-v0.203.md）: このワザの処理の中で、きぜつの判定の窓より前にきあいのハチマキのコインを投げたポケモンの番号（``focus_band_now``）。
+        # 「うら」でも、きぜつの判定の窓で投げ直さない（``focus_band_of`` が None を返す）
+        self.focus_band_settled: set[int] = set()
         # v0.103（docs/neutral-shield-attack-origin-v0.103.md 4.4 節）: ワザの要素を始めるときの、枠の発生元（ワザを使ったポケモン）の今の姿が進化ポケモンか（番号 → 真偽。
         # ``note_source_form``）。その要素の中で発生元が場をはなれた（エリカのハクリューの「つれさる」は自分を山札にもどしてから相手の対戦ポケモンを評価する）あとも、続く要素の
         # 無効にする効果の判定（``source_evolved``）に要る事実だけを運ぶ（はなれたカードの uid を新しい対象として扱わない）。状態に保存しない。決定をまたいでは運ばない（運ぶ
@@ -287,6 +290,8 @@ def note_damage_ko(res: Resolution, fs: FrameState, pokemon: PokemonInPlay, befo
 def focus_band_of(res: Resolution, pokemon: PokemonInPlay):
     """v0.81: ``pokemon`` が相手のワザの分類のダメージで HP 以上になり（``res.damage_ko``）、きあいのハチマキ（``effects.FocusBand``）がついているなら (ついているカード, 実装)。
     なければ None。"""
+    if pokemon.pokemon_id in res.focus_band_settled:
+        return None  # v0.203: このワザの処理の中で、すでにコインを投げた（``focus_band_now``）
     cause = res.damage_ko.get(pokemon.pokemon_id)
     located = res.state.find_pokemon(pokemon.pokemon_id)
     if cause is None or located is None or cause[0] == located[0]:
@@ -294,6 +299,37 @@ def focus_band_of(res: Resolution, pokemon: PokemonInPlay):
     if E.trainer_immunity(res.state, pokemon) is not None:
         return None  # v0.117: ［でんせつのからだ］のバトル場のポケモンは、ついているトレーナーカードの効果を受けない（コマンドの終わりにトラッシュするまでのあいだ）
     return E.tool_effect_of(res.state, pokemon, E.FocusBand)
+
+
+def apply_focus_band(res: Resolution, owner: int, pokemon: PokemonInPlay, attached, effect) -> bool:
+    """v0.81（docs/pokemon-tools-stadiums-v0.81.md 5 章）: きあいのハチマキ。持ち主がコインを 1 枚投げ（``source="trainer"``）、「おもて」ならのっているダメージを今有効な最大HP
+    − ``remaining_hp`` にして（「きぜつ」せず、残りHPは「10」。ログ ``focus_band`` の ``survived``）、このカードをトラッシュする（``reason`` ``used``）。「うら」ならそのまま
+    （きぜつの処理でほかのついているカードといっしょにトラッシュする）。そのあと［ずらかる］を確かめる（残りHPが「10」になった）。「おもて」なら True。
+    v0.203: きぜつの判定の窓（``flow._focus_band``）と、ワザの処理の中（``focus_band_now``）の両方から呼ぶ（v0.81 では flow の中にあった）。"""
+    state = res.state
+    flips = flip_coins(state, owner, 1, source="trainer", effect=state.cards[attached.card].card_id, card=attached.card, pokemon_id=pokemon.pokemon_id)
+    survived = flips.results[0] is CoinSide.HEADS
+    if survived:
+        pokemon.damage = max(0, E.max_hp(state, pokemon) - effect.remaining_hp)
+    state.add_event("focus_band", player=owner, pokemon=pokemon.card, pokemon_id=pokemon.pokemon_id, card=attached.card, result=flips.results[0].value,
+                    survived=survived, total_damage=pokemon.damage)
+    if survived:
+        E.discard_attached_tool(state, pokemon, attached, E.TOOL_USED)
+        settle_scram(res)
+    return survived
+
+
+def focus_band_now(res: Resolution, pokemon: PokemonInPlay) -> bool:
+    """v0.203（docs/focus-band-paralysis-coin-v0.203.md）: 相手のワザのダメージで残りHPがなくなったきあいのハチマキのポケモンに、同じワザのあとの処理がマヒにするかを決める
+    コインを投げるとき（``programs.Status.focus_band_before_paralysis_coin``）、その時点で（残りHPがなくなったとき。カード文面の「残りHPがなくなったとき、コインを投げる」に
+    沿った実装解釈）きあいのハチマキのコインを投げる。どちらの面でも、このワザのきぜつの判定の窓では投げ直さない（``res.focus_band_settled``）。投げたら True。"""
+    band = focus_band_of(res, pokemon)
+    located = res.state.find_pokemon(pokemon.pokemon_id)
+    if band is None or located is None:
+        return False
+    res.focus_band_settled.add(pokemon.pokemon_id)
+    apply_focus_band(res, located[0], pokemon, band[0], band[1])
+    return True
 
 
 def focus_band_timing(res: Resolution, pokemon: PokemonInPlay, what: str) -> None:
