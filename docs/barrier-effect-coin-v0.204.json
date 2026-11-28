@@ -1,0 +1,372 @@
+{
+ "format": "kyuura-barrier-effect-coin/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "bb491694955f1856278eb6cba35cc74c05722d1c",
+  "branch": "claude/barrier-effect-coin",
+  "engine_version": "0.204.0",
+  "commits": {
+   "fix": "39420d0",
+   "version_0_204_0": "a41d2aa96416ae551fd26830bc6646f4af8b1ed8"
+  }
+ },
+ "reading": "option A (user): against Barrier (the opponent's Pokemon does not receive the attack), accept the declaration and flip the effect coin once as usual; Barrier voids the damage and the special condition; implementation interpretation applying 「ワザをうけない」 to the processing of the receiving Pokemon; no direct ruling of the time found",
+ "saved_refusal": {
+  "game": "vai-batch-tr8nd-b1 g002-rules-v10-s9110 (0.203.0)",
+  "attempt": 270,
+  "turn": 86,
+  "attack": "PMCG4-051 ミニリュウ まきつく (10, heads -> paralysis)",
+  "defender": "PMCG1-050 ミュウツー damage 20 with attack_barrier",
+  "stop": "programs.Status.run -> prevented_effect_coin (HC3)"
+ },
+ "scope": {
+  "path": "Status element with this element's coin deciding a special condition on the opponent's active, no other condition, after the attack's damage to the opponent, every other element is damage to the opponent; only the Barrier definition (catalog.BARRIER) is let through",
+  "registrations": {
+   "ParalyzeOnHeads": 95,
+   "ConfuseOnHeads": 31,
+   "PoisonOnHeads": 30,
+   "DamageThenSleepOnHeads": 7
+  },
+  "unchanged": [
+   "coin damage / success coins (いしなげ: UNRESOLVED_PREVENTED_COIN_DAMAGE)",
+   "effect coins without damage (なめる: HC3)",
+   "attacks with effects on the user (ねころぶ, ほねこんぼう, どくばりタックル: HC3)",
+   "other effect-voiding effects (Crystal Body, Neutral Shield, Light Pulse)"
+  ]
+ },
+ "probe_before": {
+  "makitsuku:barrier:H": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:barrier:T": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:no_barrier:H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": true,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:no_barrier:T": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "dokubari:barrier:H": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:ishinage:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:nameru_no_damage:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "probe_after": {
+  "makitsuku:barrier:H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:barrier:T": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:no_barrier:H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": true,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "makitsuku:no_barrier:T": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "defender": {
+    "damage": 30,
+    "paralyzed": false,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "dokubari:barrier:H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "defender": {
+    "damage": 20,
+    "paralyzed": false,
+    "poisoned": false
+   },
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:ishinage:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:nameru_no_damage:barrier": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+   "coins": null,
+   "defender": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "tests": {
+  "related_modules": 56,
+  "related_exit_0": 56,
+  "game_runner_modules": 65,
+  "game_runner_exit_0": 65,
+  "generators": 6,
+  "generators_exit_0": 6,
+  "expectation_changed": "tests.test_non_pack_effect_reuse_v0_70 USED_IN_GAMES: ES1-018#1 removed (W70 vs L70 seed 1 diverges where the in-scope attack becomes selectable on the same board; the other 15 games equal attempt by attempt; the attack is still checked by its registration and PURE_WATER tests)"
+ },
+ "normal_game": {
+  "plan": {
+   "vai-batch-bec-v10": "c9ccec3295ee6b391d3f612466cb0687aa74fa0ffa8226cdd80ceb7708d700a8"
+  },
+  "games": {
+   "old": {
+    "batch": "vai-batch-tr8nd-b1",
+    "engine_version": "0.203.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "accepted": 238,
+    "rejected": 1,
+    "judge": {
+     "expected": 238,
+     "undetermined": 1
+    }
+   },
+   "new": {
+    "batch": "vai-batch-bec-v10",
+    "engine_version": "0.204.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "accepted": 232,
+    "rejected": 0,
+    "judge": {
+     "expected": 232
+    }
+   }
+  },
+  "pair": {
+   "operation_index": 231,
+   "accepted_before": 231,
+   "public_log_equal_before": true,
+   "attempts_equal_before": 269
+  },
+  "wrap": {
+   "old": {
+    "declarations": 3,
+    "submit": {
+     "accepted": 2,
+     "rejected": 1
+    }
+   },
+   "new": {
+    "declarations": 3,
+    "submit": {
+     "accepted": 3
+    }
+   }
+  },
+  "same_declaration": {
+   "old": {
+    "n": 270,
+    "actor": 1,
+    "turn": [
+     0,
+     86
+    ],
+    "check_valid": true,
+    "submit": "rejected",
+    "diagnostic_id": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+    "defender": {
+     "card_id": "PMCG1-050",
+     "name_ja": "ミュウツー",
+     "persistent": [
+      "attack_barrier"
+     ],
+     "damage": 20
+    },
+    "next_accepted_same_actor": {
+     "n": 271,
+     "kind": "retreat",
+     "meaning": [
+      null,
+      null
+     ]
+    }
+   },
+   "new": {
+    "n": 270,
+    "actor": 1,
+    "turn": [
+     0,
+     86
+    ],
+    "check_valid": true,
+    "submit": "accepted",
+    "diagnostic_id": null,
+    "defender": {
+     "card_id": "PMCG1-050",
+     "name_ja": "ミュウツー",
+     "persistent": [
+      "attack_barrier"
+     ],
+     "damage": 20
+    },
+    "events": [
+     "attack",
+     "damage_prevented",
+     "coin_flip",
+     "persistent_effect_removed",
+     "turn_end",
+     "pokemon_check",
+     "turn_start",
+     "deck_out",
+     "game_end"
+    ],
+    "coin": [
+     "tails"
+    ],
+    "damage": [],
+    "damage_prevented": 1,
+    "coin_sources": [
+     [
+      "attack",
+      "tails"
+     ]
+    ],
+    "focus_band": [],
+    "knock_out": 0,
+    "paralysis_applied": 0,
+    "next_accepted": null
+   }
+  },
+  "after_the_declaration": "the turn ended; at the next turn start player 0 could not draw (deck_out), game_end; no further operation",
+  "budget_used": {
+   "tool_seconds": 11.107,
+   "outer_seconds": 28.572,
+   "evidence_bytes": 19107963
+  }
+ }
+}
