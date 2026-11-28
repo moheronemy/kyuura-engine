@@ -1,0 +1,434 @@
+{
+ "format": "kyuura-focus-band-paralysis-coin/1",
+ "date": "2026-11-28",
+ "base": {
+  "commit": "585bdf4fbc509d63b70bc6b0d6d0c9fc793a3f3d",
+  "branch": "claude/focus-band-timing",
+  "engine_version": "0.203.0",
+  "commits": {
+   "fix": "1826701",
+   "version_0_203_0": "964d0d526ac61fad8d3e903be2d5f11b4be1f56e"
+  }
+ },
+ "reading": "reading A chosen by the user: flip the Focus Band coin when the opponent's attack damage leaves no HP (card text 「残りHPがなくなったとき、コインを投げる」); implementation interpretation; heads -> HP 10 and the same attack continues (the paralysis coin is flipped); tails -> no HP, the paralysis coin is not flipped, normal knock-out (no second Focus Band coin at the knock-out check)",
+ "scope": {
+  "applies": "a heads-paralysis coin element of the same attack, as its last element, on the Pokemon whose HP the attack's damage emptied, with Focus Band in effect",
+  "unchanged": [
+   "later damage",
+   "damage counters",
+   "other effects (poison etc.)",
+   "KS1 (Endure / Armor Up)"
+  ]
+ },
+ "probe_before": {
+  "bubble:band_H:bubble_H": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+   "coins": null,
+   "focus_band": null,
+   "defender": null,
+   "knock_out": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "bubble:band_H:bubble_T": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+   "coins": null,
+   "focus_band": null,
+   "defender": null,
+   "knock_out": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "bubble:band_T": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+   "coins": null,
+   "focus_band": null,
+   "defender": null,
+   "knock_out": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:no_band": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [],
+   "focus_band": [],
+   "defender": null,
+   "knock_out": 1,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:hp_left_band_unused:bubble_H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "focus_band": [],
+   "defender": {
+    "card": "PR1-022",
+    "damage": 50,
+    "paralyzed": true,
+    "tools": []
+   },
+   "knock_out": 0,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:poison_sting_band_out_of_scope": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+   "coins": null,
+   "focus_band": null,
+   "defender": null,
+   "knock_out": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "probe_after": {
+  "bubble:band_H:bubble_H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "trainer",
+     "heads"
+    ],
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "focus_band": [
+    [
+     "heads",
+     true
+    ]
+   ],
+   "defender": {
+    "card": "PR1-022",
+    "damage": 50,
+    "paralyzed": true,
+    "tools": []
+   },
+   "knock_out": 0,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "bubble:band_H:bubble_T": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "trainer",
+     "heads"
+    ],
+    [
+     "attack",
+     "tails"
+    ]
+   ],
+   "focus_band": [
+    [
+     "heads",
+     true
+    ]
+   ],
+   "defender": {
+    "card": "PR1-022",
+    "damage": 50,
+    "paralyzed": false,
+    "tools": []
+   },
+   "knock_out": 0,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "bubble:band_T": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "trainer",
+     "tails"
+    ]
+   ],
+   "focus_band": [
+    [
+     "tails",
+     false
+    ]
+   ],
+   "defender": null,
+   "knock_out": 1,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:no_band": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [],
+   "focus_band": [],
+   "defender": null,
+   "knock_out": 1,
+   "current_player_after": 1,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:hp_left_band_unused:bubble_H": {
+   "direct": "accepted",
+   "code": null,
+   "coins": [
+    [
+     "attack",
+     "heads"
+    ]
+   ],
+   "focus_band": [],
+   "defender": {
+    "card": "PR1-022",
+    "damage": 50,
+    "paralyzed": true,
+    "tools": []
+   },
+   "knock_out": 0,
+   "current_player_after": 0,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  },
+  "control:poison_sting_band_out_of_scope": {
+   "direct": "rejected",
+   "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+   "coins": null,
+   "focus_band": null,
+   "defender": null,
+   "knock_out": null,
+   "current_player_after": null,
+   "modes_same_as_direct": true,
+   "api_same_as_direct": true
+  }
+ },
+ "related_tests": {
+  "modules": 62,
+  "exit_0": 62,
+  "git_status_unchanged": true
+ },
+ "generators": {
+  "checks": 6,
+  "exit_0": 6
+ },
+ "normal_game": {
+  "plan": {
+   "vai-batch-fbt-v10": "d581bb3d24699804b3196b465991ac2ad00340f275bf5318eea7ec32751667e1"
+  },
+  "games": {
+   "old": {
+    "batch": "vai-batch-tr8v10m-c2",
+    "engine_version": "0.201.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 87,
+    "accepted": 239,
+    "rejected": 4,
+    "judge": {
+     "expected": 239,
+     "undetermined": 4
+    }
+   },
+   "new": {
+    "batch": "vai-batch-fbt-v10",
+    "engine_version": "0.203.0",
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 89,
+    "accepted": 259,
+    "rejected": 0,
+    "judge": {
+     "expected": 259
+    }
+   }
+  },
+  "pair": {
+   "operation_index": 135,
+   "accepted_before": 135,
+   "public_log_equal_before": true,
+   "attempts_equal_before": 135
+  },
+  "bubble": {
+   "old": {
+    "declarations": 13,
+    "submit": {
+     "accepted": 9,
+     "rejected": 4
+    },
+    "with_focus_band": 0
+   },
+   "new": {
+    "declarations": 13,
+    "submit": {
+     "accepted": 13
+    },
+    "with_focus_band": 1
+   }
+  },
+  "same_declaration": {
+   "old": {
+    "n": 136,
+    "actor": 1,
+    "turn": [
+     0,
+     47
+    ],
+    "check_valid": true,
+    "submit": "rejected",
+    "diagnostic_id": "UNRESOLVED_FOCUS_BAND_TIMING",
+    "defender": {
+     "card_id": "PR1-022",
+     "name_ja": "ミュウツー",
+     "persistent": [],
+     "damage": 50
+    },
+    "next_accepted_same_actor": {
+     "n": 137,
+     "kind": "use_attack",
+     "meaning": [
+      "からにこもる"
+     ]
+    }
+   },
+   "new": {
+    "n": 136,
+    "actor": 1,
+    "turn": [
+     0,
+     47
+    ],
+    "check_valid": true,
+    "submit": "accepted",
+    "diagnostic_id": null,
+    "defender": {
+     "card_id": "PR1-022",
+     "name_ja": "ミュウツー",
+     "persistent": [],
+     "damage": 50
+    },
+    "events": [
+     "attack",
+     "damage",
+     "coin_flip",
+     "focus_band",
+     "discard_attached_trainer",
+     "coin_flip",
+     "special_condition",
+     "turn_end",
+     "pokemon_check",
+     "turn_start",
+     "draw"
+    ],
+    "coin": [
+     "heads",
+     "heads"
+    ],
+    "damage": [
+     10
+    ],
+    "damage_prevented": 0,
+    "coin_sources": [
+     [
+      "trainer",
+      "heads"
+     ],
+     [
+      "attack",
+      "heads"
+     ]
+    ],
+    "focus_band": [
+     [
+      "heads",
+      true,
+      50
+     ]
+    ],
+    "knock_out": 0,
+    "paralysis_applied": 1,
+    "defender_after": {
+     "card_id": "PR1-022",
+     "hp": 60,
+     "damage": 50,
+     "special_conditions": [
+      "paralysis"
+     ],
+     "trainers": []
+    },
+    "next_accepted": {
+     "actor": 0,
+     "command": "attach_energy"
+    }
+   }
+  },
+  "next_bubble_on_same_pokemon_new": {
+   "n": 141,
+   "actor": 1,
+   "turn": [
+    0,
+    49
+   ],
+   "check_valid": true,
+   "submit": "accepted",
+   "diagnostic_id": null,
+   "defender": {
+    "card_id": "PR1-022",
+    "name_ja": "ミュウツー",
+    "persistent": [],
+    "damage": 50
+   },
+   "events": [
+    "attack",
+    "damage",
+    "knock_out"
+   ],
+   "coin": [],
+   "damage": [
+    10
+   ],
+   "damage_prevented": 0,
+   "coin_sources": [],
+   "focus_band": [],
+   "knock_out": 1,
+   "paralysis_applied": 0,
+   "defender_after": {
+    "card_id": null,
+    "hp": null,
+    "damage": null,
+    "special_conditions": null,
+    "trainers": []
+   },
+   "next_accepted": {
+    "actor": 1,
+    "command": "resolve_decision"
+   }
+  },
+  "budget_used": {
+   "tool_seconds": 13.993,
+   "outer_seconds": 31.177,
+   "evidence_bytes": 20933968
+  }
+ }
+}
