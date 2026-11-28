@@ -1767,7 +1767,11 @@ class Damage(Element):
             from .kernel import first_void
 
             void = first_void(run.res, run.incoming(), owner, receiver)
-            if void is not None:
+            # v0.201: 「コインを投げて「おもて」なら、N ダメージを追加する」（``HeadsBonus``）は、受けるポケモンの効果がダメージだけを無効にする（効果の窓を持たない。
+            # 「からにこもる」「かたまる」）なら、通常どおりコインを投げ、その結果で決まるダメージに無効を当てる（カード文面と既存のルールに基づく実装解釈。
+            # docs/quick-attack-prevented-coin-v0.201.md）。ワザ全体を受けない効果（バリアー。効果の窓も持つ）と、ほかのコインのダメージ（×・つのでつつく・相手が投げるコインなど）は今までどおり問う
+            damage_only = void is not None and Window.BEFORE_EFFECT not in void.definition.windows
+            if void is not None and not (damage_only and getattr(self.base, "flip_against_damage_only_void", False) and not gate_only_damage):
                 raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}",
                                        E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
         if self.local_gate is not None:
@@ -2992,11 +2996,14 @@ class RecoverEnergy(Element):
 
 @dataclass(frozen=True)
 class HeadsBonus:
-    """「コインを投げて「おもて」なら、``bonus`` ダメージを追加」（でんこうせっか・ひをふく）。コインはダメージの要素の中（ダメージの量だけを決める。
-    受けるポケモンがダメージを受けない状態なら投げるかが決まらない。v0.4b と同じ問い）。"""
+    """「コインを投げて「おもて」なら、``bonus`` ダメージを追加」（でんこうせっか・ひをふく）。コインはダメージの要素の中（ダメージの量だけを決める）。
+    v0.4b〜v0.200 は、受けるポケモンがダメージを受けない状態なら投げるかが決まらないとして問うた。v0.201 から、ダメージだけを無効にする効果（からにこもる・かたまる）なら
+    コインを投げて結果のダメージに無効を当てる。ワザを受けない効果（バリアー）は今までどおり問う（``Damage.run``）。"""
 
     bonus: int
     local_coins: ClassVar[int] = 1
+    # v0.201: 受けるポケモンの効果がダメージだけを無効にするとき、コインを投げて結果のダメージに無効を当てる（``Damage.run``。問わない）
+    flip_against_damage_only_void: ClassVar[bool] = True
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         return run.attack.damage + (self.bonus if flips.results[0] is HEADS else 0)
