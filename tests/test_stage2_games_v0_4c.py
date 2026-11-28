@@ -351,25 +351,24 @@ class RandomCommandsWithStage2Test(unittest.TestCase):
 # 止まった 3 局は対戦準備の切り直しの補償（v0.1 からの未解決）。2 進化 79 回（バトル場 31・ベンチ 48）、同じ番の再進化の
 # 拒否 51 回。スピアーのきぜつ 24 回はどれも 3 枚をトラッシュした（ワザのあと 14・ポケモンチェックのどく 10）。「かたまる」の
 # 相手へのダブルニードルは 5 回とも UNRESOLVED_PREVENTED_COIN_DAMAGE で拒否され、どくばりは 2 回ダメージが無効になった
+# v0.202（docs/coin-times-prevented-damage-v0.202.md）: ×のコインのワザ（CoinFlipDamage）が「ダメージを受けない」相手に止まらなくなったので、0.201.0 で UNRESOLVED_PREVENTED_COIN_DAMAGE で拒否した対戦の値を作り直した（どの対戦も、最初の差がその拒否から受け付けへの変化であることを確かめてから）
 EXPECTED_COUNTS = {
-    "beedrill_gave_poison": 14, "beedrill_どくばり": 55, "beedrill_ダブルニードル": 71, "damage_prevented": 21,
-    "damage_prevented_by_beedrill": 2, "evolve": 243, "evolve2_active": 31, "evolve2_bench": 48, "evolve_to_PMCG1-003": 38,
-    "evolve_to_PMCG1-009": 99, "evolve_to_PMCG1-012": 79, "evolve_to_PMCG2-010": 27,
-    "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "knock_out_1_cards": 158, "knock_out_2_cards": 24, "knock_out_3_cards": 24,
-    "knock_out_stage2_attack": 14, "knock_out_stage2_pokemon_check": 10, "knock_out_stage2_three_cards_in_discard": 24,
-    "phase_game_over": 37, "phase_halted": 3, "poison_sting_coin_heads": 14, "poison_sting_coin_tails": 9,
-    "rejected_attack_POKEMON_ASLEEP": 31, "rejected_attack_POKEMON_PARALYZED": 39,
-    "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 1, "rejected_attack_UNRESOLVED_PREVENTED_COIN_DAMAGE": 5,
-    "rejected_attack_by_PMCG1-012": 5, "rejected_evolve2_EVOLVED_THIS_TURN": 51, "rejected_evolve_FIRST_TURN_EVOLUTION": 26,
-    "rejected_evolve_PLAYED_THIS_TURN": 73, "rejected_retreat_POKEMON_ASLEEP": 33, "rejected_retreat_POKEMON_PARALYZED": 78,
-    "take_prize": 206, "twineedle_coin_heads": 64, "twineedle_coin_tails": 78,
+    "beedrill_gave_poison": 12, "beedrill_どくばり": 55, "beedrill_ダブルニードル": 75, "damage_prevented": 26, "damage_prevented_by_beedrill": 2, "evolve": 243,
+    "evolve2_active": 31, "evolve2_bench": 48, "evolve_to_PMCG1-003": 38, "evolve_to_PMCG1-009": 99, "evolve_to_PMCG1-012": 79,
+    "evolve_to_PMCG2-010": 27, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "knock_out_1_cards": 158, "knock_out_2_cards": 23,
+    "knock_out_3_cards": 24, "knock_out_stage2_attack": 14, "knock_out_stage2_pokemon_check": 10, "knock_out_stage2_three_cards_in_discard": 24,
+    "phase_game_over": 37, "phase_halted": 3, "poison_sting_coin_heads": 12, "poison_sting_coin_tails": 9, "rejected_attack_POKEMON_ASLEEP": 31,
+    "rejected_attack_POKEMON_PARALYZED": 40, "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 1, "rejected_evolve2_EVOLVED_THIS_TURN": 51,
+    "rejected_evolve_FIRST_TURN_EVOLUTION": 26, "rejected_evolve_PLAYED_THIS_TURN": 73, "rejected_retreat_POKEMON_ASLEEP": 35,
+    "rejected_retreat_POKEMON_PARALYZED": 77, "take_prize": 205, "twineedle_coin_heads": 71, "twineedle_coin_tails": 79,
 }
-# cure seed 2: 161 コマンド、51 番で勝敗が決まる（2 進化 3 回、ダブルニードル 8 回（コイン 16 枚）、どくばり 3 回、
-# スピアーのきぜつ 2 回）
+# cure seed 2: 154 コマンド、49 番で勝敗が決まる（2 進化 3 回、ダブルニードル 8 回（コイン 16 枚）、どくばり 3 回、
+# スピアーのきぜつ 2 回）。v0.202: 0.201.0 までは 161 コマンド・51 番（最初の差は、ダブルニードルの「ダメージを受けない」相手への拒否が受け付けになった試み。
+# docs/coin-times-prevented-damage-v0.202.md）
 GOLDEN_SEED = 2
 GOLDEN_CURE = True
-GOLDEN_SHAPE = (161, 51, Phase.GAME_OVER)
-GOLDEN_DIGEST = "53e6a10881f38a1fc1572977e6dd5d160b7bdbb6b158d7e7409db2ade3872d8e"
+GOLDEN_SHAPE = (154, 49, Phase.GAME_OVER)
+GOLDEN_DIGEST = "239912b13efc43e93b4eefceb0d427d68b46f535d8c104117bf610f95ac3dd5e"
 
 
 if __name__ == "__main__":

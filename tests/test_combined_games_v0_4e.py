@@ -301,24 +301,22 @@ class StressSmokeTest(unittest.TestCase):
 # ディフェンダーのついた相手をふきとばした 4 回・持続する効果をふきとばしで消した 6 回・ついていたトレーナーごときぜつした 6 回・
 # 同時のきぜつ 8 回など。こんらんで「にげる」に失敗した記録を進化で消す場面・「かたまる」の番の終わりのどくのきぜつ（効果は
 # きぜつで消える）は、この 48 局では起こらなかった（tests/test_combined_state_v0_4e.py で盤面を直接作って確かめた）
+# v0.202（docs/coin-times-prevented-damage-v0.202.md）: ×のコインのワザ（CoinFlipDamage）が「ダメージを受けない」相手に止まらなくなったので、0.201.0 で UNRESOLVED_PREVENTED_COIN_DAMAGE で拒否した対戦の値を作り直した（どの対戦も、最初の差がその拒否から受け付けへの変化であることを確かめてから）
 EXPECTED_COUNTS = {
-    "applied_confusion": 21, "applied_paralysis": 154, "applied_poison": 114, "applied_sleep": 296,
-    "conditions_removed_by_evolve": 10, "conditions_removed_by_forced_switch": 1, "conditions_removed_by_paralysis_end": 139,
-    "conditions_removed_by_retreat": 63, "conditions_removed_by_sleep_coin": 255, "conditions_removed_by_switch": 33,
-    "confusion_damage": 6, "damage_prevented": 30, "drain_heal": 33, "drain_heal_zero": 10, "evolve_PMCG1-002_to_PMCG1-003": 86,
-    "evolve_PMCG1-003_to_PMCG2-007": 57, "evolve_PMCG1-004_to_PMCG1-009": 75, "evolve_PMCG1-009_to_PMCG1-012": 49,
-    "evolve_PMCG1-029_to_PMCG1-030": 61, "evolve_PMCG2-003_to_PMCG2-010": 58, "evolve_cleared_paralysis": 1,
-    "evolve_cleared_poison": 2, "evolve_cleared_sleep": 7, "forced_switch": 135, "forced_switch_chosen_by_opponent": 135,
-    "forced_switch_of_evolved": 58, "forced_switch_skipped_knocked_out": 38, "forced_switch_skipped_no_bench": 9,
-    "forced_switch_with_defender": 4, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "knock_out_1_cards": 212,
-    "knock_out_2_cards": 58, "knock_out_3_cards": 34, "knock_out_pokemon_check": 31, "knock_out_simultaneous": 8,
-    "knock_out_with_trainers": 6, "persistent_removed_by_expired": 66, "persistent_removed_by_forced_switch": 6,
-    "phase_game_over": 45, "phase_halted": 3, "rejected_attack_POKEMON_ASLEEP": 103, "rejected_attack_POKEMON_PARALYZED": 92,
-    "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 1, "rejected_attack_UNRESOLVED_PREVENTED_COIN_DAMAGE": 6,
-    "rejected_evolve2_EVOLVED_THIS_TURN": 63, "rejected_evolve_FIRST_TURN_EVOLUTION": 31,
-    "rejected_evolve_PLAYED_THIS_TURN": 94, "rejected_retreat_POKEMON_ASLEEP": 140, "rejected_retreat_POKEMON_PARALYZED": 144,
-    "rejected_retreat_RETREAT_ALREADY_FAILED": 7, "retreat": 243, "retreat_failed": 8, "self_damage": 16, "sleep_check": 493,
-    "switch": 126, "take_prize": 304,
+    "applied_confusion": 22, "applied_paralysis": 155, "applied_poison": 119, "applied_sleep": 299, "conditions_removed_by_evolve": 10,
+    "conditions_removed_by_forced_switch": 1, "conditions_removed_by_paralysis_end": 140, "conditions_removed_by_retreat": 68,
+    "conditions_removed_by_sleep_coin": 256, "conditions_removed_by_switch": 35, "confusion_damage": 5, "damage_prevented": 39, "drain_heal": 34,
+    "drain_heal_zero": 10, "evolve_PMCG1-002_to_PMCG1-003": 86, "evolve_PMCG1-003_to_PMCG2-007": 57, "evolve_PMCG1-004_to_PMCG1-009": 75,
+    "evolve_PMCG1-009_to_PMCG1-012": 49, "evolve_PMCG1-029_to_PMCG1-030": 61, "evolve_PMCG2-003_to_PMCG2-010": 58, "evolve_cleared_paralysis": 1,
+    "evolve_cleared_poison": 2, "evolve_cleared_sleep": 7, "forced_switch": 133, "forced_switch_chosen_by_opponent": 133,
+    "forced_switch_of_evolved": 56, "forced_switch_skipped_knocked_out": 37, "forced_switch_skipped_no_bench": 9, "forced_switch_with_defender": 5,
+    "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 3, "knock_out_1_cards": 212, "knock_out_2_cards": 56, "knock_out_3_cards": 34,
+    "knock_out_pokemon_check": 32, "knock_out_simultaneous": 8, "knock_out_with_trainers": 5, "persistent_removed_by_expired": 69,
+    "persistent_removed_by_forced_switch": 7, "phase_game_over": 45, "phase_halted": 3, "rejected_attack_POKEMON_ASLEEP": 106,
+    "rejected_attack_POKEMON_PARALYZED": 92, "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 1, "rejected_evolve2_EVOLVED_THIS_TURN": 63,
+    "rejected_evolve_FIRST_TURN_EVOLUTION": 31, "rejected_evolve_PLAYED_THIS_TURN": 94, "rejected_retreat_POKEMON_ASLEEP": 144,
+    "rejected_retreat_POKEMON_PARALYZED": 145, "rejected_retreat_RETREAT_ALREADY_FAILED": 6, "retreat": 252, "retreat_failed": 7, "self_damage": 16,
+    "sleep_check": 500, "switch": 126, "take_prize": 302, "persistent_removed_by_knock_out": 1,
 }
 
 

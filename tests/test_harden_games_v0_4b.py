@@ -288,20 +288,19 @@ class RandomCommandsWithHardenTest(unittest.TestCase):
 # 止まった 1 局は対戦準備の切り直しの補償（v0.1 からの未解決）。効果を与えた 195 回のうち、191 回は次の相手の番の終わりに
 # 消え（expired）、1 回はポケモンチェックのどくできぜつして消え（knock_out）、3 回は効果のはたらく番に対戦が終わった
 # （ended_with_effect）。ベンチに戻る・進化して消えることは、自然な対戦では起こらない（単体テストで確かめる）
+# v0.202（docs/coin-times-prevented-damage-v0.202.md）: ×のコインのワザ（CoinFlipDamage）が「ダメージを受けない」相手に止まらなくなったので、0.201.0 で UNRESOLVED_PREVENTED_COIN_DAMAGE で拒否した対戦の値を作り直した（どの対戦も、最初の差がその拒否から受け付けへの変化であることを確かめてから）
 EXPECTED_COUNTS = {
-    "evolve": 239, "evolve_to_PMCG1-003": 125, "evolve_to_PMCG1-009": 114,
-    "rejected_evolve_FIRST_TURN_EVOLUTION": 37, "rejected_evolve_PLAYED_THIS_TURN": 109,
-    "harden": 392, "harden_heads": 195, "harden_tails": 184, "harden_confusion_failed": 13, "effect_added": 195,
-    "effect_removed_expired": 191, "effect_removed_knock_out": 1, "ended_with_effect": 3,
-    "damage_prevented": 103, "damage_prevented_by_PMCG1-002#0": 19, "damage_prevented_by_PMCG1-003#1": 14,
-    "damage_prevented_by_PMCG1-004#0": 25, "damage_prevented_by_PMCG1-009#1": 6, "damage_prevented_by_PMCG1-015#0": 30,
-    "damage_prevented_by_PMCG1-035#0": 6, "damage_prevented_by_PMCG1-035#1": 1, "damage_prevented_by_PMCG2-003#0": 2,
-    "effect_after_prevention_confusion": 13, "effect_after_prevention_paralysis": 19, "effect_after_prevention_poison": 14,
-    "rejected_attack_UNRESOLVED_PREVENTED_COIN_DAMAGE": 13, "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 5,
-    "rejected_attack_POKEMON_ASLEEP": 79, "rejected_attack_POKEMON_PARALYZED": 119, "rejected_retreat_POKEMON_ASLEEP": 85,
-    "rejected_retreat_POKEMON_PARALYZED": 137, "rejected_retreat_RETREAT_ALREADY_FAILED": 9,
-    "knock_out_evolved": 59, "knock_out_evolved_PMCG1-003": 33, "knock_out_evolved_PMCG1-009": 26, "knock_out_basic": 130,
-    "take_prize": 189, "phase_game_over": 39, "phase_halted": 1, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 1,
+    "evolve": 242, "evolve_to_PMCG1-003": 127, "evolve_to_PMCG1-009": 115, "rejected_evolve_FIRST_TURN_EVOLUTION": 37,
+    "rejected_evolve_PLAYED_THIS_TURN": 112, "harden": 383, "harden_heads": 184, "harden_tails": 186, "harden_confusion_failed": 13,
+    "effect_added": 184, "effect_removed_expired": 180, "effect_removed_knock_out": 1, "ended_with_effect": 3, "damage_prevented": 109,
+    "damage_prevented_by_PMCG1-002#0": 19, "damage_prevented_by_PMCG1-003#1": 14, "damage_prevented_by_PMCG1-004#0": 25,
+    "damage_prevented_by_PMCG1-009#1": 6, "damage_prevented_by_PMCG1-015#0": 27, "damage_prevented_by_PMCG1-035#0": 6,
+    "damage_prevented_by_PMCG1-035#1": 1, "damage_prevented_by_PMCG2-003#0": 2, "effect_after_prevention_confusion": 12,
+    "effect_after_prevention_paralysis": 19, "effect_after_prevention_poison": 14, "rejected_attack_UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS": 5,
+    "rejected_attack_POKEMON_ASLEEP": 76, "rejected_attack_POKEMON_PARALYZED": 119, "rejected_retreat_POKEMON_ASLEEP": 82,
+    "rejected_retreat_POKEMON_PARALYZED": 137, "rejected_retreat_RETREAT_ALREADY_FAILED": 10, "knock_out_evolved": 63,
+    "knock_out_evolved_PMCG1-003": 34, "knock_out_evolved_PMCG1-009": 29, "knock_out_basic": 129, "take_prize": 192, "phase_game_over": 39,
+    "phase_halted": 1, "halted_UNRESOLVED_MULLIGAN_COMPENSATION": 1, "damage_prevented_by_PMCG1-061#0": 9,
 }
 # cure seed 2: 225 コマンド、88 番で勝敗が決まる（「かたまる」16 回・「おもて」12 回、ダメージの無効 9 回（どくばり 8・
 # あやしいひかり 1）、無効のあとのどく 4 回）
