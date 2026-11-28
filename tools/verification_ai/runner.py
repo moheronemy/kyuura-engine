@@ -24,7 +24,7 @@ from kyuura_engine.observation import visible_log
 from . import actions as B
 from .judge import accepted_content_check, is_face_down_power, judge_normal, judge_recorded_accepted_content, judge_run_termination, submit_evidence
 from .metrics import Metrics, repetition_summary
-from .policies import DEFER_ALL, REFUSED_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, RULES8_VERSION, RULES9_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransProgressRulePolicy, RefusedInputRulePolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
+from .policies import DEFER_ALL, REFUSED_ALL, RULES3_VERSION, RULES4_VERSION, RULES5_VERSION, RULES6_VERSION, RULES7_VERSION, RULES8_VERSION, RULES9_VERSION, RULES10_VERSION, STAGE, TUPLE, BoundaryPolicy, EnergyTransProgressRulePolicy, RefusedInputRulePolicy, BasicMovesProgressRulePolicy, EnergyTransRulePolicy, LoopRulePolicy, MixedPolicy, RetreatDeferralRulePolicy, RulePolicy, SwapCapRulePolicy, TransitionRulePolicy, UniformPolicy, action_key, host_seed, mix_seed, player_seed, short_key, turn_of
 from .reach import ReachBudget, ReachPolicy
 from kyuura_engine.replay_record import checks
 
@@ -858,6 +858,10 @@ def make_policies(config: Config, policy_factory=None) -> dict[Any, Any]:
         host = UniformPolicy(host_seed(config.host_seed), config.distribution)
     elif config.policy == "boundary":
         players = {p: BoundaryPolicy(player_seed(config.policy_seed, p)) for p in (0, 1)}
+        host = UniformPolicy(host_seed(config.host_seed), STAGE)
+    elif config.policy == "rules" and config.rules_version == RULES10_VERSION:  # rules-v10（試験。明示的に選んだときだけ。rules-v9 + ［エナジートランス］の基本エネルギーカードの移動だけの費用評価）
+        cards = progress_card_table()
+        players = {p: BasicMovesProgressRulePolicy(player_seed(config.policy_seed, p), threshold=config.repeat_threshold, cards=cards) for p in (0, 1)}
         host = UniformPolicy(host_seed(config.host_seed), STAGE)
     elif config.policy == "rules" and config.rules_version == RULES9_VERSION:  # rules-v9（試験。明示的に選んだときだけ。rules-v8 + 同じ局面で未裁定として拒否された入力を避ける）
         cards = progress_card_table()

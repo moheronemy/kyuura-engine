@@ -421,7 +421,7 @@ class PlanV2Test(unittest.TestCase):
     def test_plan_fixes_version_2_settings_and_identity(self):
         plan = self.plan("p")
         self.assertEqual((plan["format"], B.COMPLETE_FORMAT, B.TOOL_VERSION, plan["identity"]["tool"]["version"]),
-                         ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7", 20, 20))  # 20: rules-v9（旧の期待は 19, 19）。 19: rules-v8（旧の期待は 18, 18）。 18: rules-v7（旧の期待は 17, 17）。 17: rules-v6（旧の期待は 16, 16）。 16: rules-v5（旧の期待は 15, 15）。 15: rules-v4（旧の期待は 14, 14）。 14: rules-v3（旧の期待は 13, 13）。 13: 規則 10（旧の期待は 12, 12）。12: 規則 9（旧の期待は 11, 11）。11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は形式 6・10。10: 判定の規則 8。9: 判定の規則 7（reach 版 2 の設定・選び方は同じ）
+                         ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7", 21, 21))  # 20: rules-v9（旧の期待は 19, 19）。 19: rules-v8（旧の期待は 18, 18）。 18: rules-v7（旧の期待は 17, 17）。 17: rules-v6（旧の期待は 16, 16）。 16: rules-v5（旧の期待は 15, 15）。 15: rules-v4（旧の期待は 14, 14）。 14: rules-v3（旧の期待は 13, 13）。 13: 規則 10（旧の期待は 12, 12）。12: 規則 9（旧の期待は 11, 11）。11: prestop の記録（TOOL_VERSION 11・計画と完了の形式 7。docs/prestop-record-design.md）。旧の期待は形式 6・10。10: 判定の規則 8。9: 判定の規則 7（reach 版 2 の設定・選び方は同じ）
         for entry, settings in zip(plan["games"], (P6_V2, UR_V2)):
             self.assertEqual((entry["config"]["policy"], entry["config"]["profile"], entry["config"]["rules_version"], entry["config"]["reach"]),
                              ("reach", "boundary", 2, settings))

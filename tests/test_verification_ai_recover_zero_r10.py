@@ -128,7 +128,7 @@ def judge(e, actor_logs=None, *, trace=None, hdr="default", basis_r=None):
 class VersionTest(unittest.TestCase):
     def test_versions_registration_and_basis(self):
         self.assertEqual(J.JUDGE_RULES_VERSION, 10)
-        self.assertEqual(B.TOOL_VERSION, 20)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）。 16: rules-v5（旧の期待は 15）。 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）
+        self.assertEqual(B.TOOL_VERSION, 21)  # 20: rules-v9（旧の期待は 19）。 19: rules-v8（旧の期待は 18）。 18: rules-v7（旧の期待は 17）。 17: rules-v6（旧の期待は 16）。 16: rules-v5（旧の期待は 15）。 15: rules-v4（旧の期待は 14）。 14: rules-v3（旧の期待は 13）
         self.assertEqual((B.PLAN_FORMAT, B.COMPLETE_FORMAT), ("kyuura-vai-batch-plan/7", "kyuura-vai-batch-complete/7"))
         self.assertEqual(J.RECOVER_ZERO_CODE, CODE)
         self.assertIn(CODE, J.KNOWN_STOP_EVIDENCE)

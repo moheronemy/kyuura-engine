@@ -1093,6 +1093,10 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
       組がある最上位の段（D4 で、払える費用を保つ組があればその組）だけを残す制限を返す。優先 3 で絞らないときは rules-v6 の結果をそのまま返す（rules-v7 と同じ）
     - 到達できるかは rules-v6 の除外の前の全組から判定し、選ぶのは除外のあとの組から。組を推測で外さない（評価できなければ絞らない）"""
 
+    # rules-v10（試験）: 真なら、基本エネルギーカードでないカードの移動を採点の外にして、基本エネルギーカードの移動だけを評価する（``ENERGY_TRANS_BASIC_MOVES``）。
+    # rules-v8・rules-v9 は偽（基本でないカードの移動が 1 つでもあれば、入力全体を評価しない）
+    progress_basic_moves_only = False
+
     def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP,
                  cards: dict[str, dict[str, Any]] | None = None):
         super().__init__(seed, STAGE, threshold=threshold, cap=cap)
@@ -1205,15 +1209,22 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
         aid = active["pokemon_id"]
         card_of = {o.get("card"): o.get("card_id") for o in (stages[1].get("options") or []) if isinstance(o, dict)}
         unit_of = {}
-        for _s, e, _t in moves:
+        special = set()  # rules-v10: 採点の外にした移動（基本エネルギーカードでないカード）
+        for move in moves:
+            _s, e, _t = move
             d = self._cards.get(card_of.get(e)) or {}
             if not d.get("basic_energy") or not d.get("provides"):
-                return out("unevaluable:moved_card_not_basic")
+                if not self.progress_basic_moves_only:
+                    return out("unevaluable:moved_card_not_basic")
+                special.add(move)
+                continue
             unit_of[e] = [[d["provides"]]]
+        if special and len(special) == len(moves):
+            return out("unevaluable:moved_card_not_basic")  # rules-v10: 基本エネルギーカードの移動がない
         goals = self._goals(active, items, skipped)
         if not goals:
             return out("unevaluable:no_evaluable_goal", moves=len(moves), excluded_v6=len(excluded & moves))
-        movable = {e: unit_of[e] for s, e, t in moves if t == aid and s != aid}  # 到達の判定は rules-v6 の除外の前の全組
+        movable = {e: unit_of[e] for s, e, t in moves if t == aid and s != aid and e in unit_of}  # 到達の判定は rules-v6 の除外の前の全組（rules-v10 は基本の移動だけ）
         try:
             met_now = [g.met([]) for g in goals]
             deficits = [0 if m else _deficit(g, [], list(movable.values())) for g, m in zip(goals, met_now)]
@@ -1221,7 +1232,9 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
             tiers, keeps = {}, {}
             for move in choosable:
                 s, e, t = move
-                if t == aid and s != aid:
+                if move in special:
+                    tiers[move], keeps[move] = 3, None  # rules-v10: 採点しない（優先 1・2 にならない）
+                elif t == aid and s != aid:
                     extra, rest = [unit_of[e]], [u for c, u in movable.items() if c != e]
                     if any(not m and g.met(extra) for g, m in zip(goals, met_now)):
                         tiers[move] = 1
@@ -1240,6 +1253,14 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
         sizes = [sum(1 for m in choosable if tiers[m] == k) for k in (1, 2, 3)]
         tier = next(k for k in (1, 2, 3) if sizes[k - 1])
         chosen = [m for m in choosable if tiers[m] == tier]
+        special_rec = {"special_moves": len(special), "special_choosable": sum(1 for m in choosable if m in special)} if special else {}
+        if special and tier == 3:
+            # rules-v10: 基本エネルギーカードの移動に有効な優先の組（優先 1・2）がない。特殊エネルギーを含めた従来の選び方に戻す（絞らない。D4 も当てない）
+            goals_rec = [{"kind": g.kind, "label": g.label, "source": g.source, "met": m, "deficit": d} for g, m, d in zip(goals, met_now, deficits)]
+            state = "reachable" if any(not m and d is not None for m, d in zip(met_now, deficits)) else "goal_met_only" if any(met_now) else "unreachable"
+            return {"result": "tier3", "state": state, "moves": len(moves), "excluded_v6": len(excluded & moves), "choosable": len(choosable),
+                    "tier_sizes": sizes, "chosen_set": len(choosable), "d4": None, "goals": goals_rec, "restricted": False, "fallback": "special_included",
+                    **special_rec, **({"skipped": dict(sorted(skipped.items()))} if skipped else {})}, None
         d4 = None
         if any(met_now):
             kept = [m for m in chosen if keeps[m]]
@@ -1250,7 +1271,7 @@ class EnergyTransProgressRulePolicy(RetreatDeferralRulePolicy):
         state = "reachable" if any(not m and d is not None for m, d in zip(met_now, deficits)) else "goal_met_only" if any(met_now) else "unreachable"
         record = {"result": f"tier{tier}", "state": state, "moves": len(moves), "excluded_v6": len(excluded & moves), "choosable": len(choosable),
                   "tier_sizes": sizes, "chosen_set": len(chosen), "d4": d4, "goals": goals_rec,
-                  "set": sorted([list(m) for m in chosen]), **({"skipped": dict(sorted(skipped.items()))} if skipped else {})}
+                  "set": sorted([list(m) for m in chosen]), **special_rec, **({"skipped": dict(sorted(skipped.items()))} if skipped else {})}
         if len(chosen) == len(choosable):
             record["restricted"] = False
             return record, None  # 絞らない: rules-v6 の結果のまま（rules-v7 と同じ選び方）
@@ -1361,6 +1382,39 @@ class RefusedInputRulePolicy(EnergyTransProgressRulePolicy):
 
     def loop_summary(self) -> dict[str, Any]:
         return {**super().loop_summary(), "refused_input_avoidance": self.refused_input_avoidance}
+
+
+# ---------------------------------------------------------------- rules-v10（試験の方策）: rules-v9 に、［エナジートランス］の費用評価を、基本エネルギーカードの移動だけでも
+# 行う規則を加える（docs/hydro-pump-rainbow-rules-v10-v0.200.md）。rules-v8・rules-v9 は、移動できるカードに基本エネルギーカードでないもの（レインボーエネルギーなど）が
+# 1 枚でもあると入力全体を unevaluable:moved_card_not_basic にしていた（0.199.0 の拡大本監査の異色の 18 回すべて）。候補の順位・既定の方式・拒否の記憶の範囲は変えない
+
+RULES10_VERSION = 10
+RULES10_DISTRIBUTION = "rules-v10-candidate+uniform-stage"
+ENERGY_TRANS_BASIC_MOVES = {
+    "version": 1,
+    "scored": "moves of basic Energy cards in the inputs after the existing rules-v6 restriction (same tiers 1 / 2, same D4, same stage-wise uniform draw)",
+    "reachability": "from the basic-card moves of every buildable move before the rules-v6 exclusion",
+    "not_scored": "moves of cards that are not basic Energy (Rainbow Energy and other special Energy): never tier 1 / 2",
+    "fallback": "when no basic-card move is tier 1 or 2, no restriction (the previous choice, special Energy moves included); when every move is "
+                "a non-basic card, unevaluable:moved_card_not_basic as before",
+    "unchanged": "costs whose units or colours are not determined stay unevaluable (special energy on the active for attack goals, undetermined units); "
+                 "basic-only inputs: the rules-v8 evaluation; candidate ranks, default modes, refused-input memory (rules-v9)"}
+
+
+class BasicMovesProgressRulePolicy(RefusedInputRulePolicy):
+    """rules-v10: rules-v9 に ``ENERGY_TRANS_BASIC_MOVES`` を加える（``progress_basic_moves_only`` を真にするだけ。ほかの規則・順位は rules-v9 のまま）。"""
+
+    progress_basic_moves_only = True
+
+    def __init__(self, seed: str, distribution: str = STAGE, *, threshold: int = REPEAT_THRESHOLD, cap: int = SWAP_CAP,
+                 cards: dict[str, dict[str, Any]] | None = None):
+        super().__init__(seed, STAGE, threshold=threshold, cap=cap, cards=cards)
+        self.version = RULES10_VERSION
+        self.distribution = RULES10_DISTRIBUTION
+        self.energy_trans_basic_moves = ENERGY_TRANS_BASIC_MOVES
+
+    def loop_summary(self) -> dict[str, Any]:
+        return {**super().loop_summary(), "energy_trans_basic_moves": self.energy_trans_basic_moves}
 
 
 def mix_seed(policy_seed: int, player: int) -> str:

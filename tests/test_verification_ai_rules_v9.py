@@ -276,7 +276,7 @@ class RunnerAndBatchTest(unittest.TestCase):
         v8 = adapter.policies_of(small(policy="rules", rules_version=8))
         self.assertEqual((v9["0"]["version"], v9["0"]["refused_input_avoidance"]), (9, REFUSED_INPUT_AVOIDANCE))
         self.assertNotIn("refused_input_avoidance", v8["0"])
-        self.assertEqual(B.TOOL_VERSION, 20)
+        self.assertEqual(B.TOOL_VERSION, 21)
         self.assertEqual(candidate_identity({"id": "c1", "kind": "end_turn"}), candidate_identity({"id": "c5", "kind": "end_turn"}))
 
 
