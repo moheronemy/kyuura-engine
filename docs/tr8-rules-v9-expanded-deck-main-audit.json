@@ -2178,5 +2178,498 @@
    "engine_version_after": "0.201.0",
    "fix_game": "not run"
   }
+ },
+ "audit_0_203_0": {
+  "date": "2026-11-28",
+  "base": {
+   "doc_commit": "d6a688936b0a51d5d49b640bcd3c733b6f021182",
+   "doc_branch_of_base": "claude/focus-band-timing",
+   "execution_commit": "964d0d526ac61fad8d3e903be2d5f11b4be1f56e",
+   "engine_version": "0.203.0",
+   "tool_version": 21,
+   "execution_code_vs_doc_base": "docs only",
+   "work_branch": "claude/expanded-audit-v0203"
+  },
+  "fixed_conditions": {
+   "conditions": "same as fixed_conditions (decks and seats)",
+   "convention_set": "CS-KYUURA-PLAY-TR8@1",
+   "mode": "rules-v10",
+   "profile": "deep",
+   "per_game_limits": "default",
+   "observation": true,
+   "prestop": true
+  },
+  "seeds": {
+   "rule": "9103 以上で連続 6 値がすべて未使用の最初の組（4 条件で共通に使う）",
+   "files_scanned": 919,
+   "errors": 0,
+   "max_used": 9102,
+   "selected": [
+    9103,
+    9104,
+    9105,
+    9106,
+    9107,
+    9108
+   ]
+  },
+  "plans": {
+   "games_per_plan": 6,
+   "budget_seconds": 900,
+   "evidence_mib": 1024,
+   "plan_sha256": {
+    "vai-batch-tr8v203m-c1": "fc1e040d7cca799f65c5a0b5b9206fa8d45c6fc6d2cccb348f6a5cfd39a439df",
+    "vai-batch-tr8v203m-c2": "15b1804ba7a0052ee857ad28a655b622fac51cb9ba179d16d51703dbe71d28f8",
+    "vai-batch-tr8v203m-c3": "3fd1c24ba82760ba51e0aad3eb97f0b0c5b9545d6dfb56b1b0048ea779978e05",
+    "vai-batch-tr8v203m-c4": "235757f5363a9c3b5f90b05731e3c52c3282b058578f6dcdfb558fedcbef03a0"
+   },
+   "fixed_before_first_game": true
+  },
+  "budget": {
+   "program_limits": {
+    "tool_seconds": 3600,
+    "outer_seconds": 7200,
+    "evidence_mib": 2048
+   },
+   "used": {
+    "tool_seconds": 111.341,
+    "outer_seconds": 494.55,
+    "evidence_bytes": 177949390
+   }
+  },
+  "total": {
+   "planned": 24,
+   "started": 24,
+   "complete": 24,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 24,
+   "completion_rate": "24/24",
+   "term_class": {
+    "game_over": 24
+   },
+   "plan_status_last": {
+    "completed": 24
+   },
+   "refusals": {
+    "sent_refusals": 0,
+    "by_code": {},
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 0,
+    "other_move_accepted": 0,
+    "first_accepted_kinds": {},
+    "games_with_refusal_finished": 0,
+    "games_with_refusal": 0,
+    "observed": false
+   }
+  },
+  "judge_submits": {
+   "c1": {
+    "expected": 826
+   },
+   "c2": {
+    "expected": 394
+   },
+   "c3": {
+    "expected": 353
+   },
+   "c4": {
+    "expected": 924
+   }
+  },
+  "by_condition": {
+   "reference": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "et_v10": {
+     "choices": 126,
+     "classes": {
+      "no_special_restricted": 34,
+      "no_special_unrestricted": 60,
+      "unevaluable:sleep_or_paralysis:no_special": 32
+     },
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    },
+    "cost_evaluation": {
+     "progress_result": {
+      "tier1": 24,
+      "tier3": 62,
+      "unevaluable:sleep_or_paralysis": 32,
+      "tier2": 8
+     },
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {
+      "unevaluable:sleep_or_paralysis|-|movable_nonbasic=-": 32
+     }
+    }
+   },
+   "different_colour": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 1,
+     "accepted": 1,
+     "rejected": 0,
+     "coin": {
+      "heads": 1
+     },
+     "decision_issued": 1,
+     "moved": 1,
+     "with_rainbow": 1
+    },
+    "et_v10": {
+     "choices": 29,
+     "classes": {
+      "no_special_restricted": 2,
+      "unevaluable:moved_card_not_basic:no_special": 6,
+      "no_special_unrestricted": 21
+     },
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    },
+    "cost_evaluation": {
+     "progress_result": {
+      "tier1": 2,
+      "unevaluable:moved_card_not_basic": 6,
+      "tier3": 21
+     },
+     "skipped_by_attached": {
+      "attack_special_energy_on_active|PMCG1-096": 1
+     },
+     "unevaluable_by_attached": {
+      "unevaluable:moved_card_not_basic|-|movable_nonbasic=PMCG4-065": 6
+     }
+    }
+   },
+   "special_energy": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "et_v10": {
+     "choices": 39,
+     "classes": {
+      "no_special_unrestricted": 32,
+      "no_special_restricted": 5,
+      "unevaluable:moved_card_not_basic:no_special": 2
+     },
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    },
+    "cost_evaluation": {
+     "progress_result": {
+      "tier3": 32,
+      "tier1": 4,
+      "unevaluable:moved_card_not_basic": 2,
+      "tier2": 1
+     },
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {
+      "unevaluable:moved_card_not_basic|-|movable_nonbasic=PMCG4-065": 2
+     }
+    }
+   },
+   "no_ability": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "et_v10": {
+     "choices": 0,
+     "classes": {},
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    },
+    "cost_evaluation": {
+     "progress_result": {},
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {}
+    }
+   }
+  },
+  "games": [
+   {
+    "condition": "reference",
+    "seed": 9103,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 49,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9104,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 9,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9105,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 51,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9106,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 28,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9107,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 11,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9108,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 40,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9103,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 13,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9104,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 10,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9105,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 37,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9106,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 20,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9107,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 15,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9108,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 22,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9103,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 8,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9104,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 17,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9105,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 28,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9106,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 21,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9107,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 28,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9108,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 4,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9103,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 75,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9104,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 82,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9105,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 76,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9106,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 78,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9107,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 15,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9108,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 16,
+    "refusals": 0
+   }
+  ],
+  "fix": {
+   "target": null,
+   "reason": "no refusal was sent in the 24 games",
+   "engine_version_after": "0.203.0"
+  },
+  "moved_card_not_basic_rule": "rules-v10 returns unevaluable:moved_card_not_basic only when every movable card is not basic Energy (the designed fallback)"
  }
 }
