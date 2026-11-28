@@ -1145,5 +1145,1038 @@
  "old_audit": "rules-v7 / v8 expanded audit: 16 plans equal to the fixed hashes, no LOCK, 53 games not started (not touched)",
  "not_estimated": "no cross-policy effect estimate (rules-v9 only)",
  "different_colour_unevaluable_rows_with_movable_basic": "18 of 18 (checked on the attempt rows: stage-2 options included basic Energy cards); 11 of 18 had no special energy on the active",
- "moved_card_not_basic_rule": "tools/verification_ai/policies.py: any candidate move of a non-basic Energy card makes the whole choice unevaluable:moved_card_not_basic"
+ "moved_card_not_basic_rule": "tools/verification_ai/policies.py: any candidate move of a non-basic Energy card makes the whole choice unevaluable:moved_card_not_basic",
+ "audit_0_201_0": {
+  "date": "2026-11-28",
+  "base": {
+   "doc_commit": "0c6686057002efa3974b4908821afd31fb0b84ec",
+   "doc_branch_of_base": "claude/quick-attack-prevented-coin",
+   "execution_commit": "c28d527bde034d0d5e78fcec1759d70389fde930",
+   "engine_version": "0.201.0",
+   "tool_version": 21,
+   "execution_code_vs_doc_base": "docs only",
+   "work_branch": "claude/expanded-audit-v0201"
+  },
+  "fixed_conditions": {
+   "conditions": "same as fixed_conditions (decks and seats)",
+   "convention_set": "CS-KYUURA-PLAY-TR8@1",
+   "mode": "rules-v10",
+   "profile": "deep",
+   "per_game_limits": "default",
+   "observation": true,
+   "prestop": true
+  },
+  "seeds": {
+   "rule": "9097 以上で連続 6 値がすべて未使用の最初の組（4 条件で共通に使う）",
+   "files_scanned": 881,
+   "errors": 0,
+   "max_used": 9096,
+   "selected": [
+    9097,
+    9098,
+    9099,
+    9100,
+    9101,
+    9102
+   ]
+  },
+  "plans": {
+   "games_per_plan": 6,
+   "budget_seconds": 900,
+   "evidence_mib": 1024,
+   "plan_sha256": {
+    "vai-batch-tr8v10m-c1": "513028c2a0ee7da2cdfdd3e5a3b00d98341a593df5d33d5ad0147b5b2efc9f8c",
+    "vai-batch-tr8v10m-c2": "49e13107b100cb4be3f740ce2391841cb8864101420a246e3e8fa23985299ac6",
+    "vai-batch-tr8v10m-c3": "36c1087196816606b753ca4e7992f76e66294a04bb99ba5b637047b1bd7af5f2",
+    "vai-batch-tr8v10m-c4": "ed216ccc1d5fe77f1ddc31558e2d9cad3ca5ecf7ce85eb2efaedd452b0fb21de"
+   },
+   "fixed_before_first_game": true
+  },
+  "budget": {
+   "program_limits": {
+    "tool_seconds": 3600,
+    "outer_seconds": 7200,
+    "evidence_mib": 2048
+   },
+   "used": {
+    "tool_seconds": 129.885,
+    "outer_seconds": 514.259,
+    "evidence_bytes": 205690093
+   }
+  },
+  "total": {
+   "planned": 24,
+   "started": 24,
+   "complete": 24,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 24,
+   "completion_rate": "24/24",
+   "term_class": {
+    "game_over": 24
+   },
+   "plan_status_last": {
+    "completed": 24
+   },
+   "refusals": {
+    "sent_refusals": 14,
+    "by_code": {
+     "UNRESOLVED_FOCUS_BAND_TIMING|continuable=True": 4,
+     "UNRESOLVED_PREVENTED_COIN_DAMAGE|continuable=True": 10
+    },
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 10,
+    "other_move_accepted": 14,
+    "first_accepted_kinds": {
+     "use_attack": 4,
+     "retreat": 8,
+     "play_trainer": 2
+    },
+    "games_with_refusal_finished": 4,
+    "games_with_refusal": 4,
+    "observed": true
+   }
+  },
+  "by_condition": {
+   "reference": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "cost_evaluation": {
+     "goal_status": {
+      "retreat": {
+       "unreached_active_left": 6,
+       "not_applicable_met_at_start": 2,
+       "met_after_2": 1,
+       "met_after_1": 5,
+       "met_with_0": 1
+      },
+      "attack": {
+       "unreached_active_left": 24,
+       "met_after_1": 1
+      }
+     },
+     "after_goal_met": {
+      "attack": {
+       "selected": 1,
+       "built_ok": 1,
+       "sent": 1,
+       "accepted": 1
+      },
+      "retreat": {
+       "selected": 18,
+       "built_ok": 7,
+       "sent": 7,
+       "accepted": 7
+      }
+     },
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {},
+     "after_skip_or_unevaluable_same_turn": {},
+     "et_choices": 104,
+     "progress_result": {
+      "tier2": 2,
+      "tier1": 17,
+      "tier3": 85
+     }
+    },
+    "et_v10": {
+     "choices": 104,
+     "classes": {
+      "no_special_unrestricted": 86,
+      "no_special_restricted": 18
+     },
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    }
+   },
+   "different_colour": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 4,
+     "by_code": {
+      "UNRESOLVED_FOCUS_BAND_TIMING|continuable=True": 4
+     },
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 4,
+     "first_accepted_kinds": {
+      "use_attack": 4
+     },
+     "games_with_refusal_finished": 1,
+     "games_with_refusal": 1,
+     "observed": true
+    },
+    "energy_control": {
+     "declarations": 27,
+     "accepted": 27,
+     "rejected": 0,
+     "coin": {
+      "tails": 9,
+      "heads": 18
+     },
+     "decision_issued": 18,
+     "moved": 18,
+     "with_rainbow": 21
+    },
+    "cost_evaluation": {
+     "goal_status": {},
+     "after_goal_met": {},
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {},
+     "after_skip_or_unevaluable_same_turn": {},
+     "et_choices": 0,
+     "progress_result": {}
+    },
+    "et_v10": {
+     "choices": 0,
+     "classes": {},
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    }
+   },
+   "special_energy": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 10,
+     "by_code": {
+      "UNRESOLVED_PREVENTED_COIN_DAMAGE|continuable=True": 10
+     },
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 10,
+     "other_move_accepted": 10,
+     "first_accepted_kinds": {
+      "retreat": 8,
+      "play_trainer": 2
+     },
+     "games_with_refusal_finished": 3,
+     "games_with_refusal": 3,
+     "observed": true
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "cost_evaluation": {
+     "goal_status": {
+      "retreat": {
+       "met_with_0": 2
+      },
+      "attack": {
+       "met_after_2": 2
+      }
+     },
+     "after_goal_met": {
+      "retreat": {
+       "selected": 0,
+       "built_ok": 0,
+       "sent": 0,
+       "accepted": 0
+      },
+      "attack": {
+       "selected": 2,
+       "built_ok": 2,
+       "sent": 2,
+       "accepted": 2
+      }
+     },
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {},
+     "after_skip_or_unevaluable_same_turn": {},
+     "et_choices": 4,
+     "progress_result": {
+      "tier2": 2,
+      "tier1": 2
+     }
+    },
+    "et_v10": {
+     "choices": 4,
+     "classes": {
+      "restricted_to_basic": 4
+     },
+     "restricted_to_basic_accepted": 4,
+     "restricted_to_basic_moved_special": 0
+    }
+   },
+   "no_ability": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    },
+    "energy_control": {
+     "declarations": 0,
+     "accepted": 0,
+     "rejected": 0,
+     "coin": {},
+     "decision_issued": 0,
+     "moved": 0,
+     "with_rainbow": 0
+    },
+    "cost_evaluation": {
+     "goal_status": {},
+     "after_goal_met": {},
+     "skipped_by_attached": {},
+     "unevaluable_by_attached": {},
+     "after_skip_or_unevaluable_same_turn": {},
+     "et_choices": 0,
+     "progress_result": {}
+    },
+    "et_v10": {
+     "choices": 0,
+     "classes": {},
+     "restricted_to_basic_accepted": 0,
+     "restricted_to_basic_moved_special": 0
+    }
+   }
+  },
+  "refusals_detail": [
+   {
+    "condition": "different_colour",
+    "seed": 9099,
+    "n": 136,
+    "actor": 1,
+    "turn": 47,
+    "attack": [
+     "あわ"
+    ],
+    "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+    "continuable": true,
+    "first_accepted": "use_attack"
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9099,
+    "n": 144,
+    "actor": 1,
+    "turn": 49,
+    "attack": [
+     "あわ"
+    ],
+    "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+    "continuable": true,
+    "first_accepted": "use_attack"
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9099,
+    "n": 156,
+    "actor": 1,
+    "turn": 55,
+    "attack": [
+     "あわ"
+    ],
+    "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+    "continuable": true,
+    "first_accepted": "use_attack"
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9099,
+    "n": 178,
+    "actor": 1,
+    "turn": 63,
+    "attack": [
+     "あわ"
+    ],
+    "code": "UNRESOLVED_FOCUS_BAND_TIMING",
+    "continuable": true,
+    "first_accepted": "use_attack"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 25,
+    "actor": 0,
+    "turn": 8,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 58,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "play_trainer"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 60,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 62,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "play_trainer"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 64,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 66,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 68,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "n": 70,
+    "actor": 0,
+    "turn": 20,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9101,
+    "n": 63,
+    "actor": 0,
+    "turn": 19,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9102,
+    "n": 25,
+    "actor": 0,
+    "turn": 7,
+    "attack": [
+     "いしなげ"
+    ],
+    "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "continuable": true,
+    "first_accepted": "retreat"
+   }
+  ],
+  "games": [
+   {
+    "condition": "reference",
+    "seed": 9097,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 46,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9098,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 47,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9099,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 16,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9100,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 53,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9101,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 37,
+    "refusals": 0
+   },
+   {
+    "condition": "reference",
+    "seed": 9102,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 42,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9097,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 24,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9098,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 13,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9099,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 87,
+    "refusals": 4
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9100,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 13,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9101,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 78,
+    "refusals": 0
+   },
+   {
+    "condition": "different_colour",
+    "seed": 9102,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 40,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9097,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 7,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9098,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 35,
+    "refusals": 8
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9099,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 29,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9100,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 5,
+    "refusals": 0
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9101,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 36,
+    "refusals": 1
+   },
+   {
+    "condition": "special_energy",
+    "seed": 9102,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 28,
+    "refusals": 1
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9097,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 75,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9098,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 77,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9099,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 40,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9100,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 82,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9101,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 22,
+    "refusals": 0
+   },
+   {
+    "condition": "no_ability",
+    "seed": 9102,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 9,
+    "refusals": 0
+   }
+  ],
+  "fix_considered": {
+   "refusal": "UNRESOLVED_PREVENTED_COIN_DAMAGE: PMCG5-046 いしなげ (3 coins, heads x 10) against Withdraw prevent_damage (damage only)",
+   "reason_chosen": "no refusal stopped a game; the continuable refusal with the most occurrences",
+   "interpretation": "same as v0.201: flip the coins as usual and prevent the resulting damage; barrier keeps the stop",
+   "probe_before": {
+    "ishinage:withdraw:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:withdraw:htt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:withdraw:ttt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:barrier:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:barrier:htt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:barrier:ttt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:no_prevention:hhh": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "heads",
+      "heads"
+     ],
+     "damage": [
+      30
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:no_prevention:htt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "tails",
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:no_prevention:ttt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "tails",
+      "tails",
+      "tails"
+     ],
+     "damage": [
+      0
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "tamanage_max_control:withdraw:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "tamanage_max_control:barrier:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "tamanage_max_control:no_prevention:hhh": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "heads",
+      "heads"
+     ],
+     "damage": [
+      60
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    }
+   },
+   "probe_after_candidate": {
+    "ishinage:withdraw:hhh": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "heads",
+      "heads"
+     ],
+     "damage": [],
+     "damage_prevented": 1,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:withdraw:htt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "tails",
+      "tails"
+     ],
+     "damage": [],
+     "damage_prevented": 1,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:withdraw:ttt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "tails",
+      "tails",
+      "tails"
+     ],
+     "damage": [],
+     "damage_prevented": 1,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:barrier:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:barrier:htt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:barrier:ttt": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "ishinage:no_prevention:hhh": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "heads",
+      "heads"
+     ],
+     "damage": [
+      30
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:no_prevention:htt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "tails",
+      "tails"
+     ],
+     "damage": [
+      10
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "ishinage:no_prevention:ttt": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "tails",
+      "tails",
+      "tails"
+     ],
+     "damage": [
+      0
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    },
+    "tamanage_max_control:withdraw:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "tamanage_max_control:barrier:hhh": {
+     "direct": "rejected",
+     "code": "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+     "coins": null,
+     "damage": null,
+     "damage_prevented": null,
+     "api_submit": "rejected",
+     "direct_equals_api": null
+    },
+    "tamanage_max_control:no_prevention:hhh": {
+     "direct": "accepted",
+     "code": null,
+     "coins": [
+      "heads",
+      "heads",
+      "heads"
+     ],
+     "damage": [
+      60
+     ],
+     "damage_prevented": 0,
+     "api_submit": "accepted",
+     "direct_equals_api": true
+    }
+   },
+   "related_tests_with_candidate": {
+    "modules": 53,
+    "exit_0": 39,
+    "failed": [
+     "tests.test_barrier_resume_coin_bonus_v0_34",
+     "tests.test_cd4_opponent_energy_coins_v0_33",
+     "tests.test_coin_failure_status_flight_v0_107",
+     "tests.test_combined_games_v0_4e",
+     "tests.test_effect_preflight_v0_3d",
+     "tests.test_event_kernel_v0_14",
+     "tests.test_existing_effect_pokemon_v0_29",
+     "tests.test_giovanni_machamp_line_v0_11",
+     "tests.test_harden_games_v0_4b",
+     "tests.test_harden_v0_4b",
+     "tests.test_preflight_v0_15c",
+     "tests.test_stage2_games_v0_4c",
+     "tests.test_stage2_v0_4c",
+     "tests.test_unresolved_boundaries_v0_4e"
+    ],
+    "git_status_unchanged": true
+   },
+   "not_committed_because": [
+    "the registration-level CoinFlipDamage.problem (prevented_coin_damage_problem) still stops: preflight-mode parity fails",
+    "v0.13-route reference data comparisons (no per-call rule-change registration; the record is not re-recorded)",
+    "fixed-game expectations change (v0.4b, v0.4c, v0.4e); other game tests may change and need the full suite"
+   ],
+   "decision_needed": [
+    "change the registration-level path too",
+    "add a per-call rule-change registration for the v0.13 reference comparison",
+    "re-make the fixed-game expectations",
+    "a unit that runs the full suite"
+   ],
+   "committed": false,
+   "engine_version_after": "0.201.0",
+   "fix_game": "not run"
+  }
+ }
 }
