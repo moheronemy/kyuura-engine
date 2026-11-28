@@ -1271,7 +1271,8 @@ class HeadsOwnCounters:
         return counters * self.per if flips.results[0] is HEADS else 0
 
 
-def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType, *, cards: bool, wild: bool = True) -> None:
+def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_type: EnergyType, *, cards: bool, wild: bool = True,
+                              rainbow_provides_type: bool = False) -> None:
     """v0.49（TE1）: ワザの説明が ``pokemon`` についている ``energy_type`` のエネルギー（カード）を数える・トラッシュするとき、［へんしん］の「どの色のエネルギー
     としても使うことができる」が当てはまるかで、数える・選べるカードが変わるなら止める（``E.energy_type_readings`` が 2 つの読み方を返すとき）。［へんしん］が
     はたらいていない・ついているエネルギーがどれも ``energy_type`` なら何もしない。必要なエネルギーの支払い（``E.attack_cost_payable``）とは別の問い。
@@ -1284,8 +1285,9 @@ def transform_energy_question(run: AttackRun, pokemon: PokemonInPlay, energy_typ
             # v0.124（SV5）: ［すごいへんしん］のメタモンの色のエネルギーを数える・選ぶ（UQ-SUPER-TRANSFORM-ENERGY-COLORS。支払いの 8 色とは別の問い）
             raise run.res.question("transform_energy_count", detail, UnsupportedError(E.SUPER_TRANSFORM_ENERGY_CODE, f"{detail}: {E.SUPER_TRANSFORM_ENERGY_REASON}"))
         raise run.res.question("transform_energy_count", detail)
-    # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める
-    rainbow = E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
+    # v0.58（RB1）: レインボーエネルギーが、説明の「「X」エネルギー(カード)」に当たるかが決まらない（数える・選べるカードが変わる）なら止める。
+    # v0.200: ``rainbow_provides_type`` の登録（［ハイドロポンプ］だけ）は、その色を供給するレインボーエネルギーを数えると決めてあるので問わない
+    rainbow = [] if rainbow_provides_type else E.ambiguous_rainbow_cards(run.state, pokemon, energy_type)
     if rainbow:
         raise run.res.question("rainbow_energy_type", f"ポケモン {pokemon.pokemon_id} のレインボーエネルギー {rainbow}・「{energy_type.ja}」エネルギー")
     # v0.59（BZ2）: ［エネエネ］でその色のエネルギーになったカードが、説明の「「X」エネルギー(カード)」に当たるかが決まらない
@@ -1354,13 +1356,16 @@ class ExtraEnergy:
     energy_type: EnergyType
     per: int
     max_extra: int
+    rainbow_provides_type: bool = False  # v0.200: その色を供給するレインボーエネルギーも数える（登録で決める。E.ExtraEnergyDamage と同じ）
     local_coins: ClassVar[int] = 0
 
     def value(self, run: AttackRun, flips: CoinFlips | None) -> int:
         attacker = run.attacker()
-        transform_energy_question(run, attacker, self.energy_type, cards=False)  # v0.49: TE1
+        transform_energy_question(run, attacker, self.energy_type, cards=False, rainbow_provides_type=self.rainbow_provides_type)  # v0.49: TE1
         # v0.88: 説明の「「水」エネルギー」はエネルギーの今の色で数える（エナジーコンバーターで変わった色も。基本エネルギーカードだけの場では v0.87 までのカードの枚数と同じ）
         attached = E.typed_unit_count(run.state, attacker, self.energy_type)
+        if self.rainbow_provides_type:
+            attached += E.rainbow_typed_unit_count(run.state, attacker, self.energy_type)
         return run.attack.damage + min(max(0, attached - len(run.attack.cost)), self.max_extra) * self.per
 
 
@@ -10395,7 +10400,7 @@ BUILDERS: dict[type, Any] = {
     E.DamageAndForceSwitch: lambda e: (Damage(OPP, Printed()), ForceSwitch()),
     E.DamageAndDrain: lambda e: (Damage(OPP, Printed()), Drain("damage")),
     E.DamageAndRemoveCounters: lambda e: (Damage(OPP, Printed()), Drain("damage", e.counters)),
-    E.ExtraEnergyDamage: lambda e: (Damage(OPP, ExtraEnergy(e.energy_type, e.per_energy, e.max_extra)),),
+    E.ExtraEnergyDamage: lambda e: (Damage(OPP, ExtraEnergy(e.energy_type, e.per_energy, e.max_extra, e.rainbow_provides_type)),),
     E.DiscardEnergyAndRemoveAllCounters: lambda e: (
         DiscardOwnEnergy(e.energy_type, when_lacking=LACKING_NONE), HealAllCounters(requires="discard"),
     ),

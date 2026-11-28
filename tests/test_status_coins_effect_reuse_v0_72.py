@@ -136,7 +136,7 @@ EXPECTED = {
     ("PR1-037", 0): (E.CoinFlipDamage, {"coins": 2, "damage_per_heads": 10}),
     ("PF3-009", 0): (E.CoinFlipDamage, {"coins": 2, "damage_per_heads": 10}),
     ("PF3-009", 1): (E.DamageThenSelfBarrierOnHeads, {}),
-    ("NIP2-010", 0): (E.ExtraEnergyDamage, {"energy_type": WATER, "per_energy": 10, "max_extra": 2}),
+    ("NIP2-010", 0): (E.ExtraEnergyDamage, {"energy_type": WATER, "per_energy": 10, "max_extra": 2, "rainbow_provides_type": False}),
     ("NIP2X-003", 1): (E.DamageThenDiscardOpponentEnergy, {"on_heads": True}),
     ("PRN-042", 0): (E.CoinsHeadsTimesBonusDamage, {"coins": 2, "per": 20}),
 }

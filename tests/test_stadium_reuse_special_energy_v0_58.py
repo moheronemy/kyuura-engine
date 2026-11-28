@@ -334,10 +334,12 @@ class AttachEffectTest(unittest.TestCase):
 
 
 class RainbowQuestionTest(unittest.TestCase):
-    def test_hydro_pump_with_rainbow_is_rb1(self):
-        """ハイドロポンプ（ついている「水」エネルギーの数）にレインボーエネルギーを数えるかは決まらない（RB1）。支払いには使える。"""
+    def test_hydro_pump_with_rainbow_counts_it_since_v0_200(self):
+        """v0.58 ではハイドロポンプ（ついている「水」エネルギーの数）にレインボーエネルギーを数えるかを RB1 で止めた。v0.200 から、場で「水」を供給する
+        レインボーエネルギーを「水」エネルギーとして数える（カード文面と既存のルールに基づく実装解釈。tests/test_hydro_pump_rainbow_v0_200.py）。"""
         state = board(active=mon(BLASTOISE, (W, W, W, RE)))
-        assert_stops(self, state, UseAttack(0, 0), NEW_CODES["RB1"])
+        after = apply_kernel(state, UseAttack(0, 0))
+        self.assertEqual([e["amount"] for e in after.log[len(state.log):] if e["kind"] == "damage"], [50])
 
     def test_energy_retrieval_does_not_take_special_energy(self):
         """ERR-ENERGY-RETRIEVAL: トラッシュの特殊エネルギーは「基本エネルギーカード」ではない。選べるものに入らない。"""

@@ -1908,11 +1908,15 @@ class ExtraEnergyDamage(AttackEffect):
       進化して「ハイドロポンプ」を使えば、同じ水エネルギー4個で50ダメージ」「水エネルギー5個までなら…「ハイドロポンプ」で活用できる」
       と合う。
     - ついているエネルギーは基本エネルギーだけ（1 枚 1 個）。乱数は使わない。
+    - v0.200（``rainbow_provides_type``）: 真なら、場で ``energy_type`` を供給するレインボーエネルギーを、説明の「「水」エネルギー」として 1 枚 1 個で数える
+      （RB1 で止めない）。カメックス（PMCG1-032）の［ハイドロポンプ］の登録だけが真（カード文面と既存のルールに基づく実装解釈。当時の直接裁定は未確認。
+      docs/hydro-pump-rainbow-rules-v10-v0.200.md）。ほかのワザの登録は偽のまま（RB1 で止める）。
     """
 
     energy_type: EnergyType
     per_energy: int
     max_extra: int
+    rainbow_provides_type: bool = False
     implementation_id = "extra_energy_damage"
 
     def __post_init__(self) -> None:
@@ -1940,6 +1944,8 @@ class ExtraEnergyDamage(AttackEffect):
         _, attacker = state.find_pokemon(use.pokemon_id)
         attack = attack_of(state, use.key)  # v0.49: ワザを印刷したカード（use.key）
         attached = typed_unit_count(state, attacker, self.energy_type)  # v0.88: 説明の「「水」エネルギー」はエネルギーの今の色で数える（解決の基盤の ``ExtraEnergy`` と同じ）
+        if self.rainbow_provides_type:
+            attached += rainbow_typed_unit_count(state, attacker, self.energy_type)  # v0.200: その色を供給するレインボーエネルギーも数える
         extra = min(max(0, attached - len(attack.cost)), self.max_extra)
         return attack.damage + extra * self.per_energy
 
@@ -10773,6 +10779,13 @@ def ambiguous_rainbow_cards(state: GameState, pokemon: PokemonInPlay, energy_typ
         if any(energy_type in unit and unit != frozenset({energy_type}) for unit in units):
             found.append(uid)
     return found
+
+
+def rainbow_typed_unit_count(state: GameState, pokemon: PokemonInPlay, energy_type: EnergyType) -> int:
+    """v0.200: ``pokemon`` についているレインボーエネルギー（``ambiguous_rainbow_cards``）が供給する、``energy_type`` を含む単位の数（1 枚 1 個。同じカードを
+    2 度数えない）。``typed_unit_count``（ちょうどその色だけの単位）と足して、場でその色を供給するエネルギーの数にする（［ハイドロポンプ］の追加のダメージだけ）。"""
+    return sum(1 for uid in ambiguous_rainbow_cards(state, pokemon, energy_type)
+               for unit in energy_units(state, pokemon, uid) if energy_type in unit and unit != frozenset({energy_type}))
 
 
 def rainbow_type_error(pokemon: PokemonInPlay, energy_type: EnergyType, cards: Iterable[int]) -> UnsupportedError:
@@ -23566,8 +23579,10 @@ DEFAULT_EFFECTS = EffectRegistry(
         ),
         # カメックス（v0.6。カメールから進化）p.90。ハイドロポンプ: ダメージの目安「40+」。必要なエネルギー（水 3）よりも多い「水」エネルギー
         # 1 個につき 10 を、2 個ぶんまで追加（p.88 の解説「水エネルギー5個までなら…「ハイドロポンプ」で活用できる」）
+        # v0.200: 場で「水」を供給するレインボーエネルギーを「水」エネルギーとして数える（カード文面と既存のルールに基づく実装解釈。当時の直接裁定は未確認。
+        # docs/hydro-pump-rainbow-rules-v10-v0.200.md）。同じ ExtraEnergyDamage のほかのワザ（みずでっぽうなど）は RB1 のまま
         AttackKey("PMCG1-032", 0): AttackEntry(
-            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2),
+            ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2, rainbow_provides_type=True),
             "ハイドロポンプ",
             text_ja="「水」エネルギーを1つ追加すると、10ダメージ追加できる。(追加は2つまで)",
             play_text_ja="ワザに必要なエネルギーよりも多く「水」エネルギーがついているとき、多い「水」エネルギー1個につき、10ダメージを追加する。ダメージ追加は2個ぶんまで。",

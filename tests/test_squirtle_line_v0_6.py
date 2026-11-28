@@ -96,7 +96,8 @@ class CardValuesTest(unittest.TestCase):
         self.assertEqual(DEFAULT_EFFECTS.attack_entry(WARTORTLE, 1).effect.implementation_id, "damage_only")
         hydro = DEFAULT_EFFECTS.attack_entry(BLASTOISE, 0)
         self.assertEqual((hydro.effect, hydro.play_text_ja, hydro.source),
-                         (ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2), HYDRO_LATEST, "P43 p.90"))
+                         (ExtraEnergyDamage(energy_type=EnergyType.WATER, per_energy=10, max_extra=2, rainbow_provides_type=True), HYDRO_LATEST, "P43 p.90"))
+        # v0.200: 場で「水」を供給するレインボーエネルギーも数える登録（tests/test_hydro_pump_rainbow_v0_200.py）。基本エネルギーだけの場の値は変わらない
 
     def test_extra_energy_damage_checks_the_data(self):
         """``ExtraEnergyDamage`` は、目安に「+」があり、必要なエネルギーがすべて同じタイプ（多い数が払い方で変わらない）のワザだけを
