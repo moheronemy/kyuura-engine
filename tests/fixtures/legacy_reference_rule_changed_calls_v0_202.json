@@ -1,0 +1,346 @@
+{
+ "change": "v0.202（docs/coin-times-prevented-damage-v0.202.md）: 「コインを N 枚投げ、「おもて」の数×M のダメージ」（CoinFlipDamage・CoinFlipDamageThenSelfConfuse。解決の基盤の HeadsTimes）を、「ダメージを受けない」状態（PreventDamage。ダメージだけを無効にする）の相手に使うと、通常どおりコインを投げ、結果のダメージに無効を当てる（v0.13 の経路は UNRESOLVED_PREVENTED_COIN_DAMAGE で止めた）",
+ "condition": "コマンドが UseAttack で、ワザの登録の型が CoinFlipDamage か CoinFlipDamageThenSelfConfuse、相手の対戦ポケモンに今の番の PreventDamage がある（tests/legacy_reference.py の coin_times_against_damage_only_prevention）",
+ "expected_difference": "old は参照データ（tests/fixtures/legacy_reference_v0_15.json）のその呼び出しの結果そのもの（UNRESOLVED_PREVENTED_COIN_DAMAGE の拒否）。new は今の版の受け付け（形式 9 の全体の指紋）。3 つの先読みの方法で同じ",
+ "how": "verifier の capture_legacy_diffs.py で、参照データと違う呼び出しをすべて書き出し、条件に当たる 26 件だけを登録した（違う呼び出しは 26 件。条件に当たらない違いは 0 件）",
+ "calls": {
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#15": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#16": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#17": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#36": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#37": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#38": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#57": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#58": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_event_kernel_v0_14.UnresolvedTest.test_same_code_in_both_modes#59": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_kernel_integration_v0_15.MessageTest.test_stop_messages_are_the_same_on_both_routes#102": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_kernel_integration_v0_15.MessageTest.test_stop_messages_are_the_same_on_both_routes#5": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#75": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#76": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#77": {
+   "input": "23b185367e524956c293105b1a4ba85c",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "97fef9c345c3c1481c53f7280bbd317c"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#78": {
+   "input": "b4b610d100049671b285dcd8b519b745",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "4e7926db20235b8c27ffcc007e11da6f"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#79": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#80": {
+   "input": "23b185367e524956c293105b1a4ba85c",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "97fef9c345c3c1481c53f7280bbd317c"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#81": {
+   "input": "08fef1a0ea933cfb674a8fab4ad2c2ef",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "a5acd789269898391db66a020c65728a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#82": {
+   "input": "b4b610d100049671b285dcd8b519b745",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "4e7926db20235b8c27ffcc007e11da6f"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#83": {
+   "input": "ddc3451c60c59672e6edb1a97cf126ef",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "89d1e1dea9e82e4e439da3955a100e47"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#84": {
+   "input": "71f76d6cc1cb075b48e0f2e38044de0d",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "da8e4bf1080f3926b5d104aea7792b2a"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#85": {
+   "input": "b456e2112d7cd00e7590af5509eabf12",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "acd90e11337e191268b03ba6116ab64c"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#86": {
+   "input": "23b185367e524956c293105b1a4ba85c",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "97fef9c345c3c1481c53f7280bbd317c"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#87": {
+   "input": "99c783e79a205ba642f39128125789ee",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "b8f06750488ab8581330da440b053423"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#88": {
+   "input": "c71363cd520499fb189c15cbe3a30788",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "cc5c454b1c5c02cafe5959f74fd85571"
+   ]
+  },
+  "tests.test_preflight_v0_15c.EquivalenceTest.test_derived_matches_derived_full_and_the_v0_13_route#89": {
+   "input": "08fef1a0ea933cfb674a8fab4ad2c2ef",
+   "old": [
+    "error",
+    "UnsupportedError",
+    "UNRESOLVED_PREVENTED_COIN_DAMAGE",
+    "相手の対戦ポケモン 3 は、この番「ダメージを受けない」状態（prevent_damage）。ダメージの量をコインで決めるワザの要素は無効になる（p.321）が、そのコインを投げるかは『オフィシャルブック2000』（p.309・p.319・p.320・p.321）から決められないので扱わない（投げるかどうかで乱数の続きが変わる）"
+   ],
+   "new": [
+    "ok",
+    "a5acd789269898391db66a020c65728a"
+   ]
+  }
+ }
+}

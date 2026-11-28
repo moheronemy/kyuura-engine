@@ -193,6 +193,9 @@ class StrategyTest(unittest.TestCase):
                 state = make()
                 expected = outcome(apply_kernel, state, command, preflight="derived_full")
                 self.assertEqual(outcome(apply_kernel, state, command), expected)
+                if code is None:  # v0.202: 止めない場合（tests/test_event_kernel_v0_14.py の CASES の prevented_coin）
+                    self.assertEqual(expected[0], "ok")
+                    continue
                 self.assertEqual(expected[2], code)
 
     def test_question_found_only_in_a_sibling(self):

@@ -12,6 +12,9 @@ test_preflight_v0_15c.py）は、同じ盤面・同じコマンドを旧経路�
 - 決定への答えの ``WRONG_PHASE`` の理由の文だけは、段階の名前の並びを名前の順に並べ直してから記録し、比べます（``error_outcome``）。
   v0.13 から、この並びは ``frozenset`` の並び（文字列のハッシュで決まり、プロセスごとに変わる）で、v0.16d で決まった並びにします。
   並べ直すのはこの文の段階の名前の並びだけで、ほかの理由の文・コード・例外の種類はそのまま比べます。
+- v0.202: 規約の変更で旧経路と違う結果を返すようになった呼び出し 1 つずつの登録（``RULE_CHANGED_CALLS``。tests/fixtures/legacy_reference_rule_changed_calls_v0_202.json）。
+  登録した呼び出しだけ、記録がその登録の旧の結果（そのまま）であること・盤面の指紋が同じこと・盤面が変更の条件に当たることを確かめてから、登録の新しい結果と
+  比べる（記録は変えない）。登録していない呼び出しの違いは、今までどおり失敗にする（停止コードの単位で比べを外さない）。
 - 作り方: 旧経路がある木で ``KYUURA_RECORD_LEGACY_REFERENCE=1 python3 -m unittest <モジュール>``（``RECORDED_MODULES``）。今の版から
   作り直さないでください（作り直すと、旧経路との比較ではなくなる。旧経路がない木では作れない）。
 """
@@ -32,6 +35,7 @@ from kyuura_engine.rng import rng_fingerprint
 from tests.helpers import with_card_data_commit_before_v0_69
 
 PATH = Path(__file__).resolve().parent / "fixtures" / "legacy_reference_v0_15.json"
+RULE_CHANGED_CALLS_PATH = Path(__file__).resolve().parent / "fixtures" / "legacy_reference_rule_changed_calls_v0_202.json"
 RECORD_ENV = "KYUURA_RECORD_LEGACY_REFERENCE"
 RECORDED_MODULES = (
     "tests.test_event_kernel_v0_14",
@@ -263,6 +267,47 @@ class _Store:
 STORE = _Store()
 
 
+def coin_times_against_damage_only_prevention(state, command) -> bool:
+    """v0.202 の変更の条件: 「おもて」の数×のワザ（``CoinFlipDamage``・``CoinFlipDamageThenSelfConfuse``）を、今の番に「ダメージを受けない」状態
+    （``PreventDamage``。ダメージだけを無効にする）の相手の対戦ポケモンに使うコマンド（docs/coin-times-prevented-damage-v0.202.md）。"""
+    from kyuura_engine import UseAttack
+    from kyuura_engine import effects as E
+    from kyuura_engine.persistent import damage_prevention
+
+    if not isinstance(command, UseAttack):
+        return False
+    attacker, defender = state.players[command.player].active, state.players[1 - command.player].active
+    if attacker is None or defender is None:
+        return False
+    effect = E.DEFAULT_EFFECTS.attack_entry(state.cards[attacker.card].card_id, command.attack_index).effect
+    return type(effect) in (E.CoinFlipDamage, E.CoinFlipDamageThenSelfConfuse) and damage_prevention(state, defender) is not None
+
+
+RULE_CHANGED_CONDITIONS = {"v0.202": coin_times_against_damage_only_prevention}
+
+
+def rule_changed_calls() -> dict[str, dict]:
+    """v0.202 の呼び出し 1 つずつの登録（鍵 → 盤面の指紋・旧の結果・新しい結果）。"""
+    data = json.loads(RULE_CHANGED_CALLS_PATH.read_text(encoding="utf-8"))
+    return {key: {**value, "change": "v0.202"} for key, value in data["calls"].items()}
+
+
+RULE_CHANGED_CALLS: dict[str, dict] = rule_changed_calls()
+
+
+def check_rule_changed_call(key: str, rule: dict, entry: dict, given: str, state, command) -> tuple:
+    """登録した呼び出しの確かめ（どれかが違えば失敗）。返すのは登録の新しい結果。"""
+    if rule["input"] != given or entry["input"] != given:
+        raise AssertionError(f"登録した呼び出し {key} の盤面の指紋が、登録・記録と違う（比べる意味がない）")
+    if list(entry["outcome"]) != list(rule["old"]):
+        raise AssertionError(f"登録した呼び出し {key} の記録が、登録の旧の結果と違う（記録を変えた・登録が違う）")
+    if not RULE_CHANGED_CONDITIONS[rule["change"]](state, command):
+        raise AssertionError(f"登録した呼び出し {key} の盤面が、変更（{rule['change']}）の条件に当たらない")
+    if rule["new"][0] != "ok":
+        raise AssertionError(f"登録した呼び出し {key} の新しい結果が受け付けでない")
+    return tuple(rule["new"])
+
+
 def expected(testcase, state, command) -> tuple:
     """テストの呼び出し 1 つの、旧経路の結果（``outcome_of`` の形）。記録するときは旧経路で処理して記録する。"""
     key = STORE.key(testcase.id())
@@ -277,6 +322,9 @@ def expected(testcase, state, command) -> tuple:
         raise AssertionError(f"参照データに {key} がない（テストの呼び出しが記録したときと違う。{HOW}）")
     if entry["input"] != given:
         raise AssertionError(f"参照データの {key} の盤面が、記録したときと違う（比べる意味がない）")
+    rule = RULE_CHANGED_CALLS.get(key)
+    if rule is not None:
+        return check_rule_changed_call(key, rule, entry, given, state, command)  # v0.202（記録は変えない）
     return tuple(entry["outcome"])
 
 

@@ -458,8 +458,9 @@ class UnresolvedTest(Both):
         "G37": (lambda: board({"card": WEEDLE, "energy": [GRASS]}, {**GIOVANNI_, "damage": 90}), UseAttack(0, 0),
                 "UNRESOLVED_KO_PREVENTION_ATTACK_EFFECT"),
         "T19b": (lambda: board({"card": WEEDLE, "energy": [GRASS]}, HAUNTER_), UseAttack(0, 0), "UNRESOLVED_EVADED_EFFECT_COIN"),
-        "prevented_coin": (lambda: board({"card": DODUO, "energy": [FIRE]}, {**METAPOD_, "prevent_damage": TURN - 1}), UseAttack(0, 0),
-                           "UNRESOLVED_PREVENTED_COIN_DAMAGE"),
+        # v0.202（docs/coin-times-prevented-damage-v0.202.md）: みだれづき（「おもて」の数×）は「ダメージを受けない」相手にも止めない（コードは None。
+        # v0.13 の経路の記録は変えず、tests/legacy_reference.py の RULE_CHANGED_CALLS で比べる）。並びの順番（参照データの呼び出しの番号）は変えない
+        "prevented_coin": (lambda: board({"card": DODUO, "energy": [FIRE]}, {**METAPOD_, "prevent_damage": TURN - 1}), UseAttack(0, 0), None),
         "confusion_modifiers": (lambda: board({**PONYTA_, "confusion": True, "trainers": [(PLUSPOWER, TURN)]}, RATTATA), UseAttack(0, 1),
                                 "UNRESOLVED_CONFUSION_DAMAGE_MODIFIERS"),
     }
@@ -469,6 +470,9 @@ class UnresolvedTest(Both):
             for mode in PREFLIGHT_MODES:
                 with self.subTest(case=name, mode=mode):
                     _, _, error = self.both(make(), command, mode=mode)
+                    if code is None:  # v0.202: 止めない（受け付けた結果を、登録の新しい結果と比べた）
+                        self.assertIsNone(error)
+                        continue
                     self.assertIsNotNone(error)
                     self.assertEqual(error.code, code)
 

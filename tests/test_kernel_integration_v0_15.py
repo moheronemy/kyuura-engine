@@ -499,6 +499,11 @@ class KernelGuardTest(unittest.TestCase):
                 before, fingerprint = full(state), rng_fingerprint(state.rng)
                 for mode in resolution.PREFLIGHT_MODES:
                     with self.subTest(case=name, mode=mode):
+                        if code is None:  # v0.202: 止めない（みだれづきと「ダメージを受けない」相手。コインを投げてダメージを無効にする）
+                            new = apply_kernel(state, command, preflight=mode)
+                            self.assertIn("damage_prevented", [e["kind"] for e in new.log[len(state.log):]])
+                            self.assertEqual((full(state), rng_fingerprint(state.rng)), (before, fingerprint))
+                            continue
                         with self.assertRaises(UnsupportedError) as ctx:
                             apply_kernel(state, command, preflight=mode)
                         self.assertEqual(ctx.exception.code, code)

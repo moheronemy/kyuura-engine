@@ -119,6 +119,45 @@ class FollowUpEffectTest(unittest.TestCase):
                 self.assertEqual(after.players[1].active.damage, 0)
 
 
+class LegacyReferenceRegistryTest(unittest.TestCase):
+    """v0.13 の経路の参照データは変えず、比べる側に呼び出し 1 つずつの変更を登録した（tests/legacy_reference.py の ``RULE_CHANGED_CALLS``）。"""
+
+    def test_reference_record_is_unchanged(self):
+        import hashlib
+        from tests import legacy_reference as LR
+        self.assertEqual(hashlib.sha256(LR.PATH.read_bytes()).hexdigest(), "595f9f82f23af9f347be998a4200753422bea4fe2ba30ca562f8e7dba8758872")
+
+    def test_every_registered_call_is_the_recorded_stop(self):
+        import json
+        from tests import legacy_reference as LR
+        calls = json.loads(LR.PATH.read_text(encoding="utf-8"))["calls"]
+        self.assertEqual(len(LR.RULE_CHANGED_CALLS), 26)
+        for key, rule in LR.RULE_CHANGED_CALLS.items():
+            with self.subTest(key=key):
+                self.assertEqual(calls[key]["input"], rule["input"])
+                self.assertEqual(calls[key]["outcome"], rule["old"])
+                self.assertEqual(rule["old"][:3], ["error", "UnsupportedError", CODE])
+                self.assertEqual(rule["new"][0], "ok")
+        # 記録の UNRESOLVED_PREVENTED_COIN_DAMAGE の呼び出しは、この 26 件だけ（v0.13 の比べのテストにバリアーの盤面はない）。どれも、テストの中で
+        # 盤面が変更の条件に当たることを確かめてから比べる（``check_rule_changed_call``）。ほかのコードの呼び出しは登録しない
+        stops = {k for k, v in calls.items() if v["outcome"][:3] == ["error", "UnsupportedError", CODE]}
+        self.assertEqual(stops, set(LR.RULE_CHANGED_CALLS))
+
+    def test_a_wrong_registration_fails(self):
+        from tests import legacy_reference as LR
+        key, rule = next(iter(LR.RULE_CHANGED_CALLS.items()))
+        base = after_defense(*WITHDRAW)
+        command = UseAttack(0, ROCK_THROW)
+        given = LR.input_digest(base, command)
+        good = {**rule, "input": given}
+        entry = {"input": given, "outcome": rule["old"]}
+        self.assertEqual(LR.check_rule_changed_call(key, good, entry, given, base, command), tuple(rule["new"]))
+        for broken, state in (({**good, "old": ["ok", "x"]}, base), ({**good, "input": "other"}, base),  # 記録と違う旧の結果・違う盤面
+                              (good, after_defense(WITHDRAW[0], None, None))):  # 条件に当たらない盤面（「ダメージを受けない」状態でない）
+            with self.subTest(broken=broken is good), self.assertRaises(AssertionError):
+                LR.check_rule_changed_call(key, broken, entry, given, state, command)
+
+
 class WholeAttackPreventionTest(unittest.TestCase):
     def test_barrier_still_stops_before_the_coins(self):
         base = after_defense({"card": MEWTWO, "energy": [P, P, P]}, 1, None)  # バリアー（ワザを受けない）
