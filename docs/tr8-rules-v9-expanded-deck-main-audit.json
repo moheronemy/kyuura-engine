@@ -2671,5 +2671,340 @@
    "engine_version_after": "0.203.0"
   },
   "moved_card_not_basic_rule": "rules-v10 returns unevaluable:moved_card_not_basic only when every movable card is not basic Energy (the designed fallback)"
+ },
+ "audit_new_decks_0_203_0": {
+  "date": "2026-11-28",
+  "base": {
+   "doc_commit": "e17c4514933a2efdb22e640da567651849c2ee61",
+   "doc_branch_of_base": "claude/expanded-audit-v0203",
+   "execution_commit": "964d0d526ac61fad8d3e903be2d5f11b4be1f56e",
+   "engine_version": "0.203.0",
+   "tool_version": 21,
+   "work_branch": "claude/new-deck-audit-v0203"
+  },
+  "deck_selection": {
+   "date": "2026-11-28",
+   "source": "kyuura-engine 964d0d5 tools/existing_effect_games.py DECKS (copied verbatim, no adjustment)",
+   "scan": "out/deck_scan_raw.txt: 268 decks (2 preset + 266 DECKS); attack flags from the registrations (coin damage, damage then status, Barrier) and Focus Band counts",
+   "conditions": {
+    "b1_whole_attack_prevention": {
+     "seat0": "E31",
+     "seat1": "LF29",
+     "target_cards": {
+      "seat0": "PMCG1-050 Mewtwo x2 (バリアー, cost psychic x2; deck has psychic energy x12)",
+      "seat1": "PMCG5-046 タケシのイシツブテ x3 (いしなげ), PMCG5-038 マチスのビリリダマ x3 (スピンボール・ダブルスピン), PMCG5-061 タケシのベロリンガ x3 (たたきつける)"
+     },
+     "why": "E31 is the only scanned deck with バリアー; LF29 has the most HeadsTimes coin-damage attackers (いしなげ・スピンボール・ダブルスピン・たたきつける)"
+    },
+    "b2_focus_band_follow_up": {
+     "seat0": "G116",
+     "seat1": "GW29",
+     "target_cards": {
+      "seat0": "neo1-088 きあいのハチマキ x2 (the only Pokemon Tool in the deck)",
+      "seat1": "PMCG4-001 アーボ どくばり, PMCG4-005 ドガース どくガス, PMCG5-001 タケシのズバット どくのきば (damage then poison; outside the v0.203 scope)"
+     },
+     "why": "band decks: X132, T81, G116, C116 (C116 used in past audits; T81 has 15 other tools competing for the slot; X132's opponent-facing Pokemon are few); GW29 has three damage-then-poison attacks"
+    }
+   },
+   "past_audits": "no saved plan uses E31, LF29, G116 or GW29 (scan of all plan.json deck inputs)",
+   "decks": {
+    "E31": {
+     "cards": 60,
+     "content_sha256": "00ce447005c3b39a956b685a2a1a88bb175428e5ce44b28e16898175567f87bb",
+     "sha256": "df5bd6ab0b1ad97342e5ab58dd98ab8d49436568596e88e8c2758c1fc372df6a",
+     "legal_0_203_0": true
+    },
+    "LF29": {
+     "cards": 60,
+     "content_sha256": "b27ff289c62822cab3c66cce95addf04488983a63e66bf9965da008dd2b3408b",
+     "sha256": "4df28e88af1f82feb6a443e439dc1f5275c8f7f11e6b9ae90ce48503ec3d7d21",
+     "legal_0_203_0": true
+    },
+    "G116": {
+     "cards": 60,
+     "content_sha256": "d9c7dfb777d9dc2279febf09cc504947c4a7e140b207a3b356a5769b85b5dad3",
+     "sha256": "6629db784ae015d07b4824f5efb3dfe93f9f8554302edbdde56bed84e2dcec6c",
+     "legal_0_203_0": true
+    },
+    "GW29": {
+     "cards": 60,
+     "content_sha256": "abb11a7cf629b891d4dc0b761f99c932146be8f8bcb57729eba6ca54c3c39af9",
+     "sha256": "289466bcb4c96471f797dfe7e4259ee16602d4c2a4b76a431a5d4430df06eaf7",
+     "legal_0_203_0": true
+    }
+   },
+   "note": "deck contains the target card != game reached the scene (counted separately in the summary)"
+  },
+  "fixed_conditions": {
+   "convention_set": "CS-KYUURA-PLAY-TR8@1",
+   "mode": "rules-v10",
+   "profile": "deep",
+   "per_game_limits": "default",
+   "observation": true,
+   "prestop": true
+  },
+  "seeds": {
+   "rule": "9109 以上で連続 6 値がすべて未使用の最初の組（4 条件で共通に使う）",
+   "files_scanned": 951,
+   "errors": 0,
+   "max_used": 9108,
+   "selected": [
+    9109,
+    9110,
+    9111,
+    9112,
+    9113,
+    9114
+   ]
+  },
+  "plans": {
+   "games_per_plan": 6,
+   "budget_seconds": 900,
+   "evidence_mib": 1024,
+   "plan_sha256": {
+    "vai-batch-tr8nd-b1": "e019c6c5125118b46a873297aac9686cccc133f2e711fc9b41dd52560800a0f7",
+    "vai-batch-tr8nd-b2": "c34cbbbee20383ffec512c192dffeff0300ffefc862d4a5a40cd43522cc42b2b"
+   },
+   "fixed_before_first_game": true
+  },
+  "budget": {
+   "program_limits": {
+    "tool_seconds": 1800,
+    "outer_seconds": 3600,
+    "evidence_mib": 2048
+   },
+   "used": {
+    "tool_seconds": 69.542,
+    "outer_seconds": 264.5,
+    "evidence_bytes": 123298618
+   }
+  },
+  "total": {
+   "planned": 12,
+   "started": 12,
+   "complete": 12,
+   "incomplete": 0,
+   "not_started": 0,
+   "game_over": 12,
+   "completion_rate": "12/12",
+   "term_class": {
+    "game_over": 12
+   },
+   "plan_status_last": {
+    "completed": 12
+   },
+   "refusals": {
+    "sent_refusals": 1,
+    "by_code": {
+     "UNRESOLVED_PREVENTED_EFFECT_COIN|continuable=True": 1
+    },
+    "resend_suppressed_attempts": 0,
+    "refused_excluded_rows": 1,
+    "other_move_accepted": 1,
+    "first_accepted_kinds": {
+     "retreat": 1
+    },
+    "games_with_refusal_finished": 1,
+    "games_with_refusal": 1,
+    "observed": true
+   }
+  },
+  "judge_submits": {
+   "b1": {
+    "expected": 851,
+    "undetermined": 1
+   },
+   "b2": {
+    "expected": 772
+   }
+  },
+  "by_condition": {
+   "barrier": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 1,
+     "by_code": {
+      "UNRESOLVED_PREVENTED_EFFECT_COIN|continuable=True": 1
+     },
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 1,
+     "other_move_accepted": 1,
+     "first_accepted_kinds": {
+      "retreat": 1
+     },
+     "games_with_refusal_finished": 1,
+     "games_with_refusal": 1,
+     "observed": true
+    }
+   },
+   "focus_band": {
+    "started": 6,
+    "game_over": 6,
+    "completion_rate": "6/6",
+    "term_class": {
+     "game_over": 6
+    },
+    "refusals": {
+     "sent_refusals": 0,
+     "by_code": {},
+     "resend_suppressed_attempts": 0,
+     "refused_excluded_rows": 0,
+     "other_move_accepted": 0,
+     "first_accepted_kinds": {},
+     "games_with_refusal_finished": 0,
+     "games_with_refusal": 0,
+     "observed": false
+    }
+   }
+  },
+  "scenes": {
+   "b1": {
+    "games_with_scene": 0,
+    "scene_attempts": 0,
+    "scene_submit": {},
+    "scene_codes": {},
+    "lethal_scene_attempts": 0,
+    "barrier_accepted": 2,
+    "focus_band_events": 0
+   },
+   "b2": {
+    "games_with_scene": 0,
+    "scene_attempts": 0,
+    "scene_submit": {},
+    "scene_codes": {},
+    "lethal_scene_attempts": 0,
+    "barrier_accepted": 0,
+    "focus_band_events": 3
+   }
+  },
+  "refusals_detail": [
+   {
+    "condition": "barrier",
+    "seed": 9110,
+    "n": 270,
+    "actor": 1,
+    "turn": 86,
+    "attack": [
+     "まきつく"
+    ],
+    "code": "UNRESOLVED_PREVENTED_EFFECT_COIN",
+    "continuable": true,
+    "first_accepted": "retreat"
+   }
+  ],
+  "games": [
+   {
+    "condition": "barrier",
+    "seed": 9109,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 38,
+    "refusals": 0
+   },
+   {
+    "condition": "barrier",
+    "seed": 9110,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "refusals": 1
+   },
+   {
+    "condition": "barrier",
+    "seed": 9111,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 82,
+    "refusals": 0
+   },
+   {
+    "condition": "barrier",
+    "seed": 9112,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 3,
+    "refusals": 0
+   },
+   {
+    "condition": "barrier",
+    "seed": 9113,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 23,
+    "refusals": 0
+   },
+   {
+    "condition": "barrier",
+    "seed": 9114,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 86,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9109,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 11,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9110,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 70,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9111,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 67,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9112,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 82,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9113,
+    "termination": "game_over",
+    "winner": 0,
+    "turns": 6,
+    "refusals": 0
+   },
+   {
+    "condition": "focus_band",
+    "seed": 9114,
+    "termination": "game_over",
+    "winner": 1,
+    "turns": 42,
+    "refusals": 0
+   }
+  ],
+  "fix": {
+   "target": "UNRESOLVED_PREVENTED_EFFECT_COIN (HC3): まきつく (heads -> paralysis) against Mewtwo under Barrier (attack_barrier)",
+   "committed": false,
+   "reason": "no single consistent reading: Barrier (whole attack not received) was kept as a stop in v0.201 / v0.202; kyuura UQ-COIN-IN-NULLIFIED-ELEMENT is open; flipping or not flipping the coin changes the random sequence",
+   "options": {
+    "A": "flip the coin as usual, then Barrier voids the effect (no paralysis); same as the v0.201 / v0.202 coin handling",
+    "B": "do not flip (the whole attack, its coins included, is not received); no paralysis"
+   },
+   "recommendation": "A, decided together for coin damage (HeadsTimes / HeadsBonus), effect coins (HC3) and failure coins against Barrier",
+   "engine_version_after": "0.203.0"
+  }
  }
 }
