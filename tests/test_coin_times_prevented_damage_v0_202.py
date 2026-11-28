@@ -159,12 +159,15 @@ class LegacyReferenceRegistryTest(unittest.TestCase):
 
 
 class WholeAttackPreventionTest(unittest.TestCase):
-    def test_barrier_still_stops_before_the_coins(self):
+    def test_barrier_flips_the_coins_and_prevents_the_damage(self):
+        """v0.205（docs/barrier-coin-damage-v0.205.md）: いしなげはダメージだけで終わるワザなので、バリアー（ワザを受けない）の相手にもコインを 3 枚投げ、
+        バリアーがダメージを無効にする（v0.202〜v0.204 は止めた）。"""
         base = after_defense({"card": MEWTWO, "energy": [P, P, P]}, 1, None)  # バリアー（ワザを受けない）
         for sides in ((H, H, H), (T, T, T)):
-            with self.subTest(sides=sides), self.assertRaises(UnsupportedError) as caught:
-                attack(base, sides)
-            self.assertEqual(caught.exception.code, CODE)
+            with self.subTest(sides=sides):
+                st, after = attack(base, sides)
+                self.assertEqual([e["kind"] for e in new_events(st, after)][:5], ["attack", "coin_flip", "coin_flip", "coin_flip", "damage_prevented"])
+                self.assertEqual(after.players[1].active.damage, 0)
 
 
 class ScopeTest(unittest.TestCase):

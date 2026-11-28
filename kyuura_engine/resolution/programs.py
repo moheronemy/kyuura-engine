@@ -1775,7 +1775,13 @@ class Damage(Element):
             # docs/quick-attack-prevented-coin-v0.201.md）。v0.202 から、「コインを N 枚投げ、「おもて」の数×M のダメージ」（``HeadsTimes``）も同じ（docs/coin-times-prevented-damage-v0.202.md）。
             # ワザ全体を受けない効果（バリアー。効果の窓も持つ）と、ほかのコインのダメージ（たまなげMAX・つのでつつく・相手が投げるコインなど）は今までどおり問う
             damage_only = void is not None and Window.BEFORE_EFFECT not in void.definition.windows
-            if void is not None and not (damage_only and getattr(self.base, "flip_against_damage_only_void", False) and not gate_only_damage):
+            flips_through = getattr(self.base, "flip_against_damage_only_void", False) and not gate_only_damage
+            # v0.205（docs/barrier-coin-damage-v0.205.md）: ワザが相手の対戦ポケモンへのダメージだけで終わる（ほかの要素がない）なら、バリアー（catalog.BARRIER。ワザを受けない）の
+            # 相手でもコインを通常どおり投げ、結果のダメージにバリアーを当てる（v0.204 の［まきつく］と同じ、カード文面に基づく読み方）。自分への効果・ほかの対象・成否のコイン・
+            # バリアーでない無効は今までどおり問う
+            barrier_only_damage = (void is not None and void.definition.name == "barrier" and self.target == OPP and run.redirect is None
+                                   and all(isinstance(element, Damage) and element.target == OPP for element in run.program))
+            if void is not None and not (flips_through and (damage_only or barrier_only_damage)):
                 raise run.res.question("prevented_coin_damage", f"ポケモン {receiver.pokemon_id}",
                                        E.prevented_coin_damage_error(receiver.pokemon_id, void.implementation.kind))
         if self.local_gate is not None:

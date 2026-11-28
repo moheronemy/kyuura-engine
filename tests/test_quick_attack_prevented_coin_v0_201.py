@@ -75,12 +75,15 @@ class DamageOnlyPreventionTest(unittest.TestCase):
 
 
 class WholeAttackPreventionTest(unittest.TestCase):
-    def test_barrier_still_stops_before_the_coin(self):
+    def test_barrier_flips_the_coin_and_prevents_the_damage(self):
+        """v0.205（docs/barrier-coin-damage-v0.205.md）: でんこうせっかはダメージだけで終わるワザなので、バリアー（ワザを受けない）の相手にもコインを投げ、
+        バリアーがダメージを無効にする（v0.201〜v0.204 は止めた）。"""
         base = after_defense({"card": MEWTWO, "energy": [P, P, P]}, 1, None)  # バリアー（ワザを受けない）
         for side in (H, T):
-            with self.subTest(side=side), self.assertRaises(UnsupportedError) as caught:
-                quick_attack(base, side)
-            self.assertEqual(caught.exception.code, CODE)
+            with self.subTest(side=side):
+                st, after = quick_attack(base, side)
+                self.assertEqual([e["kind"] for e in new_events(st, after)][:3], ["attack", "coin_flip", "damage_prevented"])
+                self.assertEqual(after.players[1].active.damage, 0)
 
 
 class ScopeTest(unittest.TestCase):

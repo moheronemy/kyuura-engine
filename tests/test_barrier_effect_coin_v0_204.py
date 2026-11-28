@@ -88,8 +88,8 @@ class BarrierEffectCoinTest(unittest.TestCase):
 
 class ScopeTest(unittest.TestCase):
     def test_coin_damage_and_effect_only_coins_still_stop(self):
-        for attacker, sides, code in (({"card": GEODUDE, "energy": [F, F]}, (H, H, H), "UNRESOLVED_PREVENTED_COIN_DAMAGE"),  # いしなげ（コインでダメージの量）
-                                      ({"card": LICKITUNG, "energy": [F]}, (H,), HC3)):  # なめる（ダメージのない「おもて」ならマヒ）
+        # v0.205: いしなげ（コインでダメージの量）は、ダメージだけで終わるワザとしてバリアーの相手にも投げる（tests/test_barrier_coin_damage_v0_205.py）
+        for attacker, sides, code in (({"card": LICKITUNG, "energy": [F]}, (H,), HC3),):  # なめる（ダメージのない「おもて」ならマヒ）
             with self.subTest(card=attacker["card"]), self.assertRaises(EngineError) as caught:
                 attack(board(attacker), *sides)
             self.assertEqual(caught.exception.code, code)

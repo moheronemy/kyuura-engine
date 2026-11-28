@@ -386,12 +386,18 @@ class BarrierCoinTest(unittest.TestCase):
     def test_damage_only_coin_attacks_keep_v0_4b_code(self):
         """コインがダメージの要素だけを決めるワザ（失敗するワザ・ミサイルばり・たまなげMAX・でんこうせっか）は、バリアー・かたまるの相手に v0.4b の
         ``UNRESOLVED_PREVENTED_COIN_DAMAGE``（v0.33 と同じ）。v0.201 から、でんこうせっかは、かたまる（ダメージだけを無効にする）の相手にはコインを投げる。
-        v0.202 から、ミサイルばり（「おもて」の数×）も同じ（docs/coin-times-prevented-damage-v0.202.md）。"""
+        v0.202 から、ミサイルばり（「おもて」の数×）も同じ（docs/coin-times-prevented-damage-v0.202.md）。v0.205 から、ダメージだけで終わるこの 2 つは、バリアーの相手にも
+        コインを投げてバリアーがダメージを無効にする（docs/barrier-coin-damage-v0.205.md）。失敗するワザ・たまなげMAX は止めたまま。"""
         cases = [(mon(BLAINES_KANGASKHAN, (FIGHTING,)), 0), (mon(JOLTEON, (LIGHTNING, LIGHTNING, LIGHTNING)), 1), (mon(EXEGGUTOR, (GRASS, GRASS)), 1),
                  (mon(FLAREON, (FIRE, FIRE)), 0)]
         for attacker, index in cases:
             with self.subTest(card=attacker["card"]):
-                assert_stops(self, with_barrier(attacker), UseAttack(1, index), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+                if attacker["card"] not in (FLAREON, JOLTEON):
+                    assert_stops(self, with_barrier(attacker), UseAttack(1, index), "UNRESOLVED_PREVENTED_COIN_DAMAGE")
+                else:
+                    barred = with_coin_results(with_barrier(attacker), H, H, H, H)
+                    after = play(barred, UseAttack(1, index))
+                    self.assertIn("damage_prevented", [e["kind"] for e in after.log[len(barred.log):]])
                 if attacker["card"] in (FLAREON, JOLTEON):
                     # v0.201: でんこうせっか（「おもて」なら追加。HeadsBonus）は、ダメージだけを無効にするかたまるの相手にはコインを投げて無効を当てる
                     # （tests/test_quick_attack_prevented_coin_v0_201.py）。v0.202: ミサイルばり（「おもて」の数×。HeadsTimes）も同じ
